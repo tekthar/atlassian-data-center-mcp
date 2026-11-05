@@ -5,6 +5,22 @@ Private tekthar fork of [b1ff/atlassian-dc-mcp](https://github.com/b1ff/atlassia
 - `upstream` remote: b1ff/atlassian-dc-mcp. Merge upstream fixes from there.
 - Nothing is published to npm from this repo yet. The upstream publish workflows were removed; `.github/workflows/ci.yml` only builds and tests.
 
+## Choosing which tools are exposed (Jira and Confluence)
+
+Each server reads three optional environment variables at startup. Unset, a server exposes the same tools it always has.
+
+| Variable | Effect |
+| --- | --- |
+| `TOOLSETS` | Comma-separated toolset names, `default`, or `all`. Example: `default,jira_agile`. An unknown name is ignored with a warning; if every name is unknown, no tools are exposed. |
+| `READ_ONLY_MODE` | `true` exposes only tools that never change Jira or Confluence. |
+| `ENABLED_TOOLS` | Comma-separated exact tool names. Replaces `TOOLSETS`; `READ_ONLY_MODE` still applies. |
+
+Opt-in flags such as `JIRA_VERSION_DELETE_ENABLED` and the attachment upload settings still gate their tools as before.
+
+Toolsets and each tool's access level (read, write or destructive) are listed in `packages/jira/src/tool-catalog.ts` and `packages/confluence/src/tool-catalog.ts`. The access level also sets each tool's MCP `readOnlyHint` and `destructiveHint`.
+
+Hiding a tool reduces what the model sees and the tokens it costs. It is not access control: Jira and Confluence still enforce the token owner's permissions on every call.
+
 The upstream README follows.
 
 ---
