@@ -26,7 +26,7 @@ const jiraService = new JiraService(
 );
 
 const server = createMcpServer({
-  name: "atlassian-jira-mcp",
+  name: "mcp-jira-dc",
   version
 });
 

@@ -32,7 +32,7 @@ const confluenceInstanceType = "Confluence Data Center edition instance";
 
 // Initialize MCP server
 const server = createMcpServer({
-  name: "atlassian-confluence-mcp",
+  name: "mcp-confluence-dc",
   version
 });
 

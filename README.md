@@ -5,6 +5,27 @@ Private tekthar fork of [b1ff/atlassian-dc-mcp](https://github.com/b1ff/atlassia
 - `upstream` remote: b1ff/atlassian-dc-mcp. Merge upstream fixes from there.
 - Nothing is published to npm from this repo yet. The upstream publish workflows were removed; `.github/workflows/ci.yml` only builds and tests.
 
+## Package names
+
+| Server | npm package and command | MCP registry name |
+| --- | --- | --- |
+| Jira | `mcp-jira-dc` | `io.github.tekthar/mcp-jira-dc` |
+| Confluence | `mcp-confluence-dc` | `io.github.tekthar/mcp-confluence-dc` |
+
+In the upstream README below, read `@atlassian-dc-mcp/jira` as `mcp-jira-dc` and `@atlassian-dc-mcp/confluence` as `mcp-confluence-dc`. Bitbucket keeps the upstream package. Configuration files are shared with upstream (`~/.atlassian-dc-mcp/*.env`).
+
+**How common ships:** `@atlassian-dc-mcp/common` is a private workspace and is never published. That npm scope belongs to upstream, so depending on it would install their shared code instead of ours. Each server's `prepack` script builds the workspace and runs `scripts/bundle-server.mjs`, which writes `dist/` with common inlined and every npm dependency left external. The bundle script stops if a server doesn't list one of common's runtime dependencies.
+
+**To try a package before it is published:**
+
+```bash
+cd packages/jira
+npm pack
+npm install -g ./mcp-jira-dc-0.43.2.tgz
+```
+
+The bundled `dist/` starts in about 0.3 seconds. `npm start` runs the unbundled `build/` instead.
+
 ## Choosing which tools are exposed (Jira and Confluence)
 
 Each server reads three optional environment variables at startup. Unset, a server exposes the same tools it always has.

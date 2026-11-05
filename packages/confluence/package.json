@@ -1,26 +1,38 @@
 {
-  "name": "@atlassian-dc-mcp/confluence",
+  "name": "mcp-confluence-dc",
   "version": "0.43.2",
-  "main": "build/index.js",
-  "type": "module",
-  "bin": "./bin/run.js",
-  "private": false,
-  "description": "Community-maintained MCP server for Atlassian Confluence Data Center. Not affiliated with Atlassian.",
+  "description": "MCP server for Confluence Data Center and Confluence Server: search, read, create and update pages, with page trees, history, labels, comments and attachments. Not affiliated with Atlassian.",
   "keywords": [
     "mcp",
-    "atlassian",
+    "mcp-server",
+    "model-context-protocol",
     "confluence",
+    "confluence-data-center",
+    "confluence-server",
     "data-center",
-    "model-context-protocol"
+    "atlassian",
+    "ai",
+    "claude"
   ],
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "mcp-confluence-dc": "./bin/run.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "README.md"
+  ],
+  "private": false,
   "repository": {
     "type": "git",
-    "url": "https://github.com/b1ff/atlassian-dc-mcp.git",
+    "url": "git+https://github.com/tekthar/jira-dc-mcp.git",
     "directory": "packages/confluence"
   },
-  "homepage": "https://github.com/b1ff/atlassian-dc-mcp#readme",
+  "homepage": "https://github.com/tekthar/jira-dc-mcp#readme",
   "bugs": {
-    "url": "https://github.com/b1ff/atlassian-dc-mcp/issues"
+    "url": "https://github.com/tekthar/jira-dc-mcp/issues"
   },
   "scripts": {
     "build": "tsc",
@@ -28,19 +40,23 @@
     "dev": "nodemon --exec tsx src/index.ts",
     "inspect": "mcp-inspector node build/index.js",
     "inspect:dev": "mcp-inspector tsx src/index.ts",
-    "test": "jest --passWithNoTests"
+    "test": "jest --passWithNoTests",
+    "bundle": "node ../../scripts/bundle-server.mjs",
+    "prepack": "tsc --build && npm run bundle"
   },
   "dependencies": {
-    "@atlassian-dc-mcp/common": "0.43.2",
     "dotenv": "18.0.9",
     "zod": "4.6.7",
-    "@modelcontextprotocol/server": "2.4.0"
+    "@modelcontextprotocol/server": "2.4.0",
+    "@inquirer/prompts": "7.10.1"
   },
-  "mcpName": "io.github.b1ff/atlassian-dc-mcp-confluence",
+  "devDependencies": {
+    "@atlassian-dc-mcp/common": "0.43.2"
+  },
+  "mcpName": "io.github.tekthar/mcp-confluence-dc",
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "21ea555d7c02461cde3bab32a4b75c6c6a94e927",
   "engines": {
     "node": ">=22.22.2",
     "npm": ">=11.10.0 <12"
