@@ -6,6 +6,7 @@ export * from './attachment-download.js'
 export * from './attachment-gateway.js'
 export * from './attachment-tool-response.js'
 export * from './config/index.js';
+export * from './path-encoding.js';
 export * from './tool-response.js'
 export { runSetup, runSetupCli } from './setup-cli.js';
 export { describeValidationError } from './setup/describe-error.js';

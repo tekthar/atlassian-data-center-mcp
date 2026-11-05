@@ -8,6 +8,7 @@ import type { ApiResult } from './ApiResult.js';
 import { CancelablePromise } from './CancelablePromise.js';
 import type { OnCancel } from './CancelablePromise.js';
 import type { OpenAPIConfig } from './OpenAPI.js';
+import { encodePathParam } from '@atlassian-dc-mcp/common';
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
 const REQUEST_TIMEOUT_MS_ENV_VAR = 'ATLASSIAN_DC_MCP_REQUEST_TIMEOUT_MS';
@@ -85,13 +86,13 @@ export const getQueryString = (params: Record<string, any>): string => {
 };
 
 const getUrl = (config: OpenAPIConfig, options: ApiRequestOptions): string => {
-    const encoder = config.ENCODE_PATH || encodeURI;
+    const encoder = config.ENCODE_PATH || encodePathParam;
 
     const path = options.url
         .replace('{api-version}', config.VERSION)
         .replace(/{(.*?)}/g, (substring: string, group: string) => {
             if (options.path?.hasOwnProperty(group)) {
-                return encoder(String(options.path[group]));
+                return encoder(String(options.path[group]), group);
             }
             return substring;
         });
