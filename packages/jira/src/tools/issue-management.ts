@@ -16,12 +16,12 @@ export const ISSUE_MANAGEMENT_CATALOG: ToolCatalog = {
   },
   tools: {
     jira_getProjectIssues: { toolset: 'jira_issue_management', access: 'read' },
-    jira_batchCreateIssues: { toolset: 'jira_issue_management', access: 'write' },
-    jira_assignIssue: { toolset: 'jira_issue_management', access: 'write' },
-    jira_deleteIssue: { toolset: 'jira_issue_management', access: 'destructive' },
+    jira_batchCreateIssues: { toolset: 'jira_issue_management', access: 'write', anyOfPermissions: ['CREATE_ISSUES'] },
+    jira_assignIssue: { toolset: 'jira_issue_management', access: 'write', anyOfPermissions: ['ASSIGN_ISSUES'] },
+    jira_deleteIssue: { toolset: 'jira_issue_management', access: 'destructive', anyOfPermissions: ['DELETE_ISSUES'] },
     jira_getIssueWatchers: { toolset: 'jira_watcher_management', access: 'read' },
-    jira_addWatcher: { toolset: 'jira_watcher_management', access: 'write' },
-    jira_removeWatcher: { toolset: 'jira_watcher_management', access: 'write' },
+    jira_addWatcher: { toolset: 'jira_watcher_management', access: 'write', anyOfPermissions: ['MANAGE_WATCHERS'] },
+    jira_removeWatcher: { toolset: 'jira_watcher_management', access: 'write', anyOfPermissions: ['MANAGE_WATCHERS'] },
   },
 };
 

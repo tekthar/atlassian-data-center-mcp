@@ -18,10 +18,10 @@ export const AGILE_CATALOG: ToolCatalog = {
     jira_getBoardIssues: { toolset: 'jira_agile', access: 'read' },
     jira_getSprintsFromBoard: { toolset: 'jira_agile', access: 'read' },
     jira_getSprintIssues: { toolset: 'jira_agile', access: 'read' },
-    jira_createSprint: { toolset: 'jira_agile', access: 'write' },
-    jira_updateSprint: { toolset: 'jira_agile', access: 'write' },
-    jira_addIssuesToSprint: { toolset: 'jira_agile', access: 'write' },
-    jira_moveIssuesToBacklog: { toolset: 'jira_agile', access: 'write' },
+    jira_createSprint: { toolset: 'jira_agile', access: 'write', anyOfPermissions: ['MANAGE_SPRINTS_PERMISSION'] },
+    jira_updateSprint: { toolset: 'jira_agile', access: 'write', anyOfPermissions: ['MANAGE_SPRINTS_PERMISSION'] },
+    jira_addIssuesToSprint: { toolset: 'jira_agile', access: 'write', anyOfPermissions: ['EDIT_ISSUES'] },
+    jira_moveIssuesToBacklog: { toolset: 'jira_agile', access: 'write', anyOfPermissions: ['EDIT_ISSUES'] },
   },
 };
 

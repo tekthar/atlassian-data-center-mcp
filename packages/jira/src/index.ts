@@ -4,6 +4,7 @@ import { JiraService, jiraToolSchemas } from './jira-service.js';
 import { isVersionDeleteEnabled } from './jira-versions.js';
 import { getDefaultPageSize, getJiraRuntimeConfig, JIRA_PRODUCT } from './config.js';
 import { JIRA_TOOL_CATALOG } from './tool-catalog.js';
+import { applyJiraPermissionFilter, reportToolsHiddenByPermission } from './permissions.js';
 import { registerJiraModuleTools } from './tools/index.js';
 import { createRequire } from 'node:module';
 
@@ -30,7 +31,8 @@ const server = createMcpServer({
   version
 });
 
-const tools = createPolicyRegistrar(server, JIRA_TOOL_CATALOG, resolveToolPolicy(JIRA_TOOL_CATALOG));
+const toolPolicy = await applyJiraPermissionFilter(JIRA_TOOL_CATALOG, resolveToolPolicy(JIRA_TOOL_CATALOG));
+const tools = createPolicyRegistrar(server, JIRA_TOOL_CATALOG, toolPolicy);
 
 const jiraInstanceType = "JIRA Data Center edition instance";
 
@@ -319,5 +321,6 @@ tools.registerTool(
 );
 
 registerJiraModuleTools(tools, { instanceType: jiraInstanceType, getPageSize: getDefaultPageSize });
+reportToolsHiddenByPermission(tools.hiddenByPermission());
 
 await connectServer(server);

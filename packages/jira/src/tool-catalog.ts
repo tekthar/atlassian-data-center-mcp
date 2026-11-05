@@ -1,4 +1,5 @@
 import { mergeToolCatalogs, type ToolCatalog } from '@atlassian-dc-mcp/common';
+import { PROJECT_ADMIN_PERMISSIONS } from './permissions.js';
 import { JIRA_MODULES_CATALOG } from './tools/index.js';
 
 /**
@@ -21,26 +22,26 @@ export const JIRA_CORE_CATALOG: ToolCatalog = {
   tools: {
     jira_searchIssues: { toolset: 'jira_issues', access: 'read' },
     jira_getIssue: { toolset: 'jira_issues', access: 'read' },
-    jira_createIssue: { toolset: 'jira_issues', access: 'write' },
-    jira_updateIssue: { toolset: 'jira_issues', access: 'write' },
+    jira_createIssue: { toolset: 'jira_issues', access: 'write', anyOfPermissions: ['CREATE_ISSUES'] },
+    jira_updateIssue: { toolset: 'jira_issues', access: 'write', anyOfPermissions: ['EDIT_ISSUES'] },
     jira_getIssueComments: { toolset: 'jira_comments', access: 'read' },
-    jira_postIssueComment: { toolset: 'jira_comments', access: 'write' },
-    jira_updateIssueComment: { toolset: 'jira_comments', access: 'write' },
+    jira_postIssueComment: { toolset: 'jira_comments', access: 'write', anyOfPermissions: ['ADD_COMMENTS'] },
+    jira_updateIssueComment: { toolset: 'jira_comments', access: 'write', anyOfPermissions: ['EDIT_OWN_COMMENTS', 'EDIT_ALL_COMMENTS'] },
     jira_getTransitions: { toolset: 'jira_transitions', access: 'read' },
-    jira_transitionIssue: { toolset: 'jira_transitions', access: 'write' },
+    jira_transitionIssue: { toolset: 'jira_transitions', access: 'write', anyOfPermissions: ['TRANSITION_ISSUES'] },
     jira_getIssueLinkTypes: { toolset: 'jira_links', access: 'read' },
-    jira_linkIssues: { toolset: 'jira_links', access: 'write' },
-    jira_unlinkIssues: { toolset: 'jira_links', access: 'destructive' },
+    jira_linkIssues: { toolset: 'jira_links', access: 'write', anyOfPermissions: ['LINK_ISSUES'] },
+    jira_unlinkIssues: { toolset: 'jira_links', access: 'destructive', anyOfPermissions: ['LINK_ISSUES'] },
     jira_watchIssue: { toolset: 'jira_watchers', access: 'write' },
     jira_unwatchIssue: { toolset: 'jira_watchers', access: 'write' },
     jira_getProjectVersions: { toolset: 'jira_versions', access: 'read' },
     jira_getVersion: { toolset: 'jira_versions', access: 'read' },
-    jira_createVersion: { toolset: 'jira_versions', access: 'write' },
-    jira_updateVersion: { toolset: 'jira_versions', access: 'write' },
-    jira_deleteVersion: { toolset: 'jira_versions', access: 'destructive' },
+    jira_createVersion: { toolset: 'jira_versions', access: 'write', anyOfPermissions: PROJECT_ADMIN_PERMISSIONS },
+    jira_updateVersion: { toolset: 'jira_versions', access: 'write', anyOfPermissions: PROJECT_ADMIN_PERMISSIONS },
+    jira_deleteVersion: { toolset: 'jira_versions', access: 'destructive', anyOfPermissions: PROJECT_ADMIN_PERMISSIONS },
     jira_getIssueDevelopmentInfo: { toolset: 'jira_development', access: 'read' },
     jira_downloadAttachment: { toolset: 'jira_attachments', access: 'read' },
-    jira_uploadAttachment: { toolset: 'jira_attachments', access: 'write' },
+    jira_uploadAttachment: { toolset: 'jira_attachments', access: 'write', anyOfPermissions: ['CREATE_ATTACHMENTS'] },
   },
 };
 

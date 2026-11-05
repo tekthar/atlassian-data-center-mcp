@@ -1,4 +1,4 @@
-import { annotationsFor, isToolAllowed, resolveToolPolicy, resolveToolsets, type ToolCatalog } from '../tool-policy.js';
+import { annotationsFor, isPermissionFilterEnabled, isToolAllowed, resolveToolPolicy, resolveToolsets, toolsHiddenByPermissions, type ToolCatalog, type ToolPolicy } from '../tool-policy.js';
 
 const catalog: ToolCatalog = {
   toolsets: {
@@ -8,8 +8,8 @@ const catalog: ToolCatalog = {
   },
   tools: {
     getIssue: { toolset: 'issues', access: 'read' },
-    deleteIssue: { toolset: 'issues', access: 'destructive' },
-    addComment: { toolset: 'comments', access: 'write' },
+    deleteIssue: { toolset: 'issues', access: 'destructive', anyOfPermissions: ['DELETE_ISSUES'] },
+    addComment: { toolset: 'comments', access: 'write', anyOfPermissions: ['ADD_COMMENTS', 'EDIT_ALL_COMMENTS'] },
     getSprints: { toolset: 'agile', access: 'read' },
   },
 };
@@ -71,5 +71,52 @@ describe('annotationsFor', () => {
     expect(annotationsFor('read')).toEqual({ readOnlyHint: true });
     expect(annotationsFor('write')).toEqual({ readOnlyHint: false, destructiveHint: false });
     expect(annotationsFor('destructive')).toEqual({ readOnlyHint: false, destructiveHint: true });
+  });
+});
+
+describe('permission filter', () => {
+  const policyWith = (env: Record<string, string>, granted: string[]): ToolPolicy => ({
+    ...resolveToolPolicy(catalog, env, () => undefined),
+    permissionCheck: (anyOf) => anyOf.some((key) => granted.includes(key)),
+  });
+  const allowedWith = (env: Record<string, string>, granted: string[]) => {
+    const policy = policyWith(env, granted);
+    return Object.entries(catalog.tools).filter(([name, entry]) => isToolAllowed(name, entry, policy)).map(([name]) => name);
+  };
+
+  it('hides a gated tool when the user holds none of its permissions', () => {
+    expect(allowedWith({}, [])).toEqual(['getIssue']);
+  });
+
+  it('shows a gated tool when the user holds any one of its permissions', () => {
+    expect(allowedWith({}, ['EDIT_ALL_COMMENTS'])).toEqual(['getIssue', 'addComment']);
+  });
+
+  it('also applies to tools named in ENABLED_TOOLS', () => {
+    expect(allowedWith({ ENABLED_TOOLS: 'getIssue,deleteIssue' }, ['ADD_COMMENTS'])).toEqual(['getIssue']);
+  });
+
+  it('changes nothing when the server sets no permission check', () => {
+    expect(allowedTools({})).toEqual(['getIssue', 'deleteIssue', 'addComment']);
+  });
+
+  it('reports only the tools the other settings would have exposed', () => {
+    expect(toolsHiddenByPermissions(catalog, policyWith({ TOOLSETS: 'comments' }, []))).toEqual(['addComment']);
+    expect(toolsHiddenByPermissions(catalog, resolveToolPolicy(catalog, {}, () => undefined))).toEqual([]);
+  });
+});
+
+describe('isPermissionFilterEnabled', () => {
+  it.each([
+    [undefined, true],
+    ['', true],
+    ['on', true],
+    ['true', true],
+    ['off', false],
+    ['false', false],
+    ['0', false],
+    [' NO ', false],
+  ])('treats PERMISSION_FILTER=%p as %p', (value, expected) => {
+    expect(isPermissionFilterEnabled(value === undefined ? {} : { PERMISSION_FILTER: value })).toBe(expected);
   });
 });

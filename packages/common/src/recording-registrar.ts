@@ -26,6 +26,7 @@ export function createRecordingRegistrar() {
       return undefined;
     },
     registeredTools: () => [...recorded.keys()],
+    hiddenByPermission: () => [],
   };
 
   async function call(name: string, args: Record<string, unknown> = {}): Promise<CallToolResult> {

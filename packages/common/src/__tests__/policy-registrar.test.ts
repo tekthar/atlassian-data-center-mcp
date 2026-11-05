@@ -55,6 +55,25 @@ describe('createPolicyRegistrar', () => {
     expect(tools.registerTool('deleteIssue', {}, handler)).toBeUndefined();
     expect(registerTool).not.toHaveBeenCalled();
     expect(tools.registeredTools()).toEqual([]);
+    expect(tools.hiddenByPermission()).toEqual([]);
+  });
+
+  it('records the tools only the permission check kept out', () => {
+    const gated: ToolCatalog = {
+      toolsets: catalog.toolsets,
+      tools: {
+        getIssue: { toolset: 'issues', access: 'read' },
+        deleteIssue: { toolset: 'issues', access: 'destructive', anyOfPermissions: ['DELETE_ISSUES'] },
+        editIssue: { toolset: 'issues', access: 'write', anyOfPermissions: ['EDIT_ISSUES'] },
+      },
+    };
+    const { server, registerTool } = fakeServer();
+    const tools = createPolicyRegistrar(server, gated, policy({ permissionCheck: (anyOf) => anyOf.includes('EDIT_ISSUES') }));
+
+    for (const name of ['getIssue', 'deleteIssue', 'editIssue']) tools.registerTool(name, {}, handler);
+
+    expect(registerTool.mock.calls.map(([name]) => name)).toEqual(['getIssue', 'editIssue']);
+    expect(tools.hiddenByPermission()).toEqual(['deleteIssue']);
   });
 
   it('refuses a tool that is missing from the catalog', () => {

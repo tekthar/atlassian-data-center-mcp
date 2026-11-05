@@ -11,9 +11,9 @@ export const WORKLOG_LINKS_CATALOG: ToolCatalog = {
   },
   tools: {
     jira_getWorklog: { toolset: 'jira_worklog', access: 'read' },
-    jira_addWorklog: { toolset: 'jira_worklog', access: 'write' },
-    jira_createRemoteIssueLink: { toolset: 'jira_remote_links', access: 'write' },
-    jira_linkToEpic: { toolset: 'jira_remote_links', access: 'write' },
+    jira_addWorklog: { toolset: 'jira_worklog', access: 'write', anyOfPermissions: ['WORK_ON_ISSUES'] },
+    jira_createRemoteIssueLink: { toolset: 'jira_remote_links', access: 'write', anyOfPermissions: ['LINK_ISSUES'] },
+    jira_linkToEpic: { toolset: 'jira_remote_links', access: 'write', anyOfPermissions: ['EDIT_ISSUES'] },
   },
 };
 
