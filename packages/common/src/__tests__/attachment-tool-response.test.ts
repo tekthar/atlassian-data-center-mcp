@@ -248,11 +248,11 @@ describe('formatAttachmentToolResponse', () => {
 
   it('passes through failures and unexpected shapes', () => {
     const failure = { success: false, error: 'Error downloading attachment: 404 ' };
-    expect(format(failure)).toEqual({ content: [jsonBlock(failure)] });
+    expect(format(failure)).toEqual({ content: [jsonBlock(failure)], isError: true });
     expect(format({ success: true, data: {} })).toEqual({ content: [jsonBlock({ success: true, data: {} })] });
 
     // An error result must not render an image even if one is somehow attached.
     const errorWithImage = { success: false, error: 'boom', data: { attachments: [attachment()] } };
-    expect(format(errorWithImage)).toEqual({ content: [jsonBlock(errorWithImage)] });
+    expect(format(errorWithImage)).toEqual({ content: [jsonBlock(errorWithImage)], isError: true });
   });
 });
