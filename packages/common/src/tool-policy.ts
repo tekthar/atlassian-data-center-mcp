@@ -103,6 +103,23 @@ export function isToolAllowed(name: string, entry: ToolCatalogEntry, policy: Too
   return policy.toolsets.has(entry.toolset);
 }
 
+/** Combine per-module catalogs; a toolset or tool defined twice is a wiring mistake. */
+export function mergeToolCatalogs(...catalogs: ToolCatalog[]): ToolCatalog {
+  const toolsets: Record<string, ToolsetDefinition> = {};
+  const tools: Record<string, ToolCatalogEntry> = {};
+  for (const catalog of catalogs) {
+    for (const [name, definition] of Object.entries(catalog.toolsets)) {
+      if (name in toolsets) throw new Error(`Toolset "${name}" is defined by more than one catalog.`);
+      toolsets[name] = definition;
+    }
+    for (const [name, entry] of Object.entries(catalog.tools)) {
+      if (name in tools) throw new Error(`Tool "${name}" is defined by more than one catalog.`);
+      tools[name] = entry;
+    }
+  }
+  return { toolsets, tools };
+}
+
 export function annotationsFor(access: ToolAccess): ToolAnnotations {
   if (access === 'read') {
     return { readOnlyHint: true };

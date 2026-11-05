@@ -4,6 +4,7 @@ import { ConfluenceService, ConfluenceContent, applyStorageEdits, confluenceTool
 import { shapeConfluenceMutationAck } from './confluence-response-mapper.js';
 import { CONFLUENCE_PRODUCT, getConfluenceRuntimeConfig, getDefaultPageSize } from './config.js';
 import { CONFLUENCE_TOOL_CATALOG } from './tool-catalog.js';
+import { registerConfluenceModuleTools } from './tools/index.js';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
@@ -270,5 +271,7 @@ tools.registerTool(
     const result = await confluenceService.searchSpaces(searchText, limit, start, expand, excerpt);
     return formatToolResponse(result);
   });
+
+registerConfluenceModuleTools(tools, { instanceType: confluenceInstanceType, getPageSize: getDefaultPageSize });
 
 await connectServer(server);
