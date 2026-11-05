@@ -1,11 +1,13 @@
-import type { ToolCatalog } from '@atlassian-dc-mcp/common';
+import { mergeToolCatalogs, type ToolCatalog } from '@atlassian-dc-mcp/common';
+import { JIRA_MODULES_CATALOG } from './tools/index.js';
 
 /**
  * Every Jira tool with its toolset and access level. The default toolsets expose the same
  * tools this server has always exposed, so setting nothing keeps existing setups unchanged.
  * A tool registered without an entry here fails at startup.
  */
-export const JIRA_TOOL_CATALOG: ToolCatalog = {
+/** The tools b1ff/atlassian-dc-mcp shipped; registered directly in index.ts. */
+export const JIRA_CORE_CATALOG: ToolCatalog = {
   toolsets: {
     jira_issues: { description: 'Search, read, create and update issues', default: true },
     jira_comments: { description: 'Read, add and edit issue comments', default: true },
@@ -41,3 +43,6 @@ export const JIRA_TOOL_CATALOG: ToolCatalog = {
     jira_uploadAttachment: { toolset: 'jira_attachments', access: 'write' },
   },
 };
+
+/** Core tools plus every module under tools/. New modules default to off. */
+export const JIRA_TOOL_CATALOG = mergeToolCatalogs(JIRA_CORE_CATALOG, JIRA_MODULES_CATALOG);

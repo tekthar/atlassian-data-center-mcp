@@ -4,6 +4,7 @@ import { JiraService, jiraToolSchemas } from './jira-service.js';
 import { isVersionDeleteEnabled } from './jira-versions.js';
 import { getDefaultPageSize, getJiraRuntimeConfig, JIRA_PRODUCT } from './config.js';
 import { JIRA_TOOL_CATALOG } from './tool-catalog.js';
+import { registerJiraModuleTools } from './tools/index.js';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
@@ -316,5 +317,7 @@ tools.registerTool(
     return formatAttachmentToolResponse(result, returnContent);
   }
 );
+
+registerJiraModuleTools(tools, { instanceType: jiraInstanceType, getPageSize: getDefaultPageSize });
 
 await connectServer(server);

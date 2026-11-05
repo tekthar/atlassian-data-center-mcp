@@ -1,11 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { isToolAllowed, resolveToolPolicy } from '@atlassian-dc-mcp/common';
-import { JIRA_TOOL_CATALOG } from '../tool-catalog.js';
+import { JIRA_CORE_CATALOG, JIRA_TOOL_CATALOG } from '../tool-catalog.js';
 
-const registeredInIndex = (): string[] => {
-  const source = fs.readFileSync(path.join(__dirname, '..', 'index.ts'), 'utf8');
-  return [...source.matchAll(/registerTool\(\s*['"]([A-Za-z_]+)['"]/g)].map((match) => match[1]);
+const SOURCE_DIR = path.join(__dirname, '..');
+const TOOLS_DIR = path.join(SOURCE_DIR, 'tools');
+
+const registeredInSource = (): string[] => {
+  const files = [path.join(SOURCE_DIR, 'index.ts'), ...fs.readdirSync(TOOLS_DIR).map((file) => path.join(TOOLS_DIR, file))];
+  return files.flatMap((file) =>
+    [...fs.readFileSync(file, 'utf8').matchAll(/registerTool\(\s*['"]([A-Za-z_]+)['"]/g)].map((match) => match[1]),
+  );
 };
 
 const allowedBy = (env: Record<string, string>) => {
@@ -16,8 +21,8 @@ const allowedBy = (env: Record<string, string>) => {
 };
 
 describe('JIRA_TOOL_CATALOG', () => {
-  it('has an entry for every tool index.ts registers, and nothing else', () => {
-    expect(registeredInIndex().sort()).toEqual(Object.keys(JIRA_TOOL_CATALOG.tools).sort());
+  it('has an entry for every tool the server registers, and nothing else', () => {
+    expect(registeredInSource().sort()).toEqual(Object.keys(JIRA_TOOL_CATALOG.tools).sort());
   });
 
   it('only references toolsets it defines', () => {
@@ -27,21 +32,20 @@ describe('JIRA_TOOL_CATALOG', () => {
     }
   });
 
-  it('keeps every existing tool available when no policy variable is set', () => {
-    expect(allowedBy({})).toEqual(Object.keys(JIRA_TOOL_CATALOG.tools));
+  it('exposes exactly the original tools when no policy variable is set', () => {
+    expect(allowedBy({})).toEqual(Object.keys(JIRA_CORE_CATALOG.tools));
+  });
+
+  it('exposes every tool with TOOLSETS=all', () => {
+    expect(allowedBy({ TOOLSETS: 'all' })).toEqual(Object.keys(JIRA_TOOL_CATALOG.tools));
   });
 
   it('exposes only read tools in read-only mode', () => {
-    expect(allowedBy({ READ_ONLY_MODE: 'true' })).toEqual([
-      'jira_searchIssues',
-      'jira_getIssue',
-      'jira_getIssueComments',
-      'jira_getTransitions',
-      'jira_getIssueLinkTypes',
-      'jira_getProjectVersions',
-      'jira_getVersion',
-      'jira_getIssueDevelopmentInfo',
-      'jira_downloadAttachment',
-    ]);
+    const readOnly = allowedBy({ TOOLSETS: 'all', READ_ONLY_MODE: 'true' });
+
+    expect(readOnly.length).toBeGreaterThan(0);
+    for (const name of readOnly) {
+      expect(JIRA_TOOL_CATALOG.tools[name].access).toBe('read');
+    }
   });
 });
