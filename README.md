@@ -1,3 +1,14 @@
+# jira-dc-mcp
+
+Private tekthar fork of [b1ff/atlassian-dc-mcp](https://github.com/b1ff/atlassian-dc-mcp), started from upstream PR #107 (MCP SDK v2). We extend it for Jira and Confluence Data Center: the DC-ready tools from [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian), toolset and read-only filtering, and later Jira administration and test management.
+
+- `upstream` remote: b1ff/atlassian-dc-mcp. Merge upstream fixes from there.
+- Nothing is published to npm from this repo yet. The upstream publish workflows were removed; `.github/workflows/ci.yml` only builds and tests.
+
+The upstream README follows.
+
+---
+
 [![MSeeP.ai Security Assessment Badge](https://mseep.net/pr/b1ff-atlassian-dc-mcp-badge.png)](https://mseep.ai/app/b1ff-atlassian-dc-mcp)
 
 # Atlassian Data Center MCP
