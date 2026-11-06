@@ -3,7 +3,7 @@
   "name": "io.github.tekthar/mcp-confluence-dc",
   "description": "MCP server for Confluence Data Center and Confluence Server",
   "repository": {
-    "url": "https://github.com/tekthar/jira-dc-mcp",
+    "url": "https://github.com/tekthar/atlassian-data-center-mcp",
     "source": "github"
   },
   "version": "0.45.0",

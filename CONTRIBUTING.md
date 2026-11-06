@@ -2,7 +2,7 @@
 
 Thanks for helping. This guide is for people changing the code. To use the servers, start with the [README](README.md).
 
-Questions, ideas and bug reports are welcome as [issues](https://github.com/tekthar/jira-dc-mcp/issues). For a larger change, open an issue first so we can agree on the approach before you write it.
+Questions, ideas and bug reports are welcome as [issues](https://github.com/tekthar/atlassian-data-center-mcp/issues). For a larger change, open an issue first so we can agree on the approach before you write it.
 
 ## Where this code comes from
 
@@ -124,7 +124,7 @@ The three servers are released together with one version. A release is a merged 
 
 Pushes that don't change the version publish nothing, and packages already on npm are skipped, so running the workflow by hand (Actions → Release → Run workflow on `main`) only publishes what is missing on npm, then retries the GitHub release and the MCP Registry. A prerelease version (`1.0.0-rc.1`) goes to the `next` dist-tag and is marked as a prerelease.
 
-npm auth is [trusted publishing](https://docs.npmjs.com/trusted-publishers): each package trusts `tekthar/jira-dc-mcp` with the workflow `release.yml` and no environment, and there is no `NPM_TOKEN` secret. The trust lasts until someone changes it, so keep the workflow's file name and the repository name. Renaming either means updating the trusted publisher of all three packages on npmjs.com.
+npm auth is [trusted publishing](https://docs.npmjs.com/trusted-publishers): each package trusts `tekthar/atlassian-data-center-mcp` with the workflow `release.yml` and no environment, and there is no `NPM_TOKEN` secret. The trust lasts until someone changes it, so keep the workflow's file name and the repository name. Renaming either means updating the trusted publisher of all three packages on npmjs.com.
 
 ## Package names
 

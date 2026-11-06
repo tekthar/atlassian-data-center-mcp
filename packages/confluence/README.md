@@ -113,6 +113,11 @@ the engine, only that run fails.
 The tool search never offers a destructive tool. To use one, turn on its toolset with `TOOLSETS`. Page bodies are read
 and written in Confluence storage format (XHTML).
 
+## Supported apps
+
+No Confluence apps (Marketplace plugins) are supported yet. The Jira server, `mcp-jira-dc`, has tools for Xray and Jira
+Service Management; [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists them with the versions they were built from.
+
 ## Settings
 
 Every setting is an environment variable. Each comes from the first of these that has it: the environment, the dotenv
@@ -180,6 +185,6 @@ server. Their copyright notices are in [LICENSE](LICENSE).
 
 ## License
 
-MIT. Part of [Atlassian Data Center MCP](https://github.com/tekthar/jira-dc-mcp), with
+MIT. Part of [Atlassian Data Center MCP](https://github.com/tekthar/atlassian-data-center-mcp), with
 [mcp-jira-dc](https://www.npmjs.com/package/mcp-jira-dc) and
 [mcp-bitbucket-dc](https://www.npmjs.com/package/mcp-bitbucket-dc).

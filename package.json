@@ -1,14 +1,14 @@
 {
-  "name": "jira-dc-mcp",
+  "name": "atlassian-data-center-mcp",
   "version": "0.1.0",
   "private": true,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tekthar/jira-dc-mcp.git"
+    "url": "git+https://github.com/tekthar/atlassian-data-center-mcp.git"
   },
-  "homepage": "https://github.com/tekthar/jira-dc-mcp#readme",
+  "homepage": "https://github.com/tekthar/atlassian-data-center-mcp#readme",
   "bugs": {
-    "url": "https://github.com/tekthar/jira-dc-mcp/issues"
+    "url": "https://github.com/tekthar/atlassian-data-center-mcp/issues"
   },
   "type": "module",
   "workspaces": [
