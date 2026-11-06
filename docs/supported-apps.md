@@ -19,7 +19,7 @@ apps**.
 
 ## Xray
 
-Test management by Xpand IT, Marketplace key `com.xpandit.plugins.xray`. Added in the release after 0.45.0.
+Test management by Xpand IT, Marketplace key `com.xpandit.plugins.xray`. Added in 0.47.0.
 
 | | |
 |---|---|

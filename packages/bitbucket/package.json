@@ -1,6 +1,6 @@
 {
   "name": "mcp-bitbucket-dc",
-  "version": "0.45.0",
+  "version": "0.47.0",
   "description": "MCP server for Bitbucket Data Center and Bitbucket Server: browse projects, repositories, files, branches and commits, search code, and review, comment on and (opt-in) merge pull requests. Not affiliated with Atlassian.",
   "keywords": [
     "mcp",
