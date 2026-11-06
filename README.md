@@ -3,7 +3,18 @@
 Private tekthar fork of [b1ff/atlassian-dc-mcp](https://github.com/b1ff/atlassian-dc-mcp), started from upstream PR #107 (MCP SDK v2). We extend it for Jira and Confluence Data Center: the DC-ready tools from [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian), toolset and read-only filtering, and later Jira administration and test management.
 
 - `upstream` remote: b1ff/atlassian-dc-mcp. Merge upstream fixes from there.
-- Nothing is published to npm from this repo yet. The upstream publish workflows were removed; `.github/workflows/ci.yml` only builds and tests.
+- `.github/workflows/ci.yml` builds and tests. `.github/workflows/release.yml` publishes to npm and the MCP Registry (see [Releasing](#releasing)).
+
+## Releasing
+
+The three servers are released together with one version.
+
+1. In a PR, bump `version` in `packages/{jira,confluence,bitbucket}/package.json`, run `node scripts/sync-versions.js` to update each `server.json`, and update the changelogs.
+2. After merging, publish a GitHub release tagged `vX.Y.Z` on `main`.
+3. The Release workflow builds, tests, checks that the tag matches every `package.json` and `server.json`, and publishes each package with `scripts/publish-npm.sh`. Versions already on npm are skipped, so re-running the workflow is safe. Versions with a prerelease suffix (`1.0.0-rc.1`) go to the `next` dist-tag.
+4. It then publishes the servers to the MCP Registry with `scripts/publish-mcp.sh`.
+
+npm auth uses [trusted publishing](https://docs.npmjs.com/trusted-publishers) (GitHub OIDC), so there is no `NPM_TOKEN` secret. Each package needs a trusted publisher on npmjs.com pointing at `tekthar/jira-dc-mcp` and the workflow file `release.yml`, with **npm publish** allowed.
 
 ## Package names
 
