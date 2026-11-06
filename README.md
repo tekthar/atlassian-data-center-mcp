@@ -40,6 +40,8 @@ more when it needs them, and a sandbox where it can combine many reads into one 
   never run.
 - **Writes stay visible**: every tool tells the client whether it reads, changes or deletes, so the client can ask you
   first. Scripts can only read, and deleting always needs a setting you turn on.
+- **An audit trail when you need one**: turn on the audit log to record every tool the agent calls, including the ones
+  it reaches through the search or from a script, without recording what it read or wrote.
 - **Locked down when you need it**: read-only mode, an exact tool allowlist, merges only on the repositories and target
   branches you name, and attachments only inside folders you name.
 - **Credentials in the right place**: `setup` checks your token against the server, then stores it in your OS keychain
@@ -108,13 +110,14 @@ everything as flags and exits non-zero when the token doesn't work.
 
 ### 2. Connect your agent
 
-With [Claude Code](https://claude.com/claude-code):
+`install` registers the server with [Claude Code](https://claude.com/claude-code) or Claude Desktop for you:
 
 ```bash
-claude mcp add jira -- npx -y mcp-jira-dc
+npx -y mcp-jira-dc install --claude-code      # runs claude mcp add
+npx -y mcp-jira-dc install --claude-desktop   # edits Claude Desktop's config, after backing it up
 ```
 
-Claude Desktop, Cursor, VS Code and other clients with an `mcpServers` file:
+Cursor, VS Code and other clients with an `mcpServers` file:
 
 ```json
 {
@@ -140,6 +143,7 @@ Every setting is optional. Unset, Jira and Confluence list their everyday tools 
 | `TOOL_GATEWAY=off` | Turns the search off: tools outside the selected toolsets are left out. |
 | `CODE_EXECUTION=off` | Removes the code sandbox. |
 | `PERMISSION_FILTER=off` | Lists Jira tools without checking your permissions first. |
+| `ATLASSIAN_DC_MCP_AUDIT=1` | Keeps an audit log: one line per tool call, with the tool, outcome and duration, never the arguments or results. Tools run through the search or from code are recorded too. |
 
 Each server's README lists its toolsets and the settings that turn on risky tools:
 [Jira](packages/jira/README.md), [Confluence](packages/confluence/README.md),
