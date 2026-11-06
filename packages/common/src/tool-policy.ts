@@ -8,6 +8,8 @@ import type { ToolAnnotations } from '@modelcontextprotocol/server';
  * - `READ_ONLY_MODE`: when true, only tools that never change Jira or Confluence are exposed.
  * - `ENABLED_TOOLS`: comma-separated exact tool names. When set it replaces `TOOLSETS`;
  *   `READ_ONLY_MODE` still applies.
+ * - `PERMISSION_FILTER`: on by default. A server that can read the user's permissions at startup
+ *   also hides tools the user could never run successfully; `off` turns that check off.
  *
  * Hiding a tool trims what the model sees and pays for in tokens. It is not access control:
  * Jira and Confluence still enforce the token owner's permissions on every call.
@@ -24,6 +26,8 @@ export interface ToolsetDefinition {
 export interface ToolCatalogEntry {
   toolset: string;
   access: ToolAccess;
+  /** Product permission keys; with the permission filter on, the user must hold at least one. */
+  anyOfPermissions?: readonly string[];
 }
 
 export interface ToolCatalog {
@@ -31,27 +35,42 @@ export interface ToolCatalog {
   tools: Readonly<Record<string, ToolCatalogEntry>>;
 }
 
+/** Answers whether the user holds at least one of the given permission keys. */
+export type PermissionCheck = (anyOf: readonly string[]) => boolean;
+
 export interface ToolPolicy {
   toolsets: ReadonlySet<string>;
   readOnly: boolean;
   /** Exact tool names to expose; `null` when `ENABLED_TOOLS` is unset. */
   enabledTools: ReadonlySet<string> | null;
+  /** Set by servers that read the user's permissions at startup; absent means no permission filtering. */
+  permissionCheck?: PermissionCheck;
 }
 
 export const TOOLSETS_ENV_VAR = 'TOOLSETS';
 export const READ_ONLY_ENV_VAR = 'READ_ONLY_MODE';
 export const ENABLED_TOOLS_ENV_VAR = 'ENABLED_TOOLS';
+export const PERMISSION_FILTER_ENV_VAR = 'PERMISSION_FILTER';
 
 type Env = Record<string, string | undefined>;
 type Warn = (message: string) => void;
 
 const defaultWarn: Warn = (message) => console.error(message);
 
-const splitList = (value: string | undefined): string[] =>
+/** Comma-separated environment value as trimmed, non-empty items. */
+export const splitList = (value: string | undefined): string[] =>
   (value ?? '').split(',').map((item) => item.trim()).filter(Boolean);
 
 const isTruthy = (value: string | undefined): boolean =>
   ['1', 'true', 'yes', 'on'].includes((value ?? '').trim().toLowerCase());
+
+const isFalsy = (value: string | undefined): boolean =>
+  ['0', 'false', 'no', 'off'].includes((value ?? '').trim().toLowerCase());
+
+/** The permission filter is on unless `PERMISSION_FILTER` is explicitly off. */
+export function isPermissionFilterEnabled(env: Env = process.env): boolean {
+  return !isFalsy(env[PERMISSION_FILTER_ENV_VAR]);
+}
 
 export function resolveToolsets(catalog: ToolCatalog, value: string | undefined, warn: Warn = defaultWarn): Set<string> {
   const known = Object.keys(catalog.toolsets);
@@ -93,7 +112,7 @@ export function resolveToolPolicy(catalog: ToolCatalog, env: Env = process.env, 
   };
 }
 
-export function isToolAllowed(name: string, entry: ToolCatalogEntry, policy: ToolPolicy): boolean {
+function isSelected(name: string, entry: ToolCatalogEntry, policy: ToolPolicy): boolean {
   if (policy.readOnly && entry.access !== 'read') {
     return false;
   }
@@ -101,6 +120,26 @@ export function isToolAllowed(name: string, entry: ToolCatalogEntry, policy: Too
     return policy.enabledTools.has(name);
   }
   return policy.toolsets.has(entry.toolset);
+}
+
+function hasRequiredPermission(entry: ToolCatalogEntry, policy: ToolPolicy): boolean {
+  const required = entry.anyOfPermissions ?? [];
+  return required.length === 0 || !policy.permissionCheck || policy.permissionCheck(required);
+}
+
+export function isToolAllowed(name: string, entry: ToolCatalogEntry, policy: ToolPolicy): boolean {
+  return isSelected(name, entry, policy) && hasRequiredPermission(entry, policy);
+}
+
+/** True when the other settings would expose the tool and only the permission check hides it. */
+export function isHiddenByPermission(name: string, entry: ToolCatalogEntry, policy: ToolPolicy): boolean {
+  return isSelected(name, entry, policy) && !hasRequiredPermission(entry, policy);
+}
+
+export function toolsHiddenByPermissions(catalog: ToolCatalog, policy: ToolPolicy): string[] {
+  return Object.entries(catalog.tools)
+    .filter(([name, entry]) => isHiddenByPermission(name, entry, policy))
+    .map(([name]) => name);
 }
 
 /** Combine per-module catalogs; a toolset or tool defined twice is a wiring mistake. */

@@ -7,7 +7,7 @@ Private tekthar fork of [b1ff/atlassian-dc-mcp](https://github.com/b1ff/atlassia
 
 ## Choosing which tools are exposed (Jira and Confluence)
 
-Each server reads three optional environment variables at startup. Unset, a server exposes the same tools it always has.
+Each server reads these optional environment variables at startup. Unset, a server offers the same tools it always has, minus any Jira tools your account lacks the permissions for (see the next section).
 
 | Variable | Effect |
 | --- | --- |
@@ -20,6 +20,21 @@ Opt-in flags such as `JIRA_VERSION_DELETE_ENABLED` and the attachment upload set
 Toolsets and each tool's access level (read, write or destructive) are listed in `packages/jira/src/tool-catalog.ts` and `packages/confluence/src/tool-catalog.ts`. The access level also sets each tool's MCP `readOnlyHint` and `destructiveHint`.
 
 Hiding a tool reduces what the model sees and the tokens it costs. It is not access control: Jira and Confluence still enforce the token owner's permissions on every call.
+
+### Hiding Jira tools your account can't use
+
+At startup the Jira server asks Jira for the token owner's permissions (`GET /rest/api/2/mypermissions`) and hides tools that need a permission the account doesn't have. For example, `jira_deleteIssue` needs Delete Issues, and the version tools need project admin or Jira admin. Each tool's required permissions are listed as `anyOfPermissions` in the tool catalogs, and the account needs any one of them.
+
+| Variable | Effect |
+| --- | --- |
+| `PERMISSION_FILTER` | On by default. `off` lists tools without checking permissions. |
+| `JIRA_PERMISSION_PROJECTS` | Comma-separated project keys, for example `ACS,BPO`. Without it, Jira counts a project permission as held if the account has it in any project. With it, only these projects count. |
+
+- **What is checked:** only tools that change Jira. Read tools and watching an issue yourself are always listed.
+- **Startup log:** the server writes the tools it hid to stderr.
+- **Cost:** one request at startup, which is skipped when nothing could be hidden (for example in `READ_ONLY_MODE`).
+- **If Jira doesn't answer within 5 seconds, or the call fails:** the server hides only the admin tools and lists the rest.
+- **Confluence:** not filtered. No Confluence tool needs an admin permission yet, and Confluence has no single call that reports a user's permissions.
 
 The upstream README follows.
 

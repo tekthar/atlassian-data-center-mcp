@@ -1,5 +1,5 @@
 import type { McpServer, RegisteredTool, StandardSchemaWithJSON, ToolAnnotations, ToolCallback } from '@modelcontextprotocol/server';
-import { annotationsFor, isToolAllowed, type ToolCatalog, type ToolPolicy } from './tool-policy.js';
+import { annotationsFor, isHiddenByPermission, isToolAllowed, type ToolCatalog, type ToolPolicy } from './tool-policy.js';
 
 interface ToolConfig<InputArgs, OutputArgs> {
   title?: string;
@@ -19,10 +19,13 @@ export interface PolicyRegistrar {
   ): RegisteredTool | undefined;
   /** Names registered so far, in registration order. */
   registeredTools(): string[];
+  /** Tools the server tried to register that only the permission check kept out. */
+  hiddenByPermission(): string[];
 }
 
 export function createPolicyRegistrar(server: McpServer, catalog: ToolCatalog, policy: ToolPolicy): PolicyRegistrar {
   const registered: string[] = [];
+  const hidden: string[] = [];
 
   return {
     registerTool(name, config, cb) {
@@ -31,6 +34,7 @@ export function createPolicyRegistrar(server: McpServer, catalog: ToolCatalog, p
         throw new Error(`Tool "${name}" is missing from the tool catalog. Add it with a toolset and an access level.`);
       }
       if (!isToolAllowed(name, entry, policy)) {
+        if (isHiddenByPermission(name, entry, policy)) hidden.push(name);
         return undefined;
       }
       registered.push(name);
@@ -38,5 +42,6 @@ export function createPolicyRegistrar(server: McpServer, catalog: ToolCatalog, p
       return server.registerTool(name, { ...config, annotations }, cb);
     },
     registeredTools: () => [...registered],
+    hiddenByPermission: () => [...hidden],
   };
 }

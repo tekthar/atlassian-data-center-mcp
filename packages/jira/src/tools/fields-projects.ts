@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { formatToolResponse, handleApiOperation, type PolicyRegistrar, type ToolCatalog } from '@atlassian-dc-mcp/common';
 import { FieldService, IssueService, ProjectService, ProjectsService } from '../jira-client/index.js';
 import { createVersion } from '../jira-versions.js';
+import { PROJECT_ADMIN_PERMISSIONS } from '../permissions.js';
 import { asArray, asRecord, type JiraToolContext } from './context.js';
 import { shapeUser } from './users.js';
 
@@ -25,7 +26,7 @@ export const FIELDS_PROJECTS_CATALOG: ToolCatalog = {
     jira_getAllProjects: { toolset: 'jira_projects', access: 'read' },
     jira_searchProjects: { toolset: 'jira_projects', access: 'read' },
     jira_getProjectComponents: { toolset: 'jira_projects', access: 'read' },
-    jira_batchCreateVersions: { toolset: 'jira_projects', access: 'write' },
+    jira_batchCreateVersions: { toolset: 'jira_projects', access: 'write', anyOfPermissions: PROJECT_ADMIN_PERMISSIONS },
   },
 };
 
