@@ -28,7 +28,7 @@ fs.copyFileSync(path.join(packageDir, '..', '..', 'LICENSE'), path.join(packageD
 fs.rmSync(path.join(packageDir, 'dist'), { recursive: true, force: true });
 await build({
   absWorkingDir: packageDir,
-  entryPoints: { index: 'build/index.js', setup: 'build/setup.js' },
+  entryPoints: { index: 'build/index.js', setup: 'build/setup.js', doctor: 'build/doctor.js' },
   outdir: 'dist',
   bundle: true,
   splitting: true,

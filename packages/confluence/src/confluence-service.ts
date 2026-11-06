@@ -347,8 +347,11 @@ export class ConfluenceService {
     ), 'Error searching for spaces');
   }
 
-  async validateSetup(): Promise<void> {
-    await UserService.getCurrent();
+  /** Checks the configuration with one request, and returns who the token signs in as. */
+  async validateSetup(): Promise<string | undefined> {
+    // The generated Person type is empty; these two fields are what Confluence returns.
+    const user = (await UserService.getCurrent()) as { displayName?: string; username?: string };
+    return user.displayName ? `${user.displayName} (${user.username})` : user.username;
   }
 
   static validateConfig(): string[] {

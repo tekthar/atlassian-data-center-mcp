@@ -1,5 +1,6 @@
 import { confirm as inquirerConfirm, input as inquirerInput, password as inquirerPassword } from '@inquirer/prompts';
 import { buildDefaultRegistry, type ConfigRegistry } from './config/registry.js';
+import { maskToken } from './redact.js';
 import type { ProductRuntimeConfig } from './config/runtime-config.js';
 import type {
   ConfigKey,
@@ -571,14 +572,6 @@ function readable(value: string | number | undefined): string {
     return '(not set)';
   }
   return String(value);
-}
-
-function maskToken(token: string | undefined): string {
-  if (!token) {
-    return '(not set)';
-  }
-  const last4 = token.slice(-4);
-  return `••••${last4}`;
 }
 
 function isUserCancel(error: unknown): boolean {

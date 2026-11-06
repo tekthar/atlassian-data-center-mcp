@@ -40,5 +40,8 @@ jobs:
           node packages/jira/bin/run.js setup --help
           node packages/confluence/bin/run.js setup --help
           node packages/bitbucket/bin/run.js setup --help
+          node packages/jira/bin/run.js doctor --help
+          node packages/confluence/bin/run.js doctor --help
+          node packages/bitbucket/bin/run.js doctor --help
       - name: Test
         run: npx -y npm@11.21.1 test

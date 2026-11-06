@@ -78,6 +78,13 @@ body:
       required: true
 
   - type: textarea
+    id: doctor
+    attributes:
+      label: Output of doctor
+      description: "Run `npx -y mcp-jira-dc doctor` (or `mcp-confluence-dc`, `mcp-bitbucket-dc`) and paste the output. The token is masked."
+      render: text
+
+  - type: textarea
     id: settings
     attributes:
       label: Settings

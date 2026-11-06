@@ -69,6 +69,7 @@ To skip `setup`, put the settings in that entry instead:
 | `npx -y mcp-bitbucket-dc setup` | Asks for your address and token, checks them against Bitbucket, and saves them. |
 | `setup --non-interactive --host <host> --token <token>` | The same from flags, for scripts and CI. Exits non-zero if the token doesn't work. Values you leave out come from your existing settings. |
 | `setup --help` | Lists every option. |
+| `npx -y mcp-bitbucket-dc doctor` | Checks Node.js, where each setting comes from, the keychain, signing in, and the tools your client will see, and says how to fix what's wrong. The token is masked. |
 
 ## Tools
 

@@ -17,6 +17,8 @@ export * from './tool-gateway.js';
 export * from './tool-policy.js';
 export * from './tool-response.js'
 export { runSetup, runSetupCli } from './setup-cli.js';
+export { credentialValidator, type ValidatableService } from './credential-validator.js';
+export { runDoctor, runDoctorCli, type DoctorOptions } from './doctor/doctor.js';
 export { describeValidationError } from './setup/describe-error.js';
 export { parseSetupArgs, printSetupHelp, SetupArgsError, type ParsedSetupArgs } from './setup/args.js';
 
