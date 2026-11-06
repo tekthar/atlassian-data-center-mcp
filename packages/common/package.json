@@ -26,7 +26,7 @@
     "dev": "nodemon --exec tsx src/index.ts"
   },
   "dependencies": {
-    "@inquirer/prompts": "7.10.1",
+    "@inquirer/prompts": "8.7.5",
     "dotenv": "18.0.9",
     "zod": "4.6.7",
     "@modelcontextprotocol/server": "2.4.0",
