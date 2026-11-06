@@ -1,6 +1,6 @@
 {
   "name": "mcp-jira-dc",
-  "version": "0.45.0",
+  "version": "0.47.0",
   "description": "MCP server for Jira Data Center and Jira Server: search, create, update and transition issues, with comments, links, versions, agile boards and sprints, worklogs and service desk. Not affiliated with Atlassian.",
   "keywords": [
     "mcp",

@@ -3,7 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-## Unreleased
+## [0.47.0](https://github.com/tekthar/atlassian-data-center-mcp/releases/tag/v0.47.0) (2026-11-06)
+
+The first release since the repository went public. The token moves into the OS keychain on every platform and is masked in everything the servers write; `doctor` checks a setup step by step, `install` registers a server with Claude Code or Claude Desktop, and an opt-in audit log records every tool call. The Jira server gains support for Jira apps, starting with Xray. There is no 0.46.0.
+
+**Upgrading on Windows or Linux:** run `npx -y mcp-jira-dc setup` (and the Confluence and Bitbucket equivalents) again to move your token from the home file into the keychain. Until you do, everything keeps working with the token where it is, and `doctor` reminds you.
 
 ### Security
 
@@ -16,9 +20,14 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 * **install:** `npx -y mcp-jira-dc install --claude-code` runs `claude mcp add` for you, and `--claude-desktop` adds the server to Claude Desktop's configuration after backing it up. A configuration it can't parse is left untouched. The client starts the server with `npx`; nothing secret goes into its configuration.
 * **audit log:** `ATLASSIAN_DC_MCP_AUDIT=1` writes one JSON line per tool call, with the time, server, tool, outcome and duration, and never the arguments or results, to `~/.atlassian-dc-mcp/audit/<server>.jsonl` (or `ATLASSIAN_DC_MCP_AUDIT_FILE`). Tools run through the tool search or from code are recorded with `via`. It rotates at 5 MB, and a failed write never fails a tool call.
 * **doctor:** `npx -y mcp-jira-dc doctor` (and the Confluence and Bitbucket equivalents) checks the setup one step at a time and says how to fix the first problem: the Node.js version, where each setting comes from, the OS keychain, signing in, and the tools an MCP client will see. It starts the server as a client would, so the tool count, context size, tool search, code tool and any startup warnings (such as tools the permission filter hid) are what the agent really gets. The token is masked. `setup` now also says who the token signs in as.
-
 * **jira apps:** the Jira server can now use Jira apps from the Atlassian Marketplace. An app's tools are offered only when it is installed: at startup the server makes one request per app to check, in parallel with the permission check, and skips it when no app tool could be offered. `JIRA_APPS` names apps to offer without checking, or `off` turns apps off. App toolsets are off by default and reached through the tool search.
 * **xray:** 15 tools for Xray test management in five toolsets: tests, test executions, test plans, test sets and test runs. Read tests, steps and relations; list and add tests to executions, plans and sets; read, search and record test runs. Paths and request bodies come from the Xray 8.6 Data Center app's own REST resources.
+
+### Documentation
+
+* the repository is now [tekthar/atlassian-data-center-mcp](https://github.com/tekthar/atlassian-data-center-mcp); old links redirect
+* [Supported apps](docs/supported-apps.md) lists the Jira apps with tools, the exact version each was built from, and how it was checked; each README shows a short table
+* the README opens with the project's positioning, and credits the projects its code comes from
 
 ### Project
 

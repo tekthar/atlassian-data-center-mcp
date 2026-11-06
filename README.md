@@ -323,12 +323,12 @@ tests run on every pull request, on Ubuntu and on Windows:
 
 ## Status and roadmap
 
-This is **0.45**, which added the tool search and code execution. It changed which Jira tools are listed by default,
-and the [changelog](CHANGELOG.md) says how to keep the old list. Until 1.0, minor versions may include breaking
-changes, and the changelog describes them. Coming next:
+This is **0.47**, which added the token in the OS keychain on every platform, `doctor`, `install`, the audit log, and
+Jira app support starting with Xray. The [changelog](CHANGELOG.md) lists every change and what to do when upgrading.
+Until 1.0, minor versions may include breaking changes, and the changelog describes them. Coming next:
 
 - more Jira apps (plugins), reached through the tool search so they cost nothing until used. Xray, for test
-  management, is the first, on `main` for the next release
+  management, is the first
 - Jira administration tools
 
 ## Have a question? Want to help?
