@@ -15,6 +15,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 * a security policy ([SECURITY.md](SECURITY.md)) with private vulnerability reporting, a [Code of Conduct](CODE_OF_CONDUCT.md), issue forms for bugs, features and Jira app support, a pull request template and code owners
 * CodeQL code scanning, dependency review on pull requests, the OpenSSF Scorecard, and Dependabot for npm and GitHub Actions with a 7-day cooldown
 * every GitHub Action is pinned to a commit SHA, checkouts don't keep the token, and CI runs with read-only permissions
+* the test and development tools use `glob` 14.0.3 and `minimatch` 11.0.3 (npm overrides), fixing GHSA-3g3m-2fjr-6pw4 and GHSA-g3hv-75wg-m249 in the versions Jest and nodemon pull in. Neither package ships with the servers
 
 ## [0.45.0](https://github.com/tekthar/atlassian-data-center-mcp/releases/tag/v0.45.0) (2026-11-06)
 
