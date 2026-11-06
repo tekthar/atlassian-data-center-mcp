@@ -3,8 +3,8 @@
   "version": "0.43.2",
   "main": "build/index.js",
   "type": "module",
-  "private": false,
-  "description": "Shared utilities for @atlassian-dc-mcp MCP servers. Not affiliated with Atlassian.",
+  "private": true,
+  "description": "Shared code for the mcp-jira-dc and mcp-confluence-dc servers. Bundled into each server package; never published on its own.",
   "keywords": [
     "mcp",
     "atlassian",

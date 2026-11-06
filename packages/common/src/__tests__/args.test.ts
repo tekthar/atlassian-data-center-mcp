@@ -125,8 +125,19 @@ describe('printSetupHelp', () => {
     const out: string[] = [];
     printSetupHelp('jira', (m) => out.push(m));
     const joined = out.join('\n');
-    expect(joined).toContain('@atlassian-dc-mcp/jira setup');
+    expect(joined).toContain('mcp-jira-dc setup');
     expect(joined).toContain('--non-interactive');
     expect(joined).toContain('~/.atlassian-dc-mcp/jira.env');
+  });
+
+  it('names our package for Confluence and the upstream one for Bitbucket', () => {
+    const usage = (productId: string) => {
+      const out: string[] = [];
+      printSetupHelp(productId, (m) => out.push(m));
+      return out[0];
+    };
+
+    expect(usage('confluence')).toBe('Usage: mcp-confluence-dc setup [options]');
+    expect(usage('bitbucket')).toBe('Usage: @atlassian-dc-mcp/bitbucket setup [options]');
   });
 });

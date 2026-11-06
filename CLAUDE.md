@@ -6,16 +6,16 @@
 npm run build
 
 # Build specific package
-npm run build --workspace=@atlassian-dc-mcp/jira
+npm run build --workspace=packages/jira
 
 # Run all tests
 npm run test
 
 # Run tests for specific package
-npm run test --workspace=@atlassian-dc-mcp/jira
+npm run test --workspace=packages/jira
 
 # Run specific test (using Jest)
-npx jest -t 'test name' --workspace=@atlassian-dc-mcp/jira
+npx jest -t 'test name' --workspace=packages/jira
 
 # Development mode
 npm run dev:jira
