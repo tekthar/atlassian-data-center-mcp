@@ -1,3 +1,5 @@
+import { redactSecrets } from './redact.js';
+
 /**
  * Serialise a service result into the single text block every tool returns.
  *
@@ -15,7 +17,7 @@ const isFailedResult = (result: unknown): boolean =>
 export const formatToolResponse = (result: unknown) => ({
   content: [{
     type: 'text' as const,
-    text: JSON.stringify(result)
+    text: redactSecrets(JSON.stringify(result))
   }],
   ...(isFailedResult(result) ? { isError: true as const } : {}),
 });

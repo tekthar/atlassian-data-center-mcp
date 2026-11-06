@@ -1,6 +1,6 @@
 import { DefaultConfigRegistry } from '../config/registry.js';
 import { HomeFileSource } from '../config/sources/home-file.js';
-import { MacosKeychainSource, type KeychainDeps } from '../config/sources/macos-keychain.js';
+import { OsKeychainSource } from '../config/sources/os-keychain.js';
 import { ProcessEnvSource } from '../config/sources/process-env.js';
 import {
   runSetup,
@@ -35,18 +35,13 @@ const JIRA: ProductDefinition = {
   defaultApiBasePath: '/rest/api/2',
 };
 
-class FakeKeychain extends MacosKeychainSource {
+class FakeKeychain extends OsKeychainSource {
   available = true;
   store: string | undefined;
   writeCalls = 0;
   clearCalls = 0;
   constructor() {
-    const deps: Partial<KeychainDeps> = {
-      execFileSync: (() => '') as unknown as KeychainDeps['execFileSync'],
-      existsSync: () => true,
-      getPlatform: () => 'darwin' as NodeJS.Platform,
-    };
-    super(deps);
+    super({ resolveBackend: () => undefined, env: {} });
   }
   override isAvailable(): boolean {
     return this.available;

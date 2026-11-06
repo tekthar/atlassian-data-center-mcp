@@ -9,7 +9,7 @@ import { isWritableSource } from './source.js';
 import { ProcessEnvSource } from './sources/process-env.js';
 import { EnvFileSource } from './sources/env-file.js';
 import { HomeFileSource } from './sources/home-file.js';
-import { MacosKeychainSource } from './sources/macos-keychain.js';
+import { OsKeychainSource } from './sources/os-keychain.js';
 
 export interface ResolvedValue {
   value: string | undefined;
@@ -74,6 +74,6 @@ export function buildDefaultRegistry(): DefaultConfigRegistry {
     new ProcessEnvSource(),
     new EnvFileSource(),
     new HomeFileSource(),
-    new MacosKeychainSource(),
+    new OsKeychainSource(),
   ]);
 }

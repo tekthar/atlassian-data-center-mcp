@@ -19,7 +19,7 @@ claude mcp add confluence -- npx -y mcp-confluence-dc   # connects Claude Code
 |---|---|---|
 | Works with Confluence Data Center and Server | depends on the service | **yes** |
 | Reaches a Confluence behind your firewall or VPN | only if Confluence is exposed to the service | **yes**: wherever your machine can reach |
-| Where your token lives | with the service | **on your machine**: macOS Keychain, or a file only your user can read |
+| Where your token lives | with the service | **on your machine**: your OS keychain, or a file only your user can read |
 | Who decides which tools the agent sees | the service | **you**, with a few settings |
 | Something to host, approve or pay for | the service | **nothing**: `npx` runs it |
 
@@ -37,8 +37,10 @@ one, open your profile picture in Confluence, then **Settings** > **Personal Acc
 npx -y mcp-confluence-dc setup
 ```
 
-On macOS the token goes to the Keychain. Everything else goes to `~/.atlassian-dc-mcp/confluence.env`
-(`%USERPROFILE%\.atlassian-dc-mcp\confluence.env` on Windows), which only your user can read.
+The token goes to your OS keychain: the macOS Keychain, Windows Credential Manager, or on Linux the desktop
+keyring (GNOME Keyring or KWallet). Everything else goes to `~/.atlassian-dc-mcp/confluence.env`
+(`%USERPROFILE%\.atlassian-dc-mcp\confluence.env` on Windows), which only your user can read. Without a keychain, such as
+on a Linux server, the token goes in that file too.
 
 **2. Connect your client.** Claude Code:
 
@@ -121,8 +123,8 @@ Service Management; [Supported apps](https://github.com/tekthar/atlassian-data-c
 ## Settings
 
 Every setting is an environment variable. Each comes from the first of these that has it: the environment, the dotenv
-file (`ATLASSIAN_DC_MCP_CONFIG_FILE`, or `.env` in the working directory), the file `setup` writes, then the macOS
-Keychain.
+file (`ATLASSIAN_DC_MCP_CONFIG_FILE`, or `.env` in the working directory), the file `setup` writes, then the OS
+keychain.
 
 **Connecting**
 
@@ -134,6 +136,7 @@ Keychain.
 | `CONFLUENCE_DEFAULT_PAGE_SIZE` | Page size for search and list tools. Default 25. |
 | `ATLASSIAN_DC_MCP_CONFIG_FILE` | Absolute path to a dotenv file with any of these settings, e.g. one file shared by several servers. |
 | `ATLASSIAN_DC_MCP_REQUEST_TIMEOUT_MS` | How long a request to Confluence may take. Default 30000. |
+| `ATLASSIAN_DC_MCP_KEYCHAIN` | `off` keeps the token out of the OS keychain: `setup` saves it in the file instead, and the server doesn't look in the keychain. |
 
 **Choosing tools**
 

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { connectServer, createMcpServer, formatToolResponse, initializeRuntimeConfig, readOnlyToolAnnotations } from '@atlassian-dc-mcp/common';
+import { connectServer, createMcpServer, formatToolResponse, initializeRuntimeConfig, redactStderr, readOnlyToolAnnotations } from '@atlassian-dc-mcp/common';
 import { BitbucketService, bitbucketToolSchemas } from './bitbucket-service.js';
 import { getBitbucketRuntimeConfig, getDefaultPageSize } from './config.js';
 import { resolveDeclineGateway, resolveMergeGateway } from './repo-gateway.js';
@@ -9,6 +9,7 @@ import { registerPullRequestCommentsTool } from './register-pr-comments-tool.js'
 const require = createRequire(import.meta.url);
 const { version } = require('../package.json');
 
+redactStderr();
 initializeRuntimeConfig();
 
 const missingVars = BitbucketService.validateConfig();

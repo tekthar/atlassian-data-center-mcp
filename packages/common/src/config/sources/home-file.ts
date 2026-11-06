@@ -9,6 +9,7 @@ import {
   DotenvFileNotFoundError,
   type ParsedEnvironment,
 } from './dotenv-file-cache.js';
+import { restrictToCurrentWindowsUser } from './windows-acl.js';
 
 const HOME_DIR_NAME = '.atlassian-dc-mcp';
 
@@ -36,11 +37,22 @@ function serialize(values: ParsedEnvironment): string {
   return lines.length > 0 ? `${lines.join('\n')}\n` : '';
 }
 
+export type HomeFileDeps = {
+  platform: NodeJS.Platform;
+  /** Limits a file to the current user; on Windows, where the 0600 mode is ignored. */
+  restrictToCurrentUser: (file: string) => void;
+};
+
 export class HomeFileSource implements WritableSource {
   readonly id: SourceId = 'home-file';
   readonly priority = 60;
 
   private cache = new DotenvFileCache();
+  private readonly deps: HomeFileDeps;
+
+  constructor(deps: Partial<HomeFileDeps> = {}) {
+    this.deps = { platform: process.platform, restrictToCurrentUser: (file) => restrictToCurrentWindowsUser(file), ...deps };
+  }
 
   isAvailable(): boolean {
     return true;
@@ -104,6 +116,7 @@ export class HomeFileSource implements WritableSource {
     const tmpPath = `${filePath}.tmp-${process.pid}-${crypto.randomBytes(4).toString('hex')}`;
     try {
       fs.writeFileSync(tmpPath, serialize(values), { mode: 0o600 });
+      this.restrict(tmpPath, product, values);
       fs.renameSync(tmpPath, filePath);
     } catch (error) {
       try {
@@ -115,6 +128,21 @@ export class HomeFileSource implements WritableSource {
     }
 
     this.cache.invalidate();
+  }
+
+  /**
+   * On Windows, limits the file to the current user before it replaces the old one. A file holding the token is
+   * never left with inherited permissions: if they can't be replaced, the write fails. One without the token
+   * (host, base path, page size) is written anyway.
+   */
+  private restrict(file: string, product: ProductDefinition, values: ParsedEnvironment): void {
+    if (this.deps.platform !== 'win32') return;
+    try {
+      this.deps.restrictToCurrentUser(file);
+    } catch (error) {
+      if (getNonEmptyValue(values[product.envVars.token]) === undefined) return;
+      throw new Error(`Could not limit ${getHomeFilePath(product)} to your Windows account, so the token was not saved there (${(error as Error).message}).`);
+    }
   }
 }
 

@@ -1,5 +1,6 @@
 import { buildDefaultRegistry, type ConfigRegistry } from './registry.js';
 import type { ConfigKey, ProductDefinition } from './source.js';
+import { registerSecret } from '../redact.js';
 
 const FALLBACK_PAGE_SIZE = 25;
 
@@ -35,10 +36,12 @@ function parsePositiveInteger(value: string | undefined): number | undefined {
 }
 
 export function getProductRuntimeConfig(product: ProductDefinition): ProductRuntimeConfig {
+  const token = resolveString(product, 'token');
+  registerSecret(token);
   return {
     host: resolveString(product, 'host'),
     apiBasePath: resolveString(product, 'apiBasePath'),
-    token: resolveString(product, 'token'),
+    token,
     defaultPageSize:
       parsePositiveInteger(resolveString(product, 'defaultPageSize')) ?? FALLBACK_PAGE_SIZE,
   };

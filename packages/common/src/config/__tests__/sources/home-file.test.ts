@@ -126,4 +126,43 @@ describe('HomeFileSource', () => {
       renameSpy.mockRestore();
     }
   });
+
+  describe('on Windows', () => {
+    const files = () => fs.readdirSync(path.join(tempHome, HOME_DIR_NAME));
+
+    it('limits the file to the current user before it replaces the old one', () => {
+      const restricted: string[] = [];
+      const source = new HomeFileSource({ platform: 'win32', restrictToCurrentUser: (file) => restricted.push(file) });
+
+      source.write(JIRA, 'token', 'j-token');
+
+      expect(restricted).toHaveLength(1);
+      expect(restricted[0]).toContain(`${getHomeFilePath(JIRA)}.tmp-`);
+      expect(source.read(JIRA, 'token')).toBe('j-token');
+    });
+
+    it('refuses to keep the token in a file it could not limit, and leaves no temporary file', () => {
+      const source = new HomeFileSource({ platform: 'win32', restrictToCurrentUser: () => { throw new Error('icacls failed'); } });
+
+      expect(() => source.write(JIRA, 'token', 'j-token')).toThrow(/Could not limit .*jira\.env to your Windows account.*icacls failed/);
+      expect(files()).toEqual([]);
+    });
+
+    it('still saves settings without the token when the limit fails', () => {
+      const source = new HomeFileSource({ platform: 'win32', restrictToCurrentUser: () => { throw new Error('icacls failed'); } });
+
+      source.write(JIRA, 'host', 'j-host');
+
+      expect(source.read(JIRA, 'host')).toBe('j-host');
+    });
+
+    it('does not run icacls on other platforms', () => {
+      const restrict = jest.fn();
+
+      new HomeFileSource({ platform: 'linux', restrictToCurrentUser: restrict }).write(JIRA, 'token', 'j-token');
+
+      expect(restrict).not.toHaveBeenCalled();
+    });
+  });
 });
+

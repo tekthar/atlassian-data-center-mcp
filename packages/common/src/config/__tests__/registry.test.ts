@@ -91,10 +91,10 @@ describe('DefaultConfigRegistry', () => {
 
   it('getWritableSource returns the first source matching the predicate', () => {
     const a = new FakeWritableSource('home-file', 60);
-    const b = new FakeWritableSource('macos-keychain', 40);
+    const b = new FakeWritableSource('os-keychain', 40);
     const registry = new DefaultConfigRegistry([a, b]);
     const found = registry.getWritableSource(
-      (s): s is FakeWritableSource => s instanceof FakeWritableSource && s.id === 'macos-keychain',
+      (s): s is FakeWritableSource => s instanceof FakeWritableSource && s.id === 'os-keychain',
     );
     expect(found).toBe(b);
   });
