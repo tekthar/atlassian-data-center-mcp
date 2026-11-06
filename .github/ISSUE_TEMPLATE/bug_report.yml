@@ -1,0 +1,102 @@
+name: Bug report
+description: A server does something wrong, such as a failing tool, a wrong result or a setting that doesn't work.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. **Remove tokens, hostnames and anything confidential** from what you paste below.
+        For a security problem, don't open an issue: [report it privately](https://github.com/tekthar/atlassian-data-center-mcp/security/advisories/new).
+
+  - type: dropdown
+    id: server
+    attributes:
+      label: Server
+      options:
+        - mcp-jira-dc
+        - mcp-confluence-dc
+        - mcp-bitbucket-dc
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you asked the agent, the tool it called, and what came back. Paste the tool call and its result if you can.
+      placeholder: "Asked for the issues in sprint 42. The agent called jira_getSprintIssues with sprintId 42 and got an error: ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to reproduce it
+      description: The smallest steps, or the exact tool call and arguments, that show the problem.
+    validations:
+      required: true
+
+  - type: input
+    id: server-version
+    attributes:
+      label: Server version
+      description: "`npx -y mcp-jira-dc` runs the latest one, unless your MCP client's config pins a version."
+      placeholder: "0.45.0"
+    validations:
+      required: true
+
+  - type: input
+    id: product-version
+    attributes:
+      label: Jira, Confluence or Bitbucket version
+      description: Data Center or Server, and the version. For a Jira app such as Xray, add the app's version too.
+      placeholder: "Jira Data Center 10.3.4, Xray 8.6.0"
+    validations:
+      required: true
+
+  - type: input
+    id: client
+    attributes:
+      label: MCP client
+      placeholder: "Claude Code 2.4, Claude Desktop, Cursor, ..."
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Node.js version and operating system
+      placeholder: "Node 22.22.2 on macOS 26"
+    validations:
+      required: true
+
+  - type: textarea
+    id: settings
+    attributes:
+      label: Settings
+      description: The environment variables you set, such as TOOLSETS, READ_ONLY_MODE or JIRA_APPS. Leave out tokens.
+      render: shell
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Server output
+      description: Anything the server wrote to stderr, for example the permission filter or app detection lines.
+      render: text
+
+  - type: checkboxes
+    id: confirms
+    attributes:
+      label: Before you submit
+      options:
+        - label: I searched the [open issues](https://github.com/tekthar/atlassian-data-center-mcp/issues) and didn't find this one.
+          required: true
+        - label: I removed tokens, hostnames and confidential data from this report.
+          required: true

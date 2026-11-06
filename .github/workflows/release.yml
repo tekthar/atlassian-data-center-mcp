@@ -32,9 +32,11 @@ jobs:
       version: ${{ steps.plan.outputs.version }}
       release: ${{ steps.plan.outputs.pending == 'true' || github.event_name == 'workflow_dispatch' }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22.22.2'
       - name: Check for unpublished versions
@@ -76,6 +78,8 @@ jobs:
       contents: read
       id-token: write # MCP Registry login for the io.github.tekthar namespace
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Publish to the MCP Registry
         run: scripts/publish-mcp.sh

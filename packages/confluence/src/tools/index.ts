@@ -8,7 +8,7 @@ interface ConfluenceToolModule {
   register: (tools: PolicyRegistrar, context: ConfluenceToolContext) => void;
 }
 
-/** Tool modules beyond the original b1ff set, each with its own catalog fragment. */
+/** Tool modules beyond the core tools in index.ts, each with its own catalog fragment. */
 const MODULES: ConfluenceToolModule[] = [
   { catalog: PAGE_MANAGEMENT_CATALOG, register: registerPageManagementTools },
   { catalog: COLLABORATION_CATALOG, register: registerCollaborationTools },

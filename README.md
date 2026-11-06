@@ -5,12 +5,15 @@
 [![mcp-bitbucket-dc on npm](https://img.shields.io/npm/v/mcp-bitbucket-dc.svg?label=mcp-bitbucket-dc&logo=npm)](https://www.npmjs.com/package/mcp-bitbucket-dc)
 [![CI](https://github.com/tekthar/atlassian-data-center-mcp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tekthar/atlassian-data-center-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/github/license/tekthar/atlassian-data-center-mcp.svg)](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/LICENSE)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/tekthar/atlassian-data-center-mcp/badge)](https://scorecard.dev/viewer/?uri=github.com/tekthar/atlassian-data-center-mcp)
 
-**Your Jira, Confluence and Bitbucket Data Center, ready for AI agents, without flooding their context.**
+**The leading MCP for Atlassian Data Center, built for AI-first companies that run Jira, Confluence and Bitbucket on
+their own servers.**
 
-Three [Model Context Protocol](https://modelcontextprotocol.io) (MCP) servers that let Claude, Cursor and any other MCP
-client work in your self-hosted Atlassian tools: search and update issues, read and write pages, review pull requests.
-Each is one `npx` command. Your agent signs in with your personal access token, so it can do what you can, and nothing
+Your teams chose Data Center for control over their data. They shouldn't have to give up the best AI models to keep
+it. Three [Model Context Protocol](https://modelcontextprotocol.io) (MCP) servers let Claude, Cursor and any other MCP
+client work in your self-hosted Atlassian tools: search and update issues, read and write pages, review pull requests,
+without flooding the model's context. Each is one `npx` command. Your agent signs in with your personal access token, so it can do what you can, and nothing
 more.
 
 ```bash
@@ -270,6 +273,11 @@ tests run on every pull request, on Ubuntu and on Windows:
   dependency fails the build, not your install.
 - **Careful with dependencies**: every version is pinned exactly, new releases must be at least seven days old before we
   take them, and npm packages are published from CI with npm trusted publishing, with no long-lived token.
+- **Scanned for security problems**: CodeQL checks the code and the workflows on every pull request, dependency review
+  blocks a pull request that adds a dependency with a known vulnerability, Dependabot keeps dependencies and actions
+  current, every action is pinned to a commit, and the [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/tekthar/atlassian-data-center-mcp)
+  tracks the project against open-source security practices. [SECURITY.md](SECURITY.md) explains how to report a
+  problem.
 
 ## Documentation
 
@@ -296,7 +304,15 @@ changes, and the changelog describes them. Coming next:
 ## Have a question? Want to help?
 
 Questions, ideas and bug reports are welcome as [issues](https://github.com/tekthar/atlassian-data-center-mcp/issues). To contribute
-code or docs, read the [contributing guide](CONTRIBUTING.md) first.
+code or docs, read the [contributing guide](CONTRIBUTING.md) first; everyone taking part follows the
+[Code of Conduct](CODE_OF_CONDUCT.md). Please report security problems through
+[private reporting](SECURITY.md), not in public issues.
+
+Running a supported Jira app's tools against your own instance is one of the most useful contributions: it's what
+moves an app from Beta to Tested. The **Jira app support** issue form asks for what we need.
+
+Thank you to [everyone who has contributed](https://github.com/tekthar/atlassian-data-center-mcp/graphs/contributors),
+and to the open-source projects this one builds on.
 
 ```
 packages/jira/          mcp-jira-dc
@@ -320,9 +336,9 @@ npm test
 
 MIT licence.
 
-This project is Tekthar's fork of [b1ff/atlassian-dc-mcp](https://github.com/b1ff/atlassian-dc-mcp), and its Data
-Center tools are adapted from [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian). Both are MIT
-licensed, and their notices are in [LICENSE](LICENSE). Thank you to both. It is built on the official
+Parts of the code come from two MIT-licensed projects, [b1ff/atlassian-dc-mcp](https://github.com/b1ff/atlassian-dc-mcp)
+and [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian). Their notices are in [LICENSE](LICENSE).
+Thank you to both. It is built on the official
 [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) and
 [quickjs-emscripten](https://github.com/justjake/quickjs-emscripten), and maintained by
 [Tekthar](https://github.com/tekthar).

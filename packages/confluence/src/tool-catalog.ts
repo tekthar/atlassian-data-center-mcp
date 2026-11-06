@@ -6,7 +6,7 @@ import { CONFLUENCE_MODULES_CATALOG } from './tools/index.js';
  * the others are offered through the tool gateway (confluence_searchTools) unless TOOL_GATEWAY=off.
  * A tool registered without an entry here fails at startup.
  */
-/** The tools b1ff/atlassian-dc-mcp shipped; registered directly in index.ts. */
+/** The core tools, registered directly in index.ts. */
 export const CONFLUENCE_CORE_CATALOG: ToolCatalog = {
   toolsets: {
     confluence_pages: { description: 'Search, read, create and update pages', default: true },
