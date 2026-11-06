@@ -5,6 +5,8 @@ export * from './api-error-handler.js'
 export * from './attachment-download.js'
 export * from './attachment-gateway.js'
 export * from './attachment-tool-response.js'
+export * from './code-sandbox.js';
+export * from './code-tool.js';
 export * from './config/index.js';
 export * from './gateway-tools.js';
 export * from './path-encoding.js';

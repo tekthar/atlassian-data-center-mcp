@@ -3,6 +3,7 @@
 An MCP server for **Jira Data Center and Jira Server**. It lets Claude and other MCP clients search, create, update and transition issues, and, when you turn them on, work with sprints, worklogs, service desk queues, users, fields and more.
 
 - **63 tools in 18 toolsets.** By default 10 everyday issue tools are listed directly, and 3 gateway tools find and run 43 more, so the rest cost tokens only when used.
+- **Sandboxed code execution:** the model can write a short script that combines many read calls and returns only the answer.
 - **Tools your Jira account can't use are hidden** at startup.
 - **Read-only mode** and an exact tool allowlist for locked-down setups.
 - **One `npx` command:** no Python, no Docker.
@@ -80,6 +81,7 @@ npx -y mcp-jira-dc setup --non-interactive --host jira.example.com --token "$JIR
 | `READ_ONLY_MODE` | `true` lists only tools that never change Jira. |
 | `ENABLED_TOOLS` | Comma-separated tool names. Replaces `TOOLSETS`; read-only mode still applies. |
 | `TOOL_GATEWAY` | On by default: tools outside the selected toolsets, apart from destructive ones, are offered through three gateway tools instead of being left out. `off` leaves them out. The gateway is also off while `ENABLED_TOOLS` is set. |
+| `CODE_EXECUTION` | On by default: adds `jira_runCode`, which runs JavaScript in a sandbox that can call the read tools. `off` removes it. It is also off while `ENABLED_TOOLS` is set. |
 | `PERMISSION_FILTER` | On by default: at startup the server asks Jira for your permissions and hides tools you can't use. `off` turns this off. |
 | `JIRA_PERMISSION_PROJECTS` | Comma-separated project keys. Without it, a permission you hold in any project counts. With it, only these projects count. |
 
@@ -94,6 +96,23 @@ Listing every tool costs tokens on every request, so only everyday tools are lis
 - `jira_runWriteTool` runs a found tool that changes Jira. Clients can ask before running it, as they do for any write tool.
 
 The gateway applies the same rules as the tool list: read-only mode, the permission filter and the opt-in settings. It never offers destructive tools; turn on their toolset with `TOOLSETS` to use them. A toolset named in `TOOLSETS` is listed directly instead.
+
+### Running code (`jira_runCode`)
+
+Some questions take many tool calls, for example checking every issue in a sprint. `jira_runCode` lets the model write a short JavaScript snippet that makes those calls and returns only the answer, so the intermediate results don't fill the context:
+
+```js
+const sprint = await tools.jira_getSprintIssues({ sprintId: 42 });
+const blocked = sprint.issues.filter((issue) => issue.status === 'Blocked');
+return blocked.map((issue) => issue.key);
+```
+
+- **Read tools only:** code can call the read tools the server offers, listed or through the gateway. Tools that change Jira are not available to code, so a client's approval prompts still see every write. Each call goes through the same checks as calling the tool directly.
+- **Sandboxed:** the code runs in QuickJS, a JavaScript engine compiled to WebAssembly, inside a separate worker thread. It has no network, file, process or timer access, only `tools`, `callTool` and `console`.
+- **Limits:** 30 seconds per run, 50 tool calls with at most 4 at a time, 64 MB of memory, and a 100,000-character result. If the code crashes the engine, only the worker stops; the server keeps running.
+- **Install:** the sandbox is two small npm packages (about 1.4 MB) with no native build, so `npx` installs stay as before.
+
+Set `CODE_EXECUTION=off` to remove the tool.
 
 In the table below, **on** toolsets are listed directly, **gateway** toolsets are reached through the gateway, and **off** toolsets need `TOOLSETS`.
 

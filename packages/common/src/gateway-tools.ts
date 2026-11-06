@@ -10,6 +10,8 @@ export interface GatewayToolsOptions {
   /** Product name used in descriptions, e.g. `Jira`. */
   product: string;
   toolsets: Readonly<Record<string, ToolsetDefinition>>;
+  /** Name of the code tool, when registered, so search results can point to it. */
+  codeTool?: string;
 }
 
 const MAX_SEARCH_RESULTS = 20;
@@ -41,7 +43,7 @@ function registerSearchTool(server: McpServer, gateway: ToolGateway, options: Ga
   server.registerTool(
     `${prefix}_searchTools`,
     {
-      description: `Find more ${product} tools that are not listed directly. Returns each match with its description and inputSchema; run it with ${prefix}_runReadTool (access "read") or ${prefix}_runWriteTool (access "write"). Toolsets available this way:\n${overview}`,
+      description: `Find more ${product} tools that are not listed directly. Returns each match with its description and inputSchema; run it with ${prefix}_runReadTool (access "read") or ${prefix}_runWriteTool (access "write").${options.codeTool ? ` Read tools can also be called from ${options.codeTool}.` : ''} Toolsets available this way:\n${overview}`,
       inputSchema: searchSchema,
       annotations: { readOnlyHint: true },
     },

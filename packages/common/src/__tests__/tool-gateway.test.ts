@@ -109,7 +109,7 @@ describe('createPolicyRegistrar with the gateway', () => {
 
     expect(tools.registeredTools()).toEqual(['getIssue']);
     expect(tools.gatewayTools()).toEqual(['getSprint', 'createSprint']);
-    expect(gatewayNames).toEqual(['jira_searchTools', 'jira_runReadTool', 'jira_runWriteTool']);
+    expect(gatewayNames).toEqual(['jira_searchTools', 'jira_runReadTool', 'jira_runWriteTool', 'jira_runCode']);
     expect(registerTool.mock.calls.map(([name]) => name)).toEqual(['getIssue', ...gatewayNames]);
   });
 
@@ -121,14 +121,14 @@ describe('createPolicyRegistrar with the gateway', () => {
   });
 
   it('registers no gateway tools when the gateway is off', () => {
-    const { tools, gatewayNames } = registerAll({ TOOL_GATEWAY: 'off' });
+    const { tools, gatewayNames } = registerAll({ TOOL_GATEWAY: 'off', CODE_EXECUTION: 'off' });
 
     expect(tools.gatewayTools()).toEqual([]);
     expect(gatewayNames).toEqual([]);
   });
 
-  it('registers only the search and read tools in read-only mode', () => {
-    expect(registerAll({ READ_ONLY_MODE: 'true' }).gatewayNames).toEqual(['jira_searchTools', 'jira_runReadTool']);
+  it('registers only the search, read and code tools in read-only mode', () => {
+    expect(registerAll({ READ_ONLY_MODE: 'true' }).gatewayNames).toEqual(['jira_searchTools', 'jira_runReadTool', 'jira_runCode']);
   });
 
   it('runs a gateway tool through the run tool that matches its access', async () => {
@@ -147,5 +147,45 @@ describe('createPolicyRegistrar with the gateway', () => {
 
     expect(tools.map((tool: { name: string }) => tool.name)).toEqual(['getSprint', 'createSprint']);
     expect(tools[0]).toMatchObject({ access: 'read', inputSchema: { required: ['sprintId'] } });
+  });
+});
+
+describe('createPolicyRegistrar with code execution', () => {
+  jest.setTimeout(20_000);
+
+  const runCode = async (callbacks: Map<string, Callback>, code: string) =>
+    JSON.parse((await callbacks.get('jira_runCode')!({ code }, {})).content[0].text);
+
+  it('lets code call direct and gateway read tools, and nothing else', async () => {
+    const { tools, callbacks } = registerAll();
+
+    expect(tools.codeTools()).toEqual(['getIssue', 'getSprint']);
+    expect(await runCode(callbacks, 'return [await tools.getIssue({ sprintId: 1 }), await tools.getSprint({ sprintId: 2 })]'))
+      .toMatchObject({ result: ['getIssue 1', 'getSprint 2'], toolCalls: 2 });
+    expect(await runCode(callbacks, 'return Object.keys(tools)')).toMatchObject({ result: ['getIssue', 'getSprint'] });
+    expect(await runCode(callbacks, 'try { await tools.createSprint({ sprintId: 1 }) } catch (e) { return e.message }'))
+      .toMatchObject({ result: expect.stringContaining('Unknown or non-read tool "createSprint"') });
+    expect(await runCode(callbacks, 'try { await callTool("createSprint", { sprintId: 1 }) } catch (e) { return e.message }'))
+      .toMatchObject({ result: expect.stringContaining('Unknown or non-read tool "createSprint"') });
+  });
+
+  it('reports invalid arguments as an error the code can catch', async () => {
+    const { callbacks } = registerAll();
+
+    expect(await runCode(callbacks, 'try { await tools.getIssue({ sprintId: "x" }) } catch (e) { return e.message }'))
+      .toMatchObject({ result: expect.stringContaining('Invalid arguments for getIssue') });
+  });
+
+  it('is not registered with CODE_EXECUTION=off or ENABLED_TOOLS', () => {
+    expect(registerAll({ CODE_EXECUTION: 'off' }).gatewayNames).not.toContain('jira_runCode');
+    expect(registerAll({ ENABLED_TOOLS: 'getIssue' }).gatewayNames).not.toContain('jira_runCode');
+  });
+
+  it('keeps out a read tool whose annotations say it can change something', () => {
+    const fake = fakeServer();
+    const tools = createPolicyRegistrar(fake.server, catalog, resolveToolPolicy(catalog, {}, () => undefined));
+    tools.registerTool('getIssue', { annotations: { readOnlyHint: false } }, async () => ok('saved'));
+
+    expect(tools.codeTools()).toEqual([]);
   });
 });

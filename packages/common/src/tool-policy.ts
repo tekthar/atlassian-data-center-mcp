@@ -11,6 +11,8 @@ import type { ToolAnnotations } from '@modelcontextprotocol/server';
  * - `TOOL_GATEWAY`: on by default. Tools outside the selected toolsets are offered through three
  *   gateway tools (search, run read, run write) instead of being hidden; `off` hides them as before.
  *   The gateway is off while `ENABLED_TOOLS` is set, and never offers destructive tools.
+ * - `CODE_EXECUTION`: on by default. Adds a tool that runs JavaScript in a sandbox, where it can call
+ *   the read tools the server offers. `off` removes it; it is also off while `ENABLED_TOOLS` is set.
  * - `PERMISSION_FILTER`: on by default. A server that can read the user's permissions at startup
  *   also hides tools the user could never run successfully; `off` turns that check off.
  *
@@ -50,6 +52,8 @@ export interface ToolPolicy {
   enabledTools: ReadonlySet<string> | null;
   /** Toolsets whose unselected tools are offered through the gateway; absent means no gateway. */
   gatewayToolsets?: ReadonlySet<string>;
+  /** Offer the sandboxed code tool; absent means off. */
+  codeExecution?: boolean;
   /** Set by servers that read the user's permissions at startup; absent means no permission filtering. */
   permissionCheck?: PermissionCheck;
 }
@@ -59,6 +63,7 @@ export const READ_ONLY_ENV_VAR = 'READ_ONLY_MODE';
 export const ENABLED_TOOLS_ENV_VAR = 'ENABLED_TOOLS';
 export const PERMISSION_FILTER_ENV_VAR = 'PERMISSION_FILTER';
 export const TOOL_GATEWAY_ENV_VAR = 'TOOL_GATEWAY';
+export const CODE_EXECUTION_ENV_VAR = 'CODE_EXECUTION';
 
 type Env = Record<string, string | undefined>;
 type Warn = (message: string) => void;
@@ -119,6 +124,7 @@ export function resolveToolPolicy(catalog: ToolCatalog, env: Env = process.env, 
     readOnly: isTruthy(env[READ_ONLY_ENV_VAR]),
     enabledTools: enabledTools.length > 0 ? new Set(enabledTools) : null,
     gatewayToolsets: new Set(gatewayOn ? gatewayToolsetNames(catalog) : []),
+    codeExecution: enabledTools.length === 0 && !isFalsy(env[CODE_EXECUTION_ENV_VAR]),
   };
 }
 

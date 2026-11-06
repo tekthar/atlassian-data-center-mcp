@@ -1,4 +1,5 @@
 import type { McpServer, RegisteredTool, StandardSchemaWithJSON, ToolAnnotations, ToolCallback } from '@modelcontextprotocol/server';
+import { codeToolName, registerCodeTool } from './code-tool.js';
 import { registerGatewayTools } from './gateway-tools.js';
 import { createToolGateway, type GatewayOperation } from './tool-gateway.js';
 import { annotationsFor, isGatewayTool, isHiddenByPermission, isToolAllowed, type ToolCatalog, type ToolPolicy } from './tool-policy.js';
@@ -29,7 +30,12 @@ export interface PolicyRegistrar {
 export interface ServerToolRegistrar extends PolicyRegistrar {
   /** Tools offered through the gateway so far, in registration order. */
   gatewayTools(): string[];
-  /** Call once after every tool is registered; registers the gateway tools if any tool went to the gateway. */
+  /** Read tools that sandboxed code may call, in registration order. */
+  codeTools(): string[];
+  /**
+   * Call once after every tool is registered. Registers the gateway tools if any tool went to the
+   * gateway, and the code tool if the policy allows it. Returns the names registered.
+   */
   registerGatewayTools(options: { prefix: string; product: string }): string[];
 }
 
@@ -37,6 +43,10 @@ export function createPolicyRegistrar(server: McpServer, catalog: ToolCatalog, p
   const registered: string[] = [];
   const hidden: string[] = [];
   const gateway = createToolGateway();
+  const codeCallable = createToolGateway();
+  const offerToCode = (operation: GatewayOperation, annotations: ToolAnnotations) => {
+    if (policy.codeExecution && operation.access === 'read' && annotations.readOnlyHint !== false) codeCallable.add(operation);
+  };
 
   return {
     registerTool(name, config, cb) {
@@ -44,14 +54,18 @@ export function createPolicyRegistrar(server: McpServer, catalog: ToolCatalog, p
       if (!entry) {
         throw new Error(`Tool "${name}" is missing from the tool catalog. Add it with a toolset and an access level.`);
       }
+      const annotations = { ...annotationsFor(entry.access), ...config.annotations };
+      const operation: GatewayOperation = {
+        name, toolset: entry.toolset, access: entry.access, description: config.description ?? '', inputSchema: config.inputSchema, cb: cb as GatewayOperation['cb'],
+      };
       if (isToolAllowed(name, entry, policy)) {
         registered.push(name);
-        const annotations = { ...annotationsFor(entry.access), ...config.annotations };
+        offerToCode(operation, annotations);
         return server.registerTool(name, { ...config, annotations }, cb);
       }
       if (isGatewayTool(name, entry, policy)) {
-        const { description = '', inputSchema } = config;
-        gateway.add({ name, toolset: entry.toolset, access: entry.access, description, inputSchema, cb: cb as GatewayOperation['cb'] });
+        gateway.add(operation);
+        offerToCode(operation, annotations);
       } else if (isHiddenByPermission(name, entry, policy)) {
         hidden.push(name);
       }
@@ -60,6 +74,11 @@ export function createPolicyRegistrar(server: McpServer, catalog: ToolCatalog, p
     registeredTools: () => [...registered],
     hiddenByPermission: () => [...hidden],
     gatewayTools: () => gateway.operations().map((operation) => operation.name),
-    registerGatewayTools: (options) => registerGatewayTools(server, gateway, { ...options, toolsets: catalog.toolsets }),
+    codeTools: () => codeCallable.operations().map((operation) => operation.name),
+    registerGatewayTools(options) {
+      const codeTool = codeCallable.operations().length > 0 ? codeToolName(options.prefix) : undefined;
+      const names = registerGatewayTools(server, gateway, { ...options, toolsets: catalog.toolsets, codeTool });
+      return codeTool ? [...names, registerCodeTool(server, codeCallable, options)] : names;
+    },
   };
 }
