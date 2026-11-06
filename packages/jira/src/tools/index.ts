@@ -13,7 +13,7 @@ interface JiraToolModule {
   register: (tools: PolicyRegistrar, context: JiraToolContext) => void;
 }
 
-/** Tool modules beyond the original b1ff set, each with its own catalog fragment. */
+/** Tool modules beyond the core tools in index.ts, each with its own catalog fragment. */
 const MODULES: JiraToolModule[] = [
   { catalog: ISSUE_MANAGEMENT_CATALOG, register: registerIssueManagementTools },
   { catalog: USERS_CATALOG, register: registerUserTools },

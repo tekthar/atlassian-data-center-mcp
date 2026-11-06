@@ -58,7 +58,7 @@ Atlassian's service desk app. Its tools are the `jira_service_desk` toolset, whi
 
 | | |
 |---|---|
-| Built from | Ported from [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian); the app version wasn't recorded |
+| Built from | Adapted from [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian); the app version wasn't recorded |
 | REST API used | `/rest/servicedeskapi` |
 | Tools | 6 |
 | Detection | None: the toolset is listed when you turn it on, and a call explains a 404 when the app isn't installed |

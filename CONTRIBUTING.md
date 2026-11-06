@@ -10,11 +10,9 @@ Questions, ideas and bug reports are welcome as [issues](https://github.com/tekt
 - **Reviews:** every pull request needs a maintainer's approval, and CI (build, bundle and tests on Ubuntu and Windows, CodeQL and dependency review) must pass. The pull request template lists what reviewers check.
 - **Jira apps:** to ask for an app, or to report how a supported app works with your version, use the **Jira app support** issue form. Testing tools against a live instance is one of the most useful contributions.
 
-## Where this code comes from
+## Project basics
 
-This repository is Tekthar's fork of [b1ff/atlassian-dc-mcp](https://github.com/b1ff/atlassian-dc-mcp), started from upstream PR #107 (MCP SDK v2). It adds the Data Center tools of [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian), toolsets and read-only filtering, the Jira permission filter, the tool gateway and code execution.
-
-- **Upstream fixes:** the `upstream` remote is b1ff/atlassian-dc-mcp. Merge fixes from there.
+- **Credits:** parts of the code come from two MIT-licensed projects, [b1ff/atlassian-dc-mcp](https://github.com/b1ff/atlassian-dc-mcp) and [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian). Their notices in [LICENSE](LICENSE) must stay, and a tool ported from sooperset/mcp-atlassian keeps a comment naming what it was ported from.
 - **CI:** `.github/workflows/ci.yml` builds, bundles and tests on Ubuntu and Windows. `.github/workflows/release.yml` publishes to npm and the MCP Registry (see [Releasing](#releasing)).
 - **Code style:** [CLAUDE.md](CLAUDE.md) and [AI-CONVENTIONS.md](AI-CONVENTIONS.md) have the conventions every change follows.
 
@@ -140,9 +138,9 @@ npm auth is [trusted publishing](https://docs.npmjs.com/trusted-publishers): eac
 | Confluence | `mcp-confluence-dc` | `io.github.tekthar/mcp-confluence-dc` |
 | Bitbucket | `mcp-bitbucket-dc` | `io.github.tekthar/mcp-bitbucket-dc` |
 
-Configuration files are shared with upstream (`~/.atlassian-dc-mcp/*.env`), so moving from the upstream packages means changing only the package name in the MCP client config. Each package's own README (published to npm) credits both projects, and their MIT notices ship in each package's `LICENSE`, copied from the root `LICENSE` at bundle time.
+The servers read `~/.atlassian-dc-mcp/<product>.env`, the same files the `@atlassian-dc-mcp/*` packages use, so switching from those packages means changing only the package name in the MCP client config. The MIT notices ship in each package's `LICENSE`, copied from the root `LICENSE` at bundle time.
 
-**How common ships:** `@atlassian-dc-mcp/common` is a private workspace and is never published. That npm scope belongs to upstream, so depending on it would install their shared code instead of ours. Each server's `prepack` script builds the workspace and runs `scripts/bundle-server.mjs`, which writes `dist/` with common inlined and every npm dependency left external. The bundle script stops if a server doesn't list one of common's runtime dependencies.
+**How common ships:** `@atlassian-dc-mcp/common` is a private workspace and is never published. That npm scope belongs to another project, so depending on it would install their shared code instead of ours. Each server's `prepack` script builds the workspace and runs `scripts/bundle-server.mjs`, which writes `dist/` with common inlined and every npm dependency left external. The bundle script stops if a server doesn't list one of common's runtime dependencies.
 
 **To try a package before it is published:**
 

@@ -8,7 +8,7 @@ import { JIRA_MODULES_CATALOG } from './tools/index.js';
  * others are offered through the tool gateway (jira_searchTools) unless TOOL_GATEWAY=off.
  * A tool registered without an entry here fails at startup.
  */
-/** The tools b1ff/atlassian-dc-mcp shipped; registered directly in index.ts. */
+/** The core tools, registered directly in index.ts. */
 export const JIRA_CORE_CATALOG: ToolCatalog = {
   toolsets: {
     jira_issues: { description: 'Search, read, create and update issues', default: true },

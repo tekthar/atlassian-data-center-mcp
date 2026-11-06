@@ -7,11 +7,13 @@
 [![License: MIT](https://img.shields.io/github/license/tekthar/atlassian-data-center-mcp.svg)](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/LICENSE)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/tekthar/atlassian-data-center-mcp/badge)](https://scorecard.dev/viewer/?uri=github.com/tekthar/atlassian-data-center-mcp)
 
-**Your Jira, Confluence and Bitbucket Data Center, ready for AI agents, without flooding their context.**
+**The leading MCP for Atlassian Data Center, built for AI-first companies that run Jira, Confluence and Bitbucket on
+their own servers.**
 
-Three [Model Context Protocol](https://modelcontextprotocol.io) (MCP) servers that let Claude, Cursor and any other MCP
-client work in your self-hosted Atlassian tools: search and update issues, read and write pages, review pull requests.
-Each is one `npx` command. Your agent signs in with your personal access token, so it can do what you can, and nothing
+Your teams chose Data Center for control over their data. They shouldn't have to give up the best AI models to keep
+it. Three [Model Context Protocol](https://modelcontextprotocol.io) (MCP) servers let Claude, Cursor and any other MCP
+client work in your self-hosted Atlassian tools: search and update issues, read and write pages, review pull requests,
+without flooding the model's context. Each is one `npx` command. Your agent signs in with your personal access token, so it can do what you can, and nothing
 more.
 
 ```bash
@@ -310,7 +312,7 @@ Running a supported Jira app's tools against your own instance is one of the mos
 moves an app from Beta to Tested. The **Jira app support** issue form asks for what we need.
 
 Thank you to [everyone who has contributed](https://github.com/tekthar/atlassian-data-center-mcp/graphs/contributors),
-including the contributors to the upstream project this one is forked from.
+and to the open-source projects this one builds on.
 
 ```
 packages/jira/          mcp-jira-dc
@@ -334,9 +336,9 @@ npm test
 
 MIT licence.
 
-This project is Tekthar's fork of [b1ff/atlassian-dc-mcp](https://github.com/b1ff/atlassian-dc-mcp), and its Data
-Center tools are adapted from [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian). Both are MIT
-licensed, and their notices are in [LICENSE](LICENSE). Thank you to both. It is built on the official
+Parts of the code come from two MIT-licensed projects, [b1ff/atlassian-dc-mcp](https://github.com/b1ff/atlassian-dc-mcp)
+and [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian). Their notices are in [LICENSE](LICENSE).
+Thank you to both. It is built on the official
 [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) and
 [quickjs-emscripten](https://github.com/justjake/quickjs-emscripten), and maintained by
 [Tekthar](https://github.com/tekthar).
