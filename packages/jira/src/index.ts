@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { connectServer, createMcpServer, formatAttachmentToolResponse, formatToolResponse, createPolicyRegistrar, initializeRuntimeConfig, resolveAttachmentGateway, resolveToolPolicy } from '@atlassian-dc-mcp/common';
+import { connectServer, createMcpServer, formatAttachmentToolResponse, formatToolResponse, createPolicyRegistrar, initializeRuntimeConfig, redactStderr, resolveAttachmentGateway, resolveToolPolicy } from '@atlassian-dc-mcp/common';
 import { JiraService, jiraToolSchemas } from './jira-service.js';
 import { isVersionDeleteEnabled } from './jira-versions.js';
 import { getDefaultPageSize, getJiraRuntimeConfig, JIRA_PRODUCT } from './config.js';
@@ -12,6 +12,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { version } = require('../package.json');
 
+redactStderr();
 initializeRuntimeConfig();
 
 const missingEnvVars = JiraService.validateConfig();

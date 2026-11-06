@@ -52,7 +52,8 @@
     "@modelcontextprotocol/server": "2.4.0",
     "@inquirer/prompts": "7.10.1",
     "@jitl/quickjs-wasmfile-release-sync": "0.32.0",
-    "quickjs-emscripten-core": "0.32.0"
+    "quickjs-emscripten-core": "0.32.0",
+    "@napi-rs/keyring": "2.1.2"
   },
   "devDependencies": {
     "@atlassian-dc-mcp/common": "0.43.2"

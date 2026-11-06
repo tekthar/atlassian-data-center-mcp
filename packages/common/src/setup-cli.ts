@@ -7,7 +7,7 @@ import type {
   WritableSource,
 } from './config/source.js';
 import { HomeFileSource, getHomeFilePath } from './config/sources/home-file.js';
-import { MacosKeychainSource } from './config/sources/macos-keychain.js';
+import { OsKeychainSource } from './config/sources/os-keychain.js';
 import { parseSetupArgs, printSetupHelp, SetupArgsError, type ParsedSetupArgs } from './setup/args.js';
 import { SetupValueValidator } from './setup/value-validator.js';
 
@@ -444,7 +444,7 @@ async function writeToken(
   }
 
   const keychain = registry.getWritableSource(
-    (s): s is MacosKeychainSource => s instanceof MacosKeychainSource,
+    (s): s is OsKeychainSource => s instanceof OsKeychainSource,
   );
   const candidates: WritableSource[] = [];
   if (keychain?.isAvailable()) {
@@ -457,7 +457,7 @@ async function writeToken(
   for (const writer of candidates) {
     const written = await tryWrite(writer, product, token, log, prompts);
     if (written) {
-      if (writer instanceof MacosKeychainSource) {
+      if (writer instanceof OsKeychainSource) {
         homeFile.clear(product, 'token');
       }
       return writer;
@@ -482,9 +482,9 @@ async function tryWrite(
     if (stderr) {
       log(stderr.trim());
     }
-    if (writer instanceof MacosKeychainSource) {
+    if (writer instanceof OsKeychainSource) {
       const fallback = await prompts.confirm({
-        message: 'Fall back to plaintext home file with mode 0600?',
+        message: 'Save the token in the home file instead, readable only by you?',
         default: false,
       });
       if (fallback) {
@@ -544,8 +544,8 @@ function printSummary(
 }
 
 function describeWriter(writer: WritableSource, product: ProductDefinition): string {
-  if (writer instanceof MacosKeychainSource) {
-    return `macOS Keychain (service atlassian-dc-mcp, account ${product.id}-token)`;
+  if (writer instanceof OsKeychainSource) {
+    return writer.describeForProduct(product);
   }
   if (writer instanceof HomeFileSource) {
     return writer.describeForProduct(product);

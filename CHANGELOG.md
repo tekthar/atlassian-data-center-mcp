@@ -5,6 +5,12 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ## Unreleased
 
+### Security
+
+* **credentials:** `setup` stores the token in Windows Credential Manager on Windows and in the desktop keyring (Secret Service) on Linux, as it already did in the macOS Keychain. On Linux the token is never put in the kernel keyring, which is cleared at every reboot: without a Secret Service, it stays in the home file. Run `setup` again to move an existing token into the keychain. `ATLASSIAN_DC_MCP_KEYCHAIN=off` keeps the keychain out of it.
+* **credentials:** on Windows, the home file is limited to your account (`icacls`), instead of inheriting the profile folder's permissions. `setup` doesn't save the token in a file it couldn't limit.
+* **credentials:** each server masks its token in every tool result and in everything written to stderr, including a token an error message echoes back.
+
 ### Features
 
 * **jira apps:** the Jira server can now use Jira apps from the Atlassian Marketplace. An app's tools are offered only when it is installed: at startup the server makes one request per app to check, in parallel with the permission check, and skips it when no app tool could be offered. `JIRA_APPS` names apps to offer without checking, or `off` turns apps off. App toolsets are off by default and reached through the tool search.

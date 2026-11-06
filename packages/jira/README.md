@@ -20,7 +20,7 @@ claude mcp add jira -- npx -y mcp-jira-dc   # connects Claude Code
 |---|---|---|
 | Works with Jira Data Center and Server | depends on the service | **yes** |
 | Reaches a Jira behind your firewall or VPN | only if Jira is exposed to the service | **yes**: wherever your machine can reach |
-| Where your token lives | with the service | **on your machine**: macOS Keychain, or a file only your user can read |
+| Where your token lives | with the service | **on your machine**: your OS keychain, or a file only your user can read |
 | Hides tools your account can't use | depends on the service | **yes**: reads your Jira permissions at startup |
 | Who decides which tools the agent sees | the service | **you**, with a few settings |
 | Something to host, approve or pay for | the service | **nothing**: `npx` runs it |
@@ -39,8 +39,10 @@ your profile picture in Jira, then **Personal Access Tokens** > **Create token**
 npx -y mcp-jira-dc setup
 ```
 
-On macOS the token goes to the Keychain. Everything else goes to `~/.atlassian-dc-mcp/jira.env`
-(`%USERPROFILE%\.atlassian-dc-mcp\jira.env` on Windows), which only your user can read.
+The token goes to your OS keychain: the macOS Keychain, Windows Credential Manager, or on Linux the desktop
+keyring (GNOME Keyring or KWallet). Everything else goes to `~/.atlassian-dc-mcp/jira.env`
+(`%USERPROFILE%\.atlassian-dc-mcp\jira.env` on Windows), which only your user can read. Without a keychain, such as
+on a Linux server, the token goes in that file too.
 
 **2. Connect your client.** Claude Code:
 
@@ -155,8 +157,8 @@ from an execution deletes its results.
 ## Settings
 
 Every setting is an environment variable. Each comes from the first of these that has it: the environment, the dotenv
-file (`ATLASSIAN_DC_MCP_CONFIG_FILE`, or `.env` in the working directory), the file `setup` writes, then the macOS
-Keychain.
+file (`ATLASSIAN_DC_MCP_CONFIG_FILE`, or `.env` in the working directory), the file `setup` writes, then the OS
+keychain.
 
 **Connecting**
 
@@ -168,6 +170,7 @@ Keychain.
 | `JIRA_DEFAULT_PAGE_SIZE` | Page size for list tools. Default 25. |
 | `ATLASSIAN_DC_MCP_CONFIG_FILE` | Absolute path to a dotenv file with any of these settings, e.g. one file shared by several servers. |
 | `ATLASSIAN_DC_MCP_REQUEST_TIMEOUT_MS` | How long a request to Jira may take. Default 30000. |
+| `ATLASSIAN_DC_MCP_KEYCHAIN` | `off` keeps the token out of the OS keychain: `setup` saves it in the file instead, and the server doesn't look in the keychain. |
 
 **Choosing tools**
 

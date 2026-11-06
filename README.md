@@ -42,8 +42,9 @@ more when it needs them, and a sandbox where it can combine many reads into one 
   first. Scripts can only read, and deleting always needs a setting you turn on.
 - **Locked down when you need it**: read-only mode, an exact tool allowlist, merges only on the repositories and target
   branches you name, and attachments only inside folders you name.
-- **Credentials in the right place**: `setup` checks your token against the server, then stores it in the macOS
-  Keychain, or in a file only your user can read.
+- **Credentials in the right place**: `setup` checks your token against the server, then stores it in your OS keychain
+  (macOS Keychain, Windows Credential Manager, or the Linux desktop keyring), or in a file only your user can read.
+  The token is masked in everything the servers write.
 
 ## Why run it on your machine?
 
@@ -53,7 +54,7 @@ browser does.
 | | A hosted MCP connector | **These servers** |
 |---|---|---|
 | Reaches instances behind your firewall or VPN | only if the instance is exposed to the service | **yes**: wherever your machine can reach |
-| Where your token lives | with the service | **on your machine**: macOS Keychain, or a file only your user can read |
+| Where your token lives | with the service | **on your machine**: your OS keychain, or a file only your user can read |
 | Who decides which tools the agent sees | the service | **you**, with a few settings |
 | Something to host, approve or pay for | the service | **nothing**: `npx` runs it |
 

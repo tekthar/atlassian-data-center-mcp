@@ -108,7 +108,7 @@ BITBUCKET_API_BASE_PATH=https://jira.example.com/rest
 BITBUCKET_API_TOKEN=your-api-token
 ```
 
-Resolution order for each key is `process.env` → `ATLASSIAN_DC_MCP_CONFIG_FILE` (or `./.env`) → home file (`~/.atlassian-dc-mcp/<product>.env` on macOS/Linux, `%USERPROFILE%\.atlassian-dc-mcp\<product>.env` on Windows) → macOS Keychain. See the [configuration reference](docs/configuration.md#configuration-sources--precedence).
+Resolution order for each key is `process.env` → `ATLASSIAN_DC_MCP_CONFIG_FILE` (or `./.env`) → home file (`~/.atlassian-dc-mcp/<product>.env` on macOS/Linux, `%USERPROFILE%\.atlassian-dc-mcp\<product>.env` on Windows) → OS keychain. See the [configuration reference](docs/configuration.md#configuration-sources--precedence).
 
 ### Before you open a pull request
 

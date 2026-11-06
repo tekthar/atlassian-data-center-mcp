@@ -1,6 +1,6 @@
 export type ConfigKey = 'host' | 'apiBasePath' | 'token' | 'defaultPageSize';
 
-export type SourceId = 'process-env' | 'env-file' | 'home-file' | 'macos-keychain';
+export type SourceId = 'process-env' | 'env-file' | 'home-file' | 'os-keychain';
 
 export type SourceLocation = { sourceId: SourceId; detail?: string };
 

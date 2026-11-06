@@ -10,6 +10,7 @@ export * from './code-tool.js';
 export * from './config/index.js';
 export * from './gateway-tools.js';
 export * from './path-encoding.js';
+export * from './redact.js';
 export * from './policy-registrar.js';
 export * from './recording-registrar.js';
 export * from './tool-gateway.js';

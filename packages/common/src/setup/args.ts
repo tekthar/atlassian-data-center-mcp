@@ -77,7 +77,7 @@ export function printSetupHelp(productId: string, log: (message: string) => void
     '',
     'In interactive mode (default), any value not passed as a flag is collected via prompts.',
     'In --non-interactive mode, missing values fall back to existing configuration',
-    `(process env, ~/.atlassian-dc-mcp/${productId}.env, or macOS Keychain), and the run`,
+    `(process env, ~/.atlassian-dc-mcp/${productId}.env, or the OS keychain), and the run`,
     'fails if a host (or full-URL --api-base-path) and token cannot be resolved.',
     'An existing token is reused when --token is omitted.',
   ];
