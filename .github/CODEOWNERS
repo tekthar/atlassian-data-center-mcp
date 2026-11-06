@@ -1,0 +1,8 @@
+# Every change needs a review from a maintainer. With branch protection's "Require review from Code
+# Owners", these owners must approve pull requests that touch the matching paths.
+*                       @ak-itani
+
+# Release, publishing and security settings.
+/.github/               @ak-itani
+/scripts/               @ak-itani
+/SECURITY.md            @ak-itani

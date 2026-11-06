@@ -10,6 +10,12 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 * **jira apps:** the Jira server can now use Jira apps from the Atlassian Marketplace. An app's tools are offered only when it is installed: at startup the server makes one request per app to check, in parallel with the permission check, and skips it when no app tool could be offered. `JIRA_APPS` names apps to offer without checking, or `off` turns apps off. App toolsets are off by default and reached through the tool search.
 * **xray:** 15 tools for Xray test management in five toolsets: tests, test executions, test plans, test sets and test runs. Read tests, steps and relations; list and add tests to executions, plans and sets; read, search and record test runs. Paths and request bodies come from the Xray 8.6 Data Center app's own REST resources.
 
+### Project
+
+* a security policy ([SECURITY.md](SECURITY.md)) with private vulnerability reporting, a [Code of Conduct](CODE_OF_CONDUCT.md), issue forms for bugs, features and Jira app support, a pull request template and code owners
+* CodeQL code scanning, dependency review on pull requests, the OpenSSF Scorecard, and Dependabot for npm and GitHub Actions with a 7-day cooldown
+* every GitHub Action is pinned to a commit SHA, checkouts don't keep the token, and CI runs with read-only permissions
+
 ## [0.45.0](https://github.com/tekthar/atlassian-data-center-mcp/releases/tag/v0.45.0) (2026-11-06)
 
 Jira and Confluence list fewer tools and reach more: everyday tools are listed directly, the rest are one search away, and a sandbox lets the model combine many reads into one answer. The default Jira tool list changes; see **Breaking changes** to keep the old one.

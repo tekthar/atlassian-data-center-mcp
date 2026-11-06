@@ -1,0 +1,50 @@
+name: Feature request
+description: A tool, setting or behaviour you'd like a server to have.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        To ask for support for a Jira app such as a test management or time tracking app, use the **Jira app support** form instead.
+
+  - type: dropdown
+    id: server
+    attributes:
+      label: Server
+      options:
+        - mcp-jira-dc
+        - mcp-confluence-dc
+        - mcp-bitbucket-dc
+        - All of them
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What do you want the agent to be able to do?
+      description: The task, in your own words. "Ask which pull requests are waiting for my review" beats "add a tool for X".
+    validations:
+      required: true
+
+  - type: textarea
+    id: today
+    attributes:
+      label: What happens today
+      description: What the agent does now, or how you work around it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Your idea, if you have one
+      description: A tool name and arguments, a setting, or the REST endpoint that would do it.
+
+  - type: checkboxes
+    id: confirms
+    attributes:
+      label: Before you submit
+      options:
+        - label: I searched the [open issues](https://github.com/tekthar/atlassian-data-center-mcp/issues) and didn't find this one.
+          required: true

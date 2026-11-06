@@ -1,0 +1,51 @@
+version: 2
+updates:
+  # npm dependencies of every workspace, through the root package-lock.json. The cooldown matches
+  # .npmrc's min-release-age=7: a release must be a week old before we take it.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    ignore:
+      # The servers support Node 22 and later, so the Node types stay on 22: newer ones would let code
+      # use APIs that Node 22 doesn't have.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+    groups:
+      # The MCP SDK packages are released together; take them together.
+      mcp-sdk:
+        patterns:
+          - "@modelcontextprotocol/*"
+      # The code sandbox's engine and its WebAssembly build share one version.
+      quickjs:
+        patterns:
+          - "quickjs-emscripten-core"
+          - "@jitl/*"
+      dev-tooling:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # GitHub Actions, pinned by commit SHA in every workflow; Dependabot updates the SHA and its version comment.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      actions:
+        patterns:
+          - "*"

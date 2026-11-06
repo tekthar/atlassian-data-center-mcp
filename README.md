@@ -5,6 +5,7 @@
 [![mcp-bitbucket-dc on npm](https://img.shields.io/npm/v/mcp-bitbucket-dc.svg?label=mcp-bitbucket-dc&logo=npm)](https://www.npmjs.com/package/mcp-bitbucket-dc)
 [![CI](https://github.com/tekthar/atlassian-data-center-mcp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tekthar/atlassian-data-center-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/github/license/tekthar/atlassian-data-center-mcp.svg)](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/LICENSE)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/tekthar/atlassian-data-center-mcp/badge)](https://scorecard.dev/viewer/?uri=github.com/tekthar/atlassian-data-center-mcp)
 
 **Your Jira, Confluence and Bitbucket Data Center, ready for AI agents, without flooding their context.**
 
@@ -270,6 +271,11 @@ tests run on every pull request, on Ubuntu and on Windows:
   dependency fails the build, not your install.
 - **Careful with dependencies**: every version is pinned exactly, new releases must be at least seven days old before we
   take them, and npm packages are published from CI with npm trusted publishing, with no long-lived token.
+- **Scanned for security problems**: CodeQL checks the code and the workflows on every pull request, dependency review
+  blocks a pull request that adds a dependency with a known vulnerability, Dependabot keeps dependencies and actions
+  current, every action is pinned to a commit, and the [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/tekthar/atlassian-data-center-mcp)
+  tracks the project against open-source security practices. [SECURITY.md](SECURITY.md) explains how to report a
+  problem.
 
 ## Documentation
 
@@ -296,7 +302,15 @@ changes, and the changelog describes them. Coming next:
 ## Have a question? Want to help?
 
 Questions, ideas and bug reports are welcome as [issues](https://github.com/tekthar/atlassian-data-center-mcp/issues). To contribute
-code or docs, read the [contributing guide](CONTRIBUTING.md) first.
+code or docs, read the [contributing guide](CONTRIBUTING.md) first; everyone taking part follows the
+[Code of Conduct](CODE_OF_CONDUCT.md). Please report security problems through
+[private reporting](SECURITY.md), not in public issues.
+
+Running a supported Jira app's tools against your own instance is one of the most useful contributions: it's what
+moves an app from Beta to Tested. The **Jira app support** issue form asks for what we need.
+
+Thank you to [everyone who has contributed](https://github.com/tekthar/atlassian-data-center-mcp/graphs/contributors),
+including the contributors to the upstream project this one is forked from.
 
 ```
 packages/jira/          mcp-jira-dc

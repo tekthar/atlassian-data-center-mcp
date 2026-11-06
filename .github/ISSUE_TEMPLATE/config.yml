@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/tekthar/atlassian-data-center-mcp/security/advisories/new
+    about: Please don't open a public issue for a security problem. Report it privately here.
+  - name: A problem in Jira, Confluence or Bitbucket itself
+    url: https://support.atlassian.com/
+    about: Bugs in the Atlassian products, as opposed to these servers, belong with Atlassian support.

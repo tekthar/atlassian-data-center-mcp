@@ -1,0 +1,58 @@
+name: Jira app support
+description: Ask for tools for a Marketplace app, or report how a supported app works with your version.
+labels: ["enhancement", "jira-app"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists the apps with tools today and the versions they were built from.
+        Apps are marked **Beta** until someone runs the tools against a live instance, so a report that a supported app works with your version is just as useful as a request for a new one.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What is this about?
+      options:
+        - Support for an app that isn't supported yet
+        - A supported app works with my version
+        - A supported app doesn't work with my version
+    validations:
+      required: true
+
+  - type: input
+    id: app
+    attributes:
+      label: App
+      description: Its name and Marketplace link.
+      placeholder: "Xray, https://marketplace.atlassian.com/apps/..."
+    validations:
+      required: true
+
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: The app's version and your Jira, Confluence or Bitbucket version. Your administrator sees app versions under Administration > Manage apps.
+      placeholder: "Xray 8.6.0 on Jira Data Center 10.3.4"
+    validations:
+      required: true
+
+  - type: textarea
+    id: tasks
+    attributes:
+      label: What should the agent be able to do with it?
+      description: For a new app, the tasks you'd hand to an agent. For a supported app, what you tried and what happened.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: testing
+    attributes:
+      label: Could you try tools against your instance?
+      description: Running new tools against a live instance is what moves an app from Beta to Tested.
+      options:
+        - "Yes"
+        - "Maybe"
+        - "No"
+    validations:
+      required: true

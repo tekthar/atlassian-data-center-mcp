@@ -4,6 +4,12 @@ Thanks for helping. This guide is for people changing the code. To use the serve
 
 Questions, ideas and bug reports are welcome as [issues](https://github.com/tekthar/atlassian-data-center-mcp/issues). For a larger change, open an issue first so we can agree on the approach before you write it.
 
+- **Code of conduct:** everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).
+- **Security problems:** please don't open a public issue. [SECURITY.md](SECURITY.md) explains how to report one privately.
+- **Licence:** contributions are accepted under the project's [MIT licence](LICENSE). By opening a pull request, you agree that your change is released under it.
+- **Reviews:** every pull request needs a maintainer's approval, and CI (build, bundle and tests on Ubuntu and Windows, CodeQL and dependency review) must pass. The pull request template lists what reviewers check.
+- **Jira apps:** to ask for an app, or to report how a supported app works with your version, use the **Jira app support** issue form. Testing tools against a live instance is one of the most useful contributions.
+
 ## Where this code comes from
 
 This repository is Tekthar's fork of [b1ff/atlassian-dc-mcp](https://github.com/b1ff/atlassian-dc-mcp), started from upstream PR #107 (MCP SDK v2). It adds the Data Center tools of [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian), toolsets and read-only filtering, the Jira permission filter, the tool gateway and code execution.
