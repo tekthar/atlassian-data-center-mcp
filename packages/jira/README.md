@@ -124,12 +124,20 @@ The tool search never offers a destructive tool. To use one, turn on its toolset
 
 ## Jira apps
 
-The server also works with Jira apps from the Atlassian Marketplace. An app's tools are offered only when the app is
-installed: at startup the server makes one request to check, and leaves the app out if it isn't there. App toolsets
-are off by default, so their tools are reached through `jira_searchTools` and cost nothing until used.
+The server also works with Jira apps from the Atlassian Marketplace. Xray's tools are offered only when Xray is
+installed: at startup the server makes one request to check, and leaves Xray out if it isn't there. Its toolsets are
+off by default, so its tools are reached through `jira_searchTools` and cost nothing until used. Jira Service
+Management's tools are the `jira_service_desk` toolset in [Toolsets](#toolsets), which you turn on with `TOOLSETS`.
 
-**Xray**, test management. Written
-against Xray 8.6 for Data Center.
+| App | Versions | Status |
+|---|---|---|
+| Xray, test management | 8 | Beta |
+| Jira Service Management | not recorded | Beta |
+
+Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists the
+exact versions each app's tools were built from and how they were checked.
+
+**Xray** tools:
 
 | Toolset | Tools |
 |---|---|
@@ -216,6 +224,6 @@ server. Their copyright notices are in [LICENSE](LICENSE).
 
 ## License
 
-MIT. Part of [Atlassian Data Center MCP](https://github.com/tekthar/jira-dc-mcp), with
+MIT. Part of [Atlassian Data Center MCP](https://github.com/tekthar/atlassian-data-center-mcp), with
 [mcp-confluence-dc](https://www.npmjs.com/package/mcp-confluence-dc) and
 [mcp-bitbucket-dc](https://www.npmjs.com/package/mcp-bitbucket-dc).

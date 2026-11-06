@@ -29,12 +29,12 @@
   "private": false,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tekthar/jira-dc-mcp.git",
+    "url": "git+https://github.com/tekthar/atlassian-data-center-mcp.git",
     "directory": "packages/confluence"
   },
-  "homepage": "https://github.com/tekthar/jira-dc-mcp#readme",
+  "homepage": "https://github.com/tekthar/atlassian-data-center-mcp#readme",
   "bugs": {
-    "url": "https://github.com/tekthar/jira-dc-mcp/issues"
+    "url": "https://github.com/tekthar/atlassian-data-center-mcp/issues"
   },
   "scripts": {
     "build": "tsc",

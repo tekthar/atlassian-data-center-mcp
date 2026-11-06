@@ -4,7 +4,7 @@ name: Release
 # Bump with `node scripts/set-version.js X.Y.Z`. Pushes that leave the version unchanged publish nothing.
 #
 # Keep this file's name and location. Each npm package trusts exactly
-# tekthar/jira-dc-mcp + .github/workflows/release.yml (no environment);
+# tekthar/atlassian-data-center-mcp + .github/workflows/release.yml (no environment);
 # renaming the file or the repository breaks publishing until npm is reconfigured.
 on:
   push:

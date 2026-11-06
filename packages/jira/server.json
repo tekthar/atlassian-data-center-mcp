@@ -3,7 +3,7 @@
   "name": "io.github.tekthar/mcp-jira-dc",
   "description": "MCP server for Jira Data Center and Jira Server",
   "repository": {
-    "url": "https://github.com/tekthar/jira-dc-mcp",
+    "url": "https://github.com/tekthar/atlassian-data-center-mcp",
     "source": "github"
   },
   "version": "0.45.0",

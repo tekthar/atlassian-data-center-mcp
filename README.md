@@ -3,8 +3,8 @@
 [![mcp-jira-dc on npm](https://img.shields.io/npm/v/mcp-jira-dc.svg?label=mcp-jira-dc&logo=npm)](https://www.npmjs.com/package/mcp-jira-dc)
 [![mcp-confluence-dc on npm](https://img.shields.io/npm/v/mcp-confluence-dc.svg?label=mcp-confluence-dc&logo=npm)](https://www.npmjs.com/package/mcp-confluence-dc)
 [![mcp-bitbucket-dc on npm](https://img.shields.io/npm/v/mcp-bitbucket-dc.svg?label=mcp-bitbucket-dc&logo=npm)](https://www.npmjs.com/package/mcp-bitbucket-dc)
-[![CI](https://github.com/tekthar/jira-dc-mcp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tekthar/jira-dc-mcp/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/github/license/tekthar/jira-dc-mcp.svg)](https://github.com/tekthar/jira-dc-mcp/blob/main/LICENSE)
+[![CI](https://github.com/tekthar/atlassian-data-center-mcp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tekthar/atlassian-data-center-mcp/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/github/license/tekthar/atlassian-data-center-mcp.svg)](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/LICENSE)
 
 **Your Jira, Confluence and Bitbucket Data Center, ready for AI agents, without flooding their context.**
 
@@ -66,6 +66,18 @@ Cloud. These servers are for Data Center and Server.
 | **Bitbucket** | [`mcp-bitbucket-dc`](https://www.npmjs.com/package/mcp-bitbucket-dc) | Browse projects, repositories, files, branches and commits, search code, and review and comment on pull requests. Merging and declining are opt-in. 27 tools plus 2 opt-in. |
 
 Install only the ones you use. They share one configuration format, so a single settings file can serve all three.
+
+## Supported Jira apps
+
+The Jira server also has tools for these Marketplace apps:
+
+| App | Versions | Status |
+|---|---|---|
+| Xray, test management | 8 | Beta |
+| Jira Service Management | not recorded | Beta |
+
+Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](docs/supported-apps.md) lists the
+exact versions each app's tools were built from and how they were checked.
 
 ## Install
 
@@ -266,6 +278,7 @@ tests run on every pull request, on Ubuntu and on Windows:
 | [Jira server](packages/jira/README.md) | Settings, the 18 toolsets, the permission filter, attachments, deleting versions |
 | [Confluence server](packages/confluence/README.md) | Settings, the 11 toolsets, attachments |
 | [Bitbucket server](packages/bitbucket/README.md) | Settings, the tools, allowing merges for named repositories |
+| [Supported apps](docs/supported-apps.md) | The Jira apps with tools, the exact versions they were built from, and how they were checked |
 | [Configuration reference](docs/configuration.md) | Every `setup` flag, where credentials are stored, the order settings are read in, full client configurations |
 | [Contributing](CONTRIBUTING.md) | Building and testing, how tool selection, the search and the sandbox work, releasing |
 | [Changelog](CHANGELOG.md) | What each release changed |
@@ -282,7 +295,7 @@ changes, and the changelog describes them. Coming next:
 
 ## Have a question? Want to help?
 
-Questions, ideas and bug reports are welcome as [issues](https://github.com/tekthar/jira-dc-mcp/issues). To contribute
+Questions, ideas and bug reports are welcome as [issues](https://github.com/tekthar/atlassian-data-center-mcp/issues). To contribute
 code or docs, read the [contributing guide](CONTRIBUTING.md) first.
 
 ```
@@ -313,9 +326,6 @@ licensed, and their notices are in [LICENSE](LICENSE). Thank you to both. It is 
 [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) and
 [quickjs-emscripten](https://github.com/justjake/quickjs-emscripten), and maintained by
 [Tekthar](https://github.com/tekthar).
-
-The npm package named `jira-dc-mcp` is a different project; ours are `mcp-jira-dc`, `mcp-confluence-dc` and
-`mcp-bitbucket-dc`.
 
 **Sister projects:** [abp-mcp](https://github.com/tekthar/abp-mcp), your ABP app, ready for AI agents, with the
 permissions you already have; and [CASL .NET](https://github.com/tekthar/casl-net), permissions you can read out loud,

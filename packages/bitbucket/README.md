@@ -84,6 +84,11 @@ To skip `setup`, put the settings in that entry instead:
 `bitbucket_getPR_CommentsAndAction` and `bitbucket_getPullRequestChanges` take `output=summary|compact|full`. The
 default is `compact`.
 
+## Supported apps
+
+No Bitbucket apps (Marketplace plugins) are supported yet. The Jira server, `mcp-jira-dc`, has tools for Xray and Jira
+Service Management; [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists them with the versions they were built from.
+
 ## Settings
 
 Every setting is an environment variable. Each comes from the first of these that has it: the environment, the dotenv
@@ -142,6 +147,6 @@ is in [LICENSE](LICENSE), together with those of the other projects this code sh
 
 ## License
 
-MIT. Part of [Atlassian Data Center MCP](https://github.com/tekthar/jira-dc-mcp), with
+MIT. Part of [Atlassian Data Center MCP](https://github.com/tekthar/atlassian-data-center-mcp), with
 [mcp-jira-dc](https://www.npmjs.com/package/mcp-jira-dc) and
 [mcp-confluence-dc](https://www.npmjs.com/package/mcp-confluence-dc).

@@ -10,7 +10,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 * **jira apps:** the Jira server can now use Jira apps from the Atlassian Marketplace. An app's tools are offered only when it is installed: at startup the server makes one request per app to check, in parallel with the permission check, and skips it when no app tool could be offered. `JIRA_APPS` names apps to offer without checking, or `off` turns apps off. App toolsets are off by default and reached through the tool search.
 * **xray:** 15 tools for Xray test management in five toolsets: tests, test executions, test plans, test sets and test runs. Read tests, steps and relations; list and add tests to executions, plans and sets; read, search and record test runs. Paths and request bodies come from the Xray 8.6 Data Center app's own REST resources.
 
-## [0.45.0](https://github.com/tekthar/jira-dc-mcp/releases/tag/v0.45.0) (2026-11-06)
+## [0.45.0](https://github.com/tekthar/atlassian-data-center-mcp/releases/tag/v0.45.0) (2026-11-06)
 
 Jira and Confluence list fewer tools and reach more: everyday tools are listed directly, the rest are one search away, and a sandbox lets the model combine many reads into one answer. The default Jira tool list changes; see **Breaking changes** to keep the old one.
 
@@ -37,7 +37,7 @@ Jira and Confluence list fewer tools and reach more: everyday tools are listed d
 * each server depends on `quickjs-emscripten-core` and `@jitl/quickjs-wasmfile-release-sync` (about 1.4 MB, WebAssembly, no native build). Bitbucket lists them too because it bundles the same shared code, though it has no code tool
 * the release waits for npm to serve a new version before registering it with the MCP Registry
 
-## [0.44.1](https://github.com/tekthar/jira-dc-mcp/releases/tag/v0.44.1) (2026-11-06)
+## [0.44.1](https://github.com/tekthar/atlassian-data-center-mcp/releases/tag/v0.44.1) (2026-11-06)
 
 First release from this repository's Release workflow, published with npm trusted publishing. The servers' code is unchanged from 0.44.0.
 
@@ -45,7 +45,7 @@ First release from this repository's Release workflow, published with npm truste
 
 * publish to npm, GitHub releases and the MCP Registry when a version bump is merged to `main`
 * remove the upstream Lerna release tooling; `scripts/set-version.js` sets the version of all three servers
-* point every package's repository, homepage and issue links at tekthar/jira-dc-mcp
+* point every package's repository, homepage and issue links at tekthar/atlassian-data-center-mcp
 
 ## [0.44.0](https://www.npmjs.com/package/mcp-jira-dc/v/0.44.0) (2026-11-06)
 
