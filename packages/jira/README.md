@@ -3,7 +3,8 @@
 **Connect Claude, Cursor and any other MCP client to Jira Data Center and Jira Server, signed in as you.**
 
 The server runs on your machine. Your MCP client starts it and talks to it over stdio; it calls Jira's REST API with
-your personal access token, lists the everyday issue tools, and keeps 43 more one search away. Jira's own permissions
+your personal access token, lists the everyday issue tools, and keeps 43 more one search away, plus the tools of
+supported Jira apps such as Xray when they're installed. Jira's own permissions
 decide what you can do: the server can hide tools, never unlock them.
 
 ```bash
@@ -121,6 +122,28 @@ the engine, only that run fails.
 
 The tool search never offers a destructive tool. To use one, turn on its toolset with `TOOLSETS`.
 
+## Jira apps
+
+The server also works with Jira apps from the Atlassian Marketplace. An app's tools are offered only when the app is
+installed: at startup the server makes one request to check, and leaves the app out if it isn't there. App toolsets
+are off by default, so their tools are reached through `jira_searchTools` and cost nothing until used.
+
+**Xray**, test management. Written
+against Xray 8.6 for Data Center.
+
+| Toolset | Tools |
+|---|---|
+| `xray_tests`: tests, their steps and relations, test statuses | `xray_getTests`, `xray_getTestSteps`, `xray_getTestRelations`, `xray_getTestStatuses` |
+| `xray_test_executions`: a test execution's tests and runs | `xray_getTestExecutionTests`, `xray_addTestsToTestExecution` |
+| `xray_test_plans`: a test plan's tests and executions | `xray_getTestPlanTests`, `xray_getTestPlanExecutions`, `xray_addTestsToTestPlan`, `xray_addTestExecutionsToTestPlan` |
+| `xray_test_sets`: a test set's tests | `xray_getTestSetTests`, `xray_addTestsToTestSet` |
+| `xray_test_runs`: test results | `xray_getTestRun`, `xray_searchTestRuns`, `xray_updateTestRun` |
+
+With `jira_runCode`, one question like *"which tests failed in QA-20, and what defects did they raise?"* becomes one
+script: list the execution's tests, then read the failed runs. Adding tests needs Edit Issues on the execution, plan or
+set. Xray's own settings decide who may record test results. Removing tests isn't offered yet, because removing a test
+from an execution deletes its results.
+
 ## Settings
 
 Every setting is an environment variable. Each comes from the first of these that has it: the environment, the dotenv
@@ -149,6 +172,7 @@ Keychain.
 | `CODE_EXECUTION` | `off` removes `jira_runCode`. |
 | `PERMISSION_FILTER` | `off` lists tools without asking Jira for your permissions first. |
 | `JIRA_PERMISSION_PROJECTS` | Project keys, e.g. `ACS,BPO`. Without it, a permission you hold in any project counts; with it, only these projects count. |
+| `JIRA_APPS` | Which [Jira apps](#jira-apps) to offer. Unset or `auto` checks which are installed; a list such as `xray` offers those without checking; `off` offers none. |
 
 **Turning on risky tools**
 

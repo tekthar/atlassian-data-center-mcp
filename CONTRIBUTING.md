@@ -200,3 +200,31 @@ At startup the Jira server asks Jira for the token owner's permissions (`GET /re
 - **Cost:** one request at startup, which is skipped when nothing could be hidden (for example in `READ_ONLY_MODE`).
 - **If Jira doesn't answer within 5 seconds, or the call fails:** the server hides only the admin tools and lists the rest.
 - **Confluence:** not filtered. No Confluence tool needs an admin permission yet, and Confluence has no single call that reports a user's permissions.
+
+## Adding a Jira app
+
+Jira apps (Marketplace plugins) live in `packages/jira/src/apps/`, one folder per app. Xray (`apps/xray/`) is the
+example to copy:
+
+- **`catalog.ts`**: the app's toolsets and tools. Toolsets are `default: false`, so the tools are reached through the
+  tool search. Writes name the Jira permission they need in `anyOfPermissions`, unless the app decides who may make
+  them (then add the tool to `UNGATED_WRITE_TOOLS` in the catalog test, with the reason).
+- **`client.ts`**: calls the app's REST API through the generated Jira client's `request` core, relative to `/rest`.
+- **`operations.ts`**, **`read-tools.ts`**, **`write-tools.ts`**: one function per call, and the tool registrations.
+- **An entry in `JIRA_APPS`** in `apps/index.ts`: the id used in the `JIRA_APPS` setting, the catalog, a `probe`
+  (one cheap request that fails with 404 when the app isn't installed) and `register`.
+
+The catalog test finds every `registerTool` call under `apps/`, so a tool without a catalog entry fails the build.
+
+**Finding an app's REST API.** Apps rarely publish an OpenAPI spec, so read the API from the app itself. Download
+the Data Center artifact from the Marketplace, then, without running it:
+
+1. Read `atlassian-plugin.xml` for the version and the `<rest>` modules: each gives the path and version the API is
+   served under, and the Java packages it serves.
+2. Extract those packages' class files and run `javap -v -p` on them. JAX-RS annotations (`jakarta.ws.rs.Path`, `GET`,
+   `QueryParam` and so on) give every route and query parameter, even when class names are obfuscated.
+3. `javap -p` on the request bean classes gives the JSON body fields.
+
+Write the app version you read into the catalog's comments and the README, so a later app version can be checked
+against it.
+

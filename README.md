@@ -61,7 +61,7 @@ Cloud. These servers are for Data Center and Server.
 
 | Server | npm package | What the agent can do |
 |---|---|---|
-| **Jira** | [`mcp-jira-dc`](https://www.npmjs.com/package/mcp-jira-dc) | Search with JQL, create, update and transition issues, comments, links, versions, sprints, worklogs, service desk queues, fields and users. 63 tools in 18 toolsets. |
+| **Jira** | [`mcp-jira-dc`](https://www.npmjs.com/package/mcp-jira-dc) | Search with JQL, create, update and transition issues, comments, links, versions, sprints, worklogs, service desk queues, fields and users. 63 tools in 18 toolsets, plus Xray test management when it's installed. |
 | **Confluence** | [`mcp-confluence-dc`](https://www.npmjs.com/package/mcp-confluence-dc) | Search with CQL, read, create and update pages, page trees, version history and diffs, labels, comments, restrictions and attachments. 26 tools in 11 toolsets. |
 | **Bitbucket** | [`mcp-bitbucket-dc`](https://www.npmjs.com/package/mcp-bitbucket-dc) | Browse projects, repositories, files, branches and commits, search code, and review and comment on pull requests. Merging and declining are opt-in. 27 tools plus 2 opt-in. |
 
@@ -276,9 +276,9 @@ This is **0.45**, which added the tool search and code execution. It changed whi
 and the [changelog](CHANGELOG.md) says how to keep the old list. Until 1.0, minor versions may include breaking
 changes, and the changelog describes them. Coming next:
 
-- Jira Data Center apps (plugins), reached through the tool search so they cost nothing until used
+- more Jira apps (plugins), reached through the tool search so they cost nothing until used. Xray, for test
+  management, is the first, on `main` for the next release
 - Jira administration tools
-- test management
 
 ## Have a question? Want to help?
 

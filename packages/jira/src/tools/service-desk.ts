@@ -3,7 +3,7 @@ import { formatToolResponse, handleApiOperation, type PolicyRegistrar, type Tool
 import type { ApiRequestOptions } from '../jira-client/core/ApiRequestOptions.js';
 import { OpenAPI } from '../jira-client/core/OpenAPI.js';
 import { request as __request } from '../jira-client/core/request.js';
-import { asArray, asRecord, type JiraToolContext } from './context.js';
+import { asArray, asRecord, stripNoise, type JiraToolContext } from './context.js';
 import { shapeUser } from './users.js';
 
 /*
@@ -36,7 +36,6 @@ const MAX_PAGE_SIZE = 50;
 const MAX_SERVICE_DESK_PAGES = 20;
 /** Customer request creation is an experimental JSM API on Data Center (sooperset sends this too). */
 const EXPERIMENTAL_API_HEADERS = { 'X-ExperimentalApi': 'opt-in' };
-const NOISE_KEYS = new Set(['self', '_links', '_expands', 'expand', 'avatarUrls', 'iconUrl']);
 const SELECT_SCHEMA_MARKERS = ['select', 'radiobutton', 'checkbox'];
 
 type JsonRecord = Record<string, unknown>;
@@ -57,17 +56,6 @@ async function callServiceDeskApi(options: ServiceDeskRequest, subject: string):
 }
 
 const nonEmpty = (value: unknown) => (asArray(value).length > 0 ? value : undefined);
-
-/** Drop links, avatars and icon URLs at any depth; queue columns differ per queue, so fields stay generic. */
-function stripNoise(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(stripNoise);
-  if (typeof value !== 'object' || value === null) return value;
-  return Object.fromEntries(
-    Object.entries(value)
-      .filter(([key]) => !NOISE_KEYS.has(key))
-      .map(([key, item]) => [key, stripNoise(item)]),
-  );
-}
 
 function shapePage(page: JsonRecord, key: string, shapeItem: (value: unknown) => unknown) {
   return {
