@@ -375,8 +375,10 @@ export class JiraService {
     return deleteVersion(params);
   }
 
-  async validateSetup(): Promise<void> {
-    await MyselfService.getUser();
+  /** Checks the configuration with one request, and returns who the token signs in as. */
+  async validateSetup(): Promise<string | undefined> {
+    const user = await MyselfService.getUser();
+    return user.displayName ? `${user.displayName} (${user.name})` : user.name;
   }
 
   static validateConfig(): string[] {

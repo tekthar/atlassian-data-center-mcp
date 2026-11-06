@@ -38,6 +38,11 @@ export function redactLogText(text: string): string {
     .replace(FIELD, `$1$2${REDACTED}`);
 }
 
+/** A token as people should see it: only its last four characters. */
+export function maskToken(token: string | undefined): string {
+  return token ? `••••${token.slice(-4)}` : '(not set)';
+}
+
 let stderrRedacted = false;
 
 /** Masks credentials in everything written to stderr, by this code or by any library. Idempotent. */

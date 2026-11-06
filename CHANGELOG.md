@@ -13,6 +13,8 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Features
 
+* **doctor:** `npx -y mcp-jira-dc doctor` (and the Confluence and Bitbucket equivalents) checks the setup one step at a time and says how to fix the first problem: the Node.js version, where each setting comes from, the OS keychain, signing in, and the tools an MCP client will see. It starts the server as a client would, so the tool count, context size, tool search, code tool and any startup warnings (such as tools the permission filter hid) are what the agent really gets. The token is masked. `setup` now also says who the token signs in as.
+
 * **jira apps:** the Jira server can now use Jira apps from the Atlassian Marketplace. An app's tools are offered only when it is installed: at startup the server makes one request per app to check, in parallel with the permission check, and skips it when no app tool could be offered. `JIRA_APPS` names apps to offer without checking, or `off` turns apps off. App toolsets are off by default and reached through the tool search.
 * **xray:** 15 tools for Xray test management in five toolsets: tests, test executions, test plans, test sets and test runs. Read tests, steps and relations; list and add tests to executions, plans and sets; read, search and record test runs. Paths and request bodies come from the Xray 8.6 Data Center app's own REST resources.
 

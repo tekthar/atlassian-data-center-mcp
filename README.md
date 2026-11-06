@@ -145,6 +145,31 @@ Each server's README lists its toolsets and the settings that turn on risky tool
 [Jira](packages/jira/README.md), [Confluence](packages/confluence/README.md),
 [Bitbucket](packages/bitbucket/README.md).
 
+### 4. Check your setup
+
+`doctor` checks each step in turn and says how to fix what's wrong. It starts the server the way your MCP client does,
+so it shows exactly what the agent will get:
+
+```text
+$ npx -y mcp-jira-dc doctor
+mcp-jira-dc doctor
+
+✓ Node.js   22.22.2
+✓ Settings  everything needed is set
+            JIRA_HOST: jira.example.com, from C:\Users\alice\.atlassian-dc-mcp\jira.env
+            JIRA_API_BASE_PATH: (not set)
+            JIRA_API_TOKEN: ••••HcU1, from Windows Credential Manager
+            JIRA_DEFAULT_PAGE_SIZE: 25 (default)
+✓ Keychain  token kept in Windows Credential Manager
+✓ Sign-in   signed in as Alice Smith (alice)
+✓ Tools     11 listed, about 2,900 tokens of context
+            32 more through jira_searchTools
+            jira_runCode is on
+            server: Permission filter hid 14 Jira tools: jira_transitionIssue, jira_linkIssues, ...
+```
+
+The token is masked, so the output is safe to paste into a bug report.
+
 ## What the agent sees
 
 These are real responses from the Jira server, run against a test Jira. The tool list holds the everyday tools and four
