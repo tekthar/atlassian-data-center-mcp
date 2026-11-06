@@ -3,7 +3,9 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-## Unreleased
+## [0.47.1](https://github.com/tekthar/atlassian-data-center-mcp/releases/tag/v0.47.1) (2026-11-06)
+
+Two security fixes from a security review. **Upgrade promptly**, and see the first entry if you kept settings in a `.env` file.
 
 ### Security
 
