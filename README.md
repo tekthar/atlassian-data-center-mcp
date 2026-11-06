@@ -42,6 +42,21 @@ more when it needs them, and a sandbox where it can combine many reads into one 
 - **Credentials in the right place**: `setup` checks your token against the server, then stores it in the macOS
   Keychain, or in a file only your user can read.
 
+## Why run it on your machine?
+
+Data Center usually lives behind a firewall or a VPN. A server that runs where you work reaches it the way your
+browser does.
+
+| | A hosted MCP connector | **These servers** |
+|---|---|---|
+| Reaches instances behind your firewall or VPN | only if the instance is exposed to the service | **yes**: wherever your machine can reach |
+| Where your token lives | with the service | **on your machine**: macOS Keychain, or a file only your user can read |
+| Who decides which tools the agent sees | the service | **you**, with a few settings |
+| Something to host, approve or pay for | the service | **nothing**: `npx` runs it |
+
+[Atlassian's official MCP server](https://github.com/atlassian/atlassian-mcp-server) is a hosted server for Atlassian
+Cloud. These servers are for Data Center and Server.
+
 ## The three servers
 
 | Server | npm package | What the agent can do |
@@ -208,6 +223,24 @@ The same Jira server with `TOOLSETS=all`, against the defaults:
 | A question that takes many calls | One script, returning only the answer | One call per step, every result in context |
 | Writes | One at a time, each visible to the client | One at a time, each visible to the client |
 | Deleting | Only toolsets you turn on | Listed with everything else |
+
+## What it guarantees
+
+- **It never widens access.** Every request carries your token, so Jira, Confluence and Bitbucket decide what you can
+  do. Hiding a tool trims what the agent sees; it never unlocks anything.
+- **Scripts only read.** Code in the sandbox can call read tools and nothing else. Every change goes through a tool
+  call your client can see and ask you about.
+- **Deleting is always your decision.** The tool search never offers a tool that deletes, and the sandbox can't reach
+  one. Delete tools appear only in toolsets you turn on, and some need their own setting too, like
+  `JIRA_VERSION_DELETE_ENABLED`.
+- **It never retries a call on its own.** If a request fails, the agent sees the error and decides what to do.
+- **It never waits forever.** Every request to your instance times out after 30 seconds by default
+  (`ATLASSIAN_DC_MCP_REQUEST_TIMEOUT_MS`), and every script after 30 seconds or 50 tool calls.
+- **It stays out of your files.** Attachments are read from and saved to only the folders you name, and a saved file
+  never overwrites an existing one.
+
+Content in your instance is written by other people, so issue text, comments, pages and attachments reach the agent as
+data, not instructions. Tool descriptions say so where it matters.
 
 ## How do we know it works?
 
