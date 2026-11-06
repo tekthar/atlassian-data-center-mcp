@@ -1,285 +1,128 @@
-# Atlassian Confluence Data Center MCP
+# mcp-confluence-dc
 
-This package provides a Machine Comprehension Protocol (MCP) server for interacting with Atlassian Confluence Data Center edition.
+An MCP server for **Confluence Data Center and Confluence Server**. It lets Claude and other MCP clients search, read, create and update pages, and, when you turn them on, browse page trees, compare page versions, and manage labels, comments, restrictions and attachments.
 
-## Interactive Setup
+- **26 tools in 11 toolsets.** By default you get 6 everyday page tools; turn on the rest when you need them.
+- **Read-only mode** and an exact tool allowlist for locked-down setups.
+- **One `npx` command:** no Python, no Docker.
 
-The easiest way to configure this server is the built-in `setup` subcommand:
+Not affiliated with or endorsed by Atlassian. Confluence is a trademark of Atlassian.
 
-```bash
-npx @atlassian-dc-mcp/confluence setup
-```
+## Requirements
 
-It prompts for host, API base path, default page size, and API token, then stores them in the most secure place available:
+- Node.js 22.22.2 or later
+- Confluence Data Center or Confluence Server, and a personal access token. To create one in Confluence, open your profile picture, then **Settings** > **Personal Access Tokens** > **Create token**.
 
-- **macOS** — token in the login Keychain (service `atlassian-dc-mcp`, account `confluence-token`); host / base path / page size in `~/.atlassian-dc-mcp/confluence.env` (mode `0600`).
-- **Linux** — everything in `~/.atlassian-dc-mcp/confluence.env` with POSIX mode `0600` (read/write for your user only).
-- **Windows** — everything in `%USERPROFILE%\.atlassian-dc-mcp\confluence.env`. Node passes the mode bits but Windows ignores them, so the file inherits the ACL of your user profile directory (typically readable only by your user, SYSTEM, and Administrators).
+## Quick start
 
-After setup, you can launch the server without any environment variables:
+1. Save your Confluence address and token:
+
+   ```bash
+   npx -y mcp-confluence-dc setup
+   ```
+
+   On macOS the token goes to the Keychain. Everything else goes to `~/.atlassian-dc-mcp/confluence.env` (on Windows, `%USERPROFILE%\.atlassian-dc-mcp\confluence.env`), which only your user can read.
+
+2. Add the server to your MCP client.
+
+   Claude Code:
+
+   ```bash
+   claude mcp add confluence -- npx -y mcp-confluence-dc
+   ```
+
+   Claude Desktop, Cursor, VS Code and other clients with an `mcpServers` file:
+
+   ```json
+   {
+     "mcpServers": {
+       "confluence": { "command": "npx", "args": ["-y", "mcp-confluence-dc"] }
+     }
+   }
+   ```
+
+To skip `setup` and pass settings directly, add an `env` block to that entry:
 
 ```json
-{
-  "mcpServers": {
-    "atlassian-confluence-dc": {
-      "command": "npx",
-      "args": ["-y", "@atlassian-dc-mcp/confluence"]
-    }
-  }
-}
+"env": { "CONFLUENCE_HOST": "confluence.example.com", "CONFLUENCE_API_TOKEN": "<personal access token>" }
 ```
 
-Environment variables still override stored values — see [Configuration sources](#configuration-sources) below.
+## Configuration
 
-### Scripted / non-interactive setup
+| Variable | Purpose |
+| --- | --- |
+| `CONFLUENCE_HOST` | Host name and optional port, without `https://`. Example: `confluence.example.com` |
+| `CONFLUENCE_API_BASE_PATH` | Full REST API URL, used instead of `CONFLUENCE_HOST`. Example: `https://example.com/wiki/rest/api` |
+| `CONFLUENCE_API_TOKEN` | Personal access token |
+| `CONFLUENCE_DEFAULT_PAGE_SIZE` | Page size for search and list tools. Default 25. |
+| `ATLASSIAN_DC_MCP_CONFIG_FILE` | Absolute path to a dotenv file holding any of these settings, for example one file shared by several tools |
 
-For CI, remote sessions, or shell scripts, pass values as flags and add `--non-interactive` to skip prompts:
+Each setting comes from the first of these places that has it:
+1. environment variables;
+2. the dotenv file (`ATLASSIAN_DC_MCP_CONFIG_FILE`, or `.env` in the working directory);
+3. the file `setup` writes;
+4. the macOS Keychain.
+
+In scripts and CI, `setup` also runs without prompts:
 
 ```bash
-npx @atlassian-dc-mcp/confluence setup --non-interactive \
-  --host confluence.example.com \
-  --token "$CONFLUENCE_TOKEN"
+npx -y mcp-confluence-dc setup --non-interactive --host confluence.example.com --token "$CONFLUENCE_TOKEN"
 ```
 
-Available flags: `--host`/`-H`, `--api-base-path`/`-b`, `--token`/`-t`, `--default-page-size`/`-s`, `--non-interactive`/`-n`, `--help`/`-h`. In `--non-interactive` mode, missing values fall back to existing configuration and the run exits non-zero if a host (or full-URL `--api-base-path`) and token cannot be resolved. An existing token is reused when `--token` is omitted. Run `npx @atlassian-dc-mcp/confluence setup --help` for full usage.
+`npx -y mcp-confluence-dc setup --help` lists every option.
 
-## Features
+## Choosing which tools are listed
 
-- Get content by ID
-- Search for content using CQL (Confluence Query Language)
-- Create new content (pages, blog posts)
-- Update existing content
+| Variable | Effect |
+| --- | --- |
+| `TOOLSETS` | Comma-separated toolset names, `default`, or `all`. Example: `default,confluence_page_tree` |
+| `READ_ONLY_MODE` | `true` lists only tools that never change Confluence. |
+| `ENABLED_TOOLS` | Comma-separated tool names. Replaces `TOOLSETS`; read-only mode still applies. |
 
-## Setup
+Hiding tools saves tokens and avoids calls that would fail. It is not access control: Confluence still checks your permissions on every call.
 
-1. Install dependencies:
-   ```
-   npm install
-   ```
+| Toolset | Default | Tools |
+| --- | --- | --- |
+| `confluence_pages`: search, read, create and update pages | on | `confluence_getContent`, `confluence_searchContent`, `confluence_createContent`, `confluence_updateContent` |
+| `confluence_spaces`: search spaces | on | `confluence_searchSpace` |
+| `confluence_attachments`: download and upload page attachments | on | `confluence_downloadAttachment`, `confluence_uploadAttachment` (opt-in) |
+| `confluence_page_tree`: child pages and a space's page hierarchy | off | `confluence_getPageChildren`, `confluence_getSpacePageTree` |
+| `confluence_page_admin`: move, copy and delete (trash) pages | off | `confluence_deletePage` (destructive), `confluence_movePage`, `confluence_copyPage` |
+| `confluence_history`: past page versions and a diff of two versions | off | `confluence_getPageHistory`, `confluence_getPageDiff` |
+| `confluence_labels`: read and add content labels | off | `confluence_getLabels`, `confluence_addLabel` |
+| `confluence_restrictions`: read and set page view and edit restrictions | off | `confluence_getPageRestrictions`, `confluence_setPageRestrictions` |
+| `confluence_comments`: read, add and reply to page and inline comments | off | `confluence_getComments`, `confluence_getInlineComments`, `confluence_addComment`, `confluence_replyToComment`, `confluence_addInlineComment` |
+| `confluence_attachment_management`: list attachment details and delete attachments | off | `confluence_getAttachments`, `confluence_deleteAttachment` (destructive) |
+| `confluence_users`: search users by name or username | off | `confluence_searchUser` |
 
-2. Create a `.env` file in the packages/confluence directory, or put the same values in a shared dotenv file and set `ATLASSIAN_DC_MCP_CONFIG_FILE` to its absolute path:
-   ```
-   # Either CONFLUENCE_HOST or CONFLUENCE_API_BASE_PATH must be set
-   CONFLUENCE_HOST=your-confluence-instance.atlassian.net
-   CONFLUENCE_API_TOKEN=your-personal-access-token
+Page bodies are read and written in Confluence storage format (XHTML).
 
-   # Optional: Use one of the following approaches:
-   # 1. If your Confluence instance hosted on the subpath:
-   # CONFLUENCE_API_BASE_PATH=https://your-confluence-instance.atlassian.net/sub-path
+### Attachments on disk
 
-   # 2. Or continue using CONFLUENCE_HOST with the default API path (/rest):
-   # CONFLUENCE_HOST=your-confluence-instance.atlassian.net
+`confluence_uploadAttachment`, and saving downloaded attachments to disk, work only inside folders you name. Without these settings, `confluence_downloadAttachment` returns file contents inline and never touches the disk.
 
-   # Optional: default page size for paginated search tools (fallback: 25)
-   CONFLUENCE_DEFAULT_PAGE_SIZE=25
-    ```
+| Variable | Purpose |
+| --- | --- |
+| `CONFLUENCE_ATTACHMENTS_UPLOAD_ENABLED`, `CONFLUENCE_ATTACHMENTS_DOWNLOAD_ENABLED` | Turn each direction on. Default off. |
+| `CONFLUENCE_ATTACHMENTS_UPLOAD_ROOTS`, `CONFLUENCE_ATTACHMENTS_DOWNLOAD_ROOTS` | Folders allowed for each direction, separated like your OS `PATH` |
+| `CONFLUENCE_ATTACHMENTS_DIR` | One folder used for both directions |
+| `CONFLUENCE_ATTACHMENTS_MAX_UPLOAD_BYTES`, `CONFLUENCE_ATTACHMENTS_MAX_DOWNLOAD_BYTES` | Size limits. Default 25 MiB. |
 
-   Shared file example:
-   ```
-   CONFLUENCE_HOST=your-confluence-instance.atlassian.net
-   CONFLUENCE_API_TOKEN=your-personal-access-token
-   CONFLUENCE_DEFAULT_PAGE_SIZE=25
-   ```
+## Security notes
 
-   Start the server with:
-   ```
-   ATLASSIAN_DC_MCP_CONFIG_FILE=/absolute/path/to/atlassian-dc-mcp.env npm run dev
-   ```
+- **Clients can ask before risky calls.** Every tool tells the client whether it only reads, changes data, or deletes.
+- **Treat Confluence content as data, not instructions.** Pages, comments and attachments are written by other people. `confluence_downloadAttachment` shows an image to the model only when asked to, with `returnContent: 'image'`.
 
-   Windows example:
-   ```
-   set ATLASSIAN_DC_MCP_CONFIG_FILE=C:\Users\your-user\AppData\Roaming\atlassian-dc-mcp.env
-   npm run dev
-   ```
+## Related projects
 
-   Note: You have two options for configuring the API URL:
+- [mcp-jira-dc](https://www.npmjs.com/package/mcp-jira-dc) and [mcp-bitbucket-dc](https://www.npmjs.com/package/mcp-bitbucket-dc): the same approach for Jira and Bitbucket Data Center.
+- [Atlassian's official MCP server](https://github.com/atlassian/atlassian-mcp-server): a remote server for Atlassian Cloud.
+- [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian): a Python server for Jira and Confluence, Cloud and Data Center.
 
-   1. Set `CONFLUENCE_API_BASE_PATH` to the full API URL (e.g., "https://host.com/rest/api" or "https://host.com/wiki/rest/api").
-      When this is set, the `CONFLUENCE_HOST` variable is ignored.
+## Acknowledgments
 
-   2. Set `CONFLUENCE_HOST` only, which will use the default API path (/rest).
+mcp-confluence-dc builds on two MIT-licensed projects: [b1ff/atlassian-dc-mcp](https://github.com/b1ff/atlassian-dc-mcp), and [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian), whose Data Center tools were adapted for this server. Their copyright notices are in [LICENSE](LICENSE).
 
-   3. Confluence uses `/rest` as a path part always, so it will be added automatically, no need to add it manually.
+## License
 
-   See [Configuration sources](#configuration-sources) for the full precedence chain.
-
-   ### Attachment filesystem access (opt-in)
-
-   By default this server is an API-only client: the attachment tools never read from or write to the local filesystem, and `confluence_uploadAttachment` is **not even registered**. `confluence_downloadAttachment` is always available but can only return file bytes inline (base64/text) — it cannot touch local disk.
-
-   Local filesystem access is opt-in and confined to operator-configured directories that the model cannot choose:
-
-   ```
-   # Enable each direction separately (default: false)
-   CONFLUENCE_ATTACHMENTS_UPLOAD_ENABLED=true
-   CONFLUENCE_ATTACHMENTS_DOWNLOAD_ENABLED=true
-
-   # Allowed roots (os path-separator list). Uploads may only read from these,
-   # downloads may only write into the first configured download root.
-   CONFLUENCE_ATTACHMENTS_UPLOAD_ROOTS=/srv/confluence-exchange/in
-   CONFLUENCE_ATTACHMENTS_DOWNLOAD_ROOTS=/srv/confluence-exchange/out
-
-   # Convenience: a single dedicated exchange directory used as both roots
-   CONFLUENCE_ATTACHMENTS_DIR=/srv/confluence-exchange
-
-   # Hard per-file size limits in bytes (default: 25 MiB)
-   CONFLUENCE_ATTACHMENTS_MAX_UPLOAD_BYTES=26214400
-   CONFLUENCE_ATTACHMENTS_MAX_DOWNLOAD_BYTES=26214400
-   ```
-
-   Guardrails applied when enabled:
-   - A direction only activates when its flag is set **and** at least one root resolves; otherwise the tool stays disabled and a warning is logged.
-   - Roots are canonicalized (realpath) at startup. Requested paths are relative to a root; absolute paths and `..` segments are rejected, and a path that escapes a root through a symlinked directory is refused.
-   - Uploads reject symlinks and non-regular files (FIFOs, devices, directories).
-   - Downloads never overwrite an existing file (including a symlink) — they use an exclusive write.
-   - Both directions enforce the configured hard size limit.
-
-   To create a personal access token:
-   - In Confluence, select your profile picture at the top right
-   - Select **Settings** > **Personal Access Tokens**
-   - Select **Create token** and give it a name
-   - Copy the token and store it securely (you won't be able to see it again)
-
-## Configuration sources
-
-Each key is resolved by walking these sources in priority order and taking the first non-empty value:
-
-| Priority | Source | Reads | Written by `setup` |
-|---------:|--------|-------|--------------------|
-| 100 | `process.env` (`CONFLUENCE_HOST`, `CONFLUENCE_API_BASE_PATH`, `CONFLUENCE_API_TOKEN`, `CONFLUENCE_DEFAULT_PAGE_SIZE`) | all keys | — |
-| 80  | env file — `ATLASSIAN_DC_MCP_CONFIG_FILE` (absolute path) or `./.env` | all keys | — |
-| 60  | home file — `~/.atlassian-dc-mcp/confluence.env` on macOS/Linux, `%USERPROFILE%\.atlassian-dc-mcp\confluence.env` on Windows (mode `0600` on POSIX; Windows inherits the user-profile ACL) | all keys | host, apiBasePath, defaultPageSize (always); token (non-darwin or keychain fallback) |
-| 40  | macOS Keychain — service `atlassian-dc-mcp`, account `confluence-token` | token only | token (darwin only) |
-
-`setup` always writes non-secret fields to the home file and tries the keychain first for the token. If a higher-priority source shadows the value being saved, `setup` prints a warning so you can unset the env var.
-
-## Usage
-
-Start the MCP server:
-
-```
-npm run build
-npm start
-```
-
-Or for development with auto-reload:
-
-```
-npm run dev
-```
-
-## Testing
-
-Run the test suite from the package directory:
-
-```
-npm run test
-```
-
-Or from the repository root:
-
-```
-npm run test --workspace=@atlassian-dc-mcp/confluence
-```
-
-### Attachments are untrusted content
-
-An attachment is third-party content that anyone with write access to the Confluence instance can upload. Whatever one contains is data to be reported, never instructions to be followed.
-
-`returnContent: 'image'` renders an attachment for the model to look at, which is a wider surface than the other modes: instructions painted into pixels are invisible to text-level prompt-injection filters, and a human skimming the transcript will not read them either ([OWASP LLM01](https://genai.owasp.org/llmrisk/llm01-prompt-injection/)). That is why rendering is a separate, explicitly requested mode — `'base64'` and `'text'` return the bytes as data and render nothing, so a workflow that only moves a file elsewhere (e.g. re-uploading it to a Jira issue) never puts the image in front of the model.
-
-To bound that surface and stay inside host limits, image blocks are:
-
-- **sniffed, not trusted** — the format comes from the file's magic number rather than the uploader-declared media type, so a mislabelled file, an HTML error page, or an SSO login page served with a `200` is skipped instead of rendered;
-- **limited to PNG, JPEG, GIF and WEBP** — the only formats the model vision APIs accept; anything else (SVG, HEIC, BMP, TIFF) stays out;
-- **capped** at 3,750,000 bytes per image (base64 grows that to the 5 MB the model APIs accept) and 20 images per result;
-- **labelled** with `attachments[i] "<name>" (<type>, <size>)`, so every image maps back to its JSON entry. The filename is quoted and, before that, stripped of the double quote itself along with control and format characters, then length-capped — so a name can neither break the line nor close its own quotes to forge a second label;
-- **the only place bytes travel** — in this mode the JSON entry never carries `content`. A rendered image has its bytes in its block and nowhere else, so the payload is never shipped twice; an attachment that is *not* rendered, for any of the reasons above, gets no bytes either and reports `imageOmittedReason` instead. Base64 sitting in the serialised text is counted as text and costs roughly 60x the tokens of the block that shows the same pixels, which is enough on its own to push a result past the host's size limit — and it buys nothing when nothing can be looked at. Ask for those bytes with `returnContent: 'base64'`.
-
-### Available Tools
-
-#### 1. confluence_getContent
-
-Get Confluence Data Center content by ID.
-
-Parameters:
-- `contentId` (string, required): The ID of the content to retrieve
-- `expand` (string, optional): Comma-separated list of properties to expand (e.g., "body.storage,version")
-- `bodyMode` (`storage` | `text` | `none`, optional): Response shape for the content body. Defaults to `storage` for backward compatibility.
-- `maxBodyChars` (number, optional): Maximum number of characters to keep when `bodyMode=text`
-- `bodyStart` (number, optional): Character offset to start the text body slice when `bodyMode=text`. Non-negative values start from the beginning; negative values start from the end, e.g. `-2000` returns the last 2000 characters.
-
-#### 2. confluence_searchContent
-
-Search for content in Confluence Data Center using CQL.
-
-Parameters:
-- `cql` (string, required): Confluence Query Language search string
-- `limit` (number, optional): Maximum number of results to return. Defaults to `CONFLUENCE_DEFAULT_PAGE_SIZE` or `25`.
-- `start` (number, optional): Start index for pagination
-- `expand` (string, optional): Comma-separated list of properties to expand
-- `excerpt` (`none` | `highlight`, optional): Excerpt mode for search results. Defaults to `none`.
-
-#### 3. confluence_createContent
-
-Create new content in Confluence Data Center.
-
-Parameters:
-- `title` (string, required): Title of the content
-- `spaceKey` (string, required): Space key where content will be created
-- `type` (string, default: "page"): Content type (page, blogpost, etc)
-- `content` (string, required): Content body in Confluence Data Center's storage format (XML-based storage format)
-- `parentId` (string, optional): ID of the parent page (if creating a child page)
-- `output` (`ack` | `full`, optional): Return a compact acknowledgement or the full API response. Defaults to `ack`.
-
-#### 4. confluence_updateContent
-
-Update existing content in Confluence Data Center.
-
-Parameters:
-- `contentId` (string, required): ID of the content to update
-- `title` (string, optional): New title of the content
-- `content` (string, optional): New content body in Confluence Data Center's storage format (XML-based)
-- `edits` (array of `{ oldStr, newStr }`, optional): Exact find/replace edits applied in order to the current storage body, so a small change doesn't need the whole body resent. Each `oldStr` must occur exactly once; if any edit doesn't match, nothing is saved. `version` must be the current version + 1. Can't be combined with `content`.
-- `version` (number, required): New version number (must be incremented from current version)
-- `versionComment` (string, optional): Comment for this version
-- `parentId` (string, optional): ID of the new parent page (moves the page under this parent; must be different from `contentId`; uses Confluence `ancestors`, same as `createContent` `parentId`)
-- `output` (`ack` | `full`, optional): Return a compact acknowledgement or the full API response. Defaults to `ack`.
-
-#### 5. confluence_searchSpace
-
-Search for Confluence spaces by name text.
-
-Parameters:
-- `searchText` (string, required): Text to search for in space names or descriptions
-- `limit` (number, optional): Maximum number of results to return. Defaults to `CONFLUENCE_DEFAULT_PAGE_SIZE` or `25`.
-- `start` (number, optional): Start index for pagination
-- `expand` (string, optional): Comma-separated list of properties to expand
-- `excerpt` (`none` | `highlight`, optional): Excerpt mode for search results. Defaults to `none`.
-
-#### 6. confluence_uploadAttachment
-
-Upload a local file as an attachment to a Confluence content (page). Only registered when filesystem uploads are enabled (see [Attachment filesystem access](#attachment-filesystem-access-opt-in)).
-
-Parameters:
-- `contentId` (string, required): ID of the content (page) to attach the file to
-- `sourcePath` (string, required): Path to the file to upload, **relative to a server-configured upload directory**. Absolute paths and `..` segments are rejected; symlinks and non-regular files are refused.
-- `filename` (string, optional): Override for the attachment filename (defaults to the basename of `sourcePath`)
-- `comment` (string, optional): Comment describing the attachment
-- `minorEdit` (boolean, optional): If true, no notification email is sent to watchers
-- `hidden` (boolean, optional): If true, no notification email or activity stream entry is generated
-- `allowDuplicated` (boolean, optional): Allow upload even if an attachment with the same filename already exists
-- `versionIfExists` (boolean, optional): If true and an attachment with the same filename already exists, upload as a new version instead of failing
-- `contentType` (string, optional): MIME type recorded as the attachment media type, e.g. `application/vnd.jgraph.mxfile` for a draw.io diagram or `image/png`. If omitted, the file is sent as `application/octet-stream`.
-
-#### 7. confluence_downloadAttachment
-
-Download one or more attachments from a Confluence content (page). Returns metadata only unless `returnContent` asks for the bytes — as data with `base64`/`text`, or as a viewable image with `image`. Useful for inspecting a file, looking at a screenshot or mockup, or moving a file elsewhere (e.g. re-uploading to a Jira issue). When filesystem downloads are enabled (see [Attachment filesystem access](#attachment-filesystem-access-opt-in)), it can also save into the server-configured download directory.
-
-Parameters:
-- `contentId` (string, required): ID of the content (page) whose attachment(s) to download
-- `filename` (string, optional): Exact filename of a single attachment to download. If omitted, all attachments on the content are downloaded.
-- `returnContent` (`none` | `base64` | `text` | `image`, optional): Whether and how to embed the file bytes in the response. Defaults to `none` (metadata only — no bytes). `base64` embeds the bytes in the JSON payload as data; `text` embeds them decoded as UTF-8; `image` renders a PNG/JPEG/GIF/WEBP attachment as a viewable MCP image block so the model can actually look at it, and returns no bytes in the JSON at all — an attachment it cannot render reports `imageOmittedReason`, and `base64` is how you get that one's bytes. See [Attachments are untrusted content](#attachments-are-untrusted-content).
-- `maxInlineBytes` (number, optional): Maximum bytes to embed inline when `returnContent` is `base64`/`text`/`image`. Larger files are omitted from the inline content and the entry carries a `contentOmittedReason` instead, so a retry with a higher value gets them. Defaults to 1 MiB and may not exceed 25 MiB, the ceiling on what can be downloaded at all — past that there are no bytes to have, so the request is rejected rather than promising a payload nothing can deliver. Applies to all three modes alike. Rendering has its own separate limit (below), so raising this never renders an image larger than 3,750,000 bytes; re-request that one with `base64` if you need its bytes.
-- `save` (boolean, optional): Save the attachment(s) into the server-configured download directory. Requires filesystem downloads to be enabled; existing files are never overwritten. *(Only available when downloads are enabled.)*
-- `saveName` (string, optional): File name (no directories) to use when saving a single attachment; defaults to the attachment's own name. *(Only available when downloads are enabled.)*
+MIT

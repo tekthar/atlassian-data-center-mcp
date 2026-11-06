@@ -26,7 +26,7 @@ const bitbucketService = new BitbucketService(
 );
 
 const server = createMcpServer({
-  name: "atlassian-bitbucket-mcp",
+  name: "mcp-bitbucket-dc",
   version
 });
 
