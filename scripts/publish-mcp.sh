@@ -30,6 +30,25 @@ publish_with_retry() {
   done
 }
 
+# The MCP Registry checks that the npm version exists. npm can take several minutes to serve a
+# version published moments ago, so wait for it instead of spending the publish retries.
+wait_for_npm() {
+  local name version attempt
+  local max_attempts=40
+  name=$(node -p "require('./$1/package.json').name")
+  version=$(node -p "require('./$1/package.json').version")
+  for ((attempt = 1; attempt <= max_attempts; attempt++)); do
+    if curl -fsS -o /dev/null "https://registry.npmjs.org/$name/$version"; then
+      echo "$name@$version is available on npm."
+      return 0
+    fi
+    echo "Waiting for $name@$version on npm ($attempt/$max_attempts)..."
+    sleep 30
+  done
+  echo "$name@$version is still not on npm after $((max_attempts / 2)) minutes." >&2
+  return 1
+}
+
 echo "Publishing packages to MCP Registry..."
 
 # Download MCP Publisher if not exists
@@ -51,6 +70,7 @@ echo "Logging into MCP Registry..."
 packages=("jira" "confluence" "bitbucket")
 
 for pkg in "${packages[@]}"; do
+  wait_for_npm "packages/$pkg"
   echo "Publishing $pkg to MCP Registry..."
   (
     cd "packages/$pkg"

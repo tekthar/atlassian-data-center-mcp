@@ -71,6 +71,7 @@ jobs:
     needs: npm
     if: needs.npm.outputs.release == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
       id-token: write # MCP Registry login for the io.github.tekthar namespace
