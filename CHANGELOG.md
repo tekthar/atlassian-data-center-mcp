@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## Unreleased
+
+### Security
+
+* **tool search:** with saving downloaded attachments to disk turned on, and the attachments toolset reached through the tool search rather than listed, `jira_downloadAttachment` and `confluence_downloadAttachment` ran through `<product>_runReadTool`, which tells the client it only reads. A client that approves read-only tools without asking could save a file without asking. They now run through `<product>_runWriteTool`, as the directly listed tool already declared. Files were never written outside the configured folders, and never over an existing file.
+
 ## [0.47.0](https://github.com/tekthar/atlassian-data-center-mcp/releases/tag/v0.47.0) (2026-11-06)
 
 The first release since the repository went public. The token moves into the OS keychain on every platform and is masked in everything the servers write; `doctor` checks a setup step by step, `install` registers a server with Claude Code or Claude Desktop, and an opt-in audit log records every tool call. The Jira server gains support for Jira apps, starting with Xray. There is no 0.46.0.
