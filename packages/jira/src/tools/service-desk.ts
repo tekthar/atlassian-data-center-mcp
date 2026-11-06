@@ -18,6 +18,7 @@ export const SERVICE_DESK_CATALOG: ToolCatalog = {
     [TOOLSET]: {
       description: 'Jira Service Management: service desks, queues, request types and customer requests',
       default: false,
+      gateway: false,
     },
   },
   tools: {

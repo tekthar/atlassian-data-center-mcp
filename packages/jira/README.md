@@ -2,7 +2,7 @@
 
 An MCP server for **Jira Data Center and Jira Server**. It lets Claude and other MCP clients search, create, update and transition issues, and, when you turn them on, work with sprints, worklogs, service desk queues, users, fields and more.
 
-- **63 tools in 18 toolsets.** By default you get 20 everyday issue tools; turn on the rest when you need them.
+- **63 tools in 18 toolsets.** By default 10 everyday issue tools are listed directly, and 3 gateway tools find and run 43 more, so the rest cost tokens only when used.
 - **Tools your Jira account can't use are hidden** at startup.
 - **Read-only mode** and an exact tool allowlist for locked-down setups.
 - **One `npx` command:** no Python, no Docker.
@@ -79,31 +79,44 @@ npx -y mcp-jira-dc setup --non-interactive --host jira.example.com --token "$JIR
 | `TOOLSETS` | Comma-separated toolset names, `default`, or `all`. Example: `default,jira_agile` |
 | `READ_ONLY_MODE` | `true` lists only tools that never change Jira. |
 | `ENABLED_TOOLS` | Comma-separated tool names. Replaces `TOOLSETS`; read-only mode still applies. |
+| `TOOL_GATEWAY` | On by default: tools outside the selected toolsets, apart from destructive ones, are offered through three gateway tools instead of being left out. `off` leaves them out. The gateway is also off while `ENABLED_TOOLS` is set. |
 | `PERMISSION_FILTER` | On by default: at startup the server asks Jira for your permissions and hides tools you can't use. `off` turns this off. |
 | `JIRA_PERMISSION_PROJECTS` | Comma-separated project keys. Without it, a permission you hold in any project counts. With it, only these projects count. |
 
 Hiding tools saves tokens and avoids calls that would fail. It is not access control: Jira still checks your permissions on every call.
+
+### The tool gateway
+
+Listing every tool costs tokens on every request, so only everyday tools are listed directly. The rest are reached through three small tools:
+
+- `jira_searchTools` finds tools by keyword (for example "sprint issues") and returns their descriptions and input schemas. Its own description names the toolsets it can reach.
+- `jira_runReadTool` runs a found tool that only reads Jira.
+- `jira_runWriteTool` runs a found tool that changes Jira. Clients can ask before running it, as they do for any write tool.
+
+The gateway applies the same rules as the tool list: read-only mode, the permission filter and the opt-in settings. It never offers destructive tools; turn on their toolset with `TOOLSETS` to use them. A toolset named in `TOOLSETS` is listed directly instead.
+
+In the table below, **on** toolsets are listed directly, **gateway** toolsets are reached through the gateway, and **off** toolsets need `TOOLSETS`.
 
 | Toolset | Default | Tools |
 | --- | --- | --- |
 | `jira_issues`: search, read, create and update issues | on | `jira_searchIssues`, `jira_getIssue`, `jira_createIssue`, `jira_updateIssue` |
 | `jira_comments`: read, add and edit issue comments | on | `jira_getIssueComments`, `jira_postIssueComment`, `jira_updateIssueComment` |
 | `jira_transitions`: list and run workflow transitions | on | `jira_getTransitions`, `jira_transitionIssue` |
-| `jira_links`: issue link types, link and unlink issues | on | `jira_getIssueLinkTypes`, `jira_linkIssues`, `jira_unlinkIssues` (destructive) |
-| `jira_watchers`: watch and unwatch issues as yourself | on | `jira_watchIssue`, `jira_unwatchIssue` |
-| `jira_versions`: project versions (releases) | on | `jira_getProjectVersions`, `jira_getVersion`, `jira_createVersion`, `jira_updateVersion`, `jira_deleteVersion` (destructive, opt-in) |
-| `jira_development`: branches, commits and pull requests linked to issues | on | `jira_getIssueDevelopmentInfo` |
+| `jira_links`: issue link types, link and unlink issues | gateway | `jira_getIssueLinkTypes`, `jira_linkIssues`, `jira_unlinkIssues` (destructive) |
+| `jira_watchers`: watch and unwatch issues as yourself | gateway | `jira_watchIssue`, `jira_unwatchIssue` |
+| `jira_versions`: project versions (releases) | gateway | `jira_getProjectVersions`, `jira_getVersion`, `jira_createVersion`, `jira_updateVersion`, `jira_deleteVersion` (destructive, opt-in) |
+| `jira_development`: branches, commits and pull requests linked to issues | gateway | `jira_getIssueDevelopmentInfo` |
 | `jira_attachments`: download and upload issue attachments | on | `jira_downloadAttachment`, `jira_uploadAttachment` (opt-in) |
-| `jira_issue_management`: list a project's issues, bulk-create, assign and delete issues | off | `jira_getProjectIssues`, `jira_batchCreateIssues`, `jira_assignIssue`, `jira_deleteIssue` (destructive) |
-| `jira_watcher_management`: list an issue's watchers and add or remove other users | off | `jira_getIssueWatchers`, `jira_addWatcher`, `jira_removeWatcher` |
-| `jira_users`: look up user profiles and assignable users | off | `jira_getUserProfile`, `jira_searchAssignableUsers` |
-| `jira_fields`: find fields, issue-type create schemas and allowed values | off | `jira_searchFields`, `jira_getFieldOptions`, `jira_getCreateFields`, `jira_getProjectIssueTypes`, `jira_getProjectFields` |
-| `jira_projects`: list and search projects, list components, create versions in bulk | off | `jira_getAllProjects`, `jira_searchProjects`, `jira_getProjectComponents`, `jira_batchCreateVersions` |
-| `jira_agile`: boards and sprints, their issues, sprint planning | off | `jira_getAgileBoards`, `jira_getBoardIssues`, `jira_getSprintsFromBoard`, `jira_getSprintIssues`, `jira_createSprint`, `jira_updateSprint`, `jira_addIssuesToSprint`, `jira_moveIssuesToBacklog` |
-| `jira_worklog`: read and log work time | off | `jira_getWorklog`, `jira_addWorklog` |
-| `jira_remote_links`: add web links to issues and move issues into epics | off | `jira_createRemoteIssueLink`, `jira_linkToEpic` |
+| `jira_issue_management`: list a project's issues, bulk-create, assign and delete issues | gateway | `jira_getProjectIssues`, `jira_batchCreateIssues`, `jira_assignIssue`, `jira_deleteIssue` (destructive) |
+| `jira_watcher_management`: list an issue's watchers and add or remove other users | gateway | `jira_getIssueWatchers`, `jira_addWatcher`, `jira_removeWatcher` |
+| `jira_users`: look up user profiles and assignable users | gateway | `jira_getUserProfile`, `jira_searchAssignableUsers` |
+| `jira_fields`: find fields, issue-type create schemas and allowed values | gateway | `jira_searchFields`, `jira_getFieldOptions`, `jira_getCreateFields`, `jira_getProjectIssueTypes`, `jira_getProjectFields` |
+| `jira_projects`: list and search projects, list components, create versions in bulk | gateway | `jira_getAllProjects`, `jira_searchProjects`, `jira_getProjectComponents`, `jira_batchCreateVersions` |
+| `jira_agile`: boards and sprints, their issues, sprint planning | gateway | `jira_getAgileBoards`, `jira_getBoardIssues`, `jira_getSprintsFromBoard`, `jira_getSprintIssues`, `jira_createSprint`, `jira_updateSprint`, `jira_addIssuesToSprint`, `jira_moveIssuesToBacklog` |
+| `jira_worklog`: read and log work time | gateway | `jira_getWorklog`, `jira_addWorklog` |
+| `jira_remote_links`: add web links to issues and move issues into epics | gateway | `jira_createRemoteIssueLink`, `jira_linkToEpic` |
 | `jira_service_desk`: Jira Service Management desks, queues, request types and requests | off | `jira_getServiceDeskForProject`, `jira_getServiceDeskQueues`, `jira_getQueueIssues`, `jira_getRequestTypes`, `jira_getRequestTypeFields`, `jira_createCustomerRequest` |
-| `jira_analytics`: issue timelines, SLAs, epic hierarchy, cross-project links, development info in bulk | off | `jira_getIssueDates`, `jira_getIssueSla`, `jira_getProjectEpicHierarchy`, `jira_getCrossProjectDependencies`, `jira_getIssuesDevelopmentInfo` |
+| `jira_analytics`: issue timelines, SLAs, epic hierarchy, cross-project links, development info in bulk | gateway | `jira_getIssueDates`, `jira_getIssueSla`, `jira_getProjectEpicHierarchy`, `jira_getCrossProjectDependencies`, `jira_getIssuesDevelopmentInfo` |
 
 ### Tools that need an extra setting
 

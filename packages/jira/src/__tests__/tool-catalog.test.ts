@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { isToolAllowed, resolveToolPolicy } from '@atlassian-dc-mcp/common';
+import { isGatewayTool, isToolAllowed, resolveToolPolicy } from '@atlassian-dc-mcp/common';
 import { JIRA_PERMISSION_KEYS } from '../permissions.js';
 import { JIRA_CORE_CATALOG, JIRA_TOOL_CATALOG } from '../tool-catalog.js';
 
@@ -17,12 +17,19 @@ const registeredInSource = (): string[] => {
   );
 };
 
-const allowedBy = (env: Record<string, string>) => {
+type Check = typeof isToolAllowed;
+
+const exposedBy = (check: Check, env: Record<string, string>) => {
   const policy = resolveToolPolicy(JIRA_TOOL_CATALOG, env, () => undefined);
   return Object.entries(JIRA_TOOL_CATALOG.tools)
-    .filter(([name, entry]) => isToolAllowed(name, entry, policy))
+    .filter(([name, entry]) => check(name, entry, policy))
     .map(([name]) => name);
 };
+
+const allowedBy = (env: Record<string, string>) => exposedBy(isToolAllowed, env);
+const gatewayBy = (env: Record<string, string>) => exposedBy(isGatewayTool, env);
+
+const DEFAULT_DIRECT_TOOLSETS = ['jira_issues', 'jira_comments', 'jira_transitions', 'jira_attachments'];
 
 describe('JIRA_TOOL_CATALOG', () => {
   it('has an entry for every tool the server registers, and nothing else', () => {
@@ -36,8 +43,50 @@ describe('JIRA_TOOL_CATALOG', () => {
     }
   });
 
-  it('exposes exactly the original tools when no policy variable is set', () => {
-    expect(allowedBy({})).toEqual(Object.keys(JIRA_CORE_CATALOG.tools));
+  it('lists only the everyday core tools directly when no policy variable is set', () => {
+    const expected = Object.entries(JIRA_CORE_CATALOG.tools)
+      .filter(([, entry]) => DEFAULT_DIRECT_TOOLSETS.includes(entry.toolset))
+      .map(([name]) => name);
+
+    expect(allowedBy({})).toEqual(expected);
+  });
+
+  it('offers every other non-destructive tool through the gateway by default, except service desk', () => {
+    const expected = Object.entries(JIRA_TOOL_CATALOG.tools)
+      .filter(([, entry]) => !DEFAULT_DIRECT_TOOLSETS.includes(entry.toolset))
+      .filter(([, entry]) => entry.toolset !== 'jira_service_desk' && entry.access !== 'destructive')
+      .map(([name]) => name);
+
+    expect(gatewayBy({})).toEqual(expected);
+    expect(gatewayBy({})).toContain('jira_getProjectVersions');
+    expect(gatewayBy({})).not.toContain('jira_deleteIssue');
+  });
+
+  it('lists a toolset directly, not through the gateway, once TOOLSETS names it', () => {
+    const env = { TOOLSETS: 'default,jira_agile' };
+
+    expect(allowedBy(env)).toContain('jira_getAgileBoards');
+    expect(gatewayBy(env)).not.toContain('jira_getAgileBoards');
+    expect(gatewayBy(env)).toContain('jira_getWorklog');
+  });
+
+  it('keeps service desk tools out of the gateway but lists them when selected', () => {
+    expect(allowedBy({ TOOLSETS: 'default,jira_service_desk' })).toContain('jira_getServiceDeskQueues');
+    expect(gatewayBy({ TOOLSETS: 'all' })).toEqual([]);
+  });
+
+  it('turns the gateway off with TOOL_GATEWAY=off or ENABLED_TOOLS', () => {
+    expect(gatewayBy({ TOOL_GATEWAY: 'off' })).toEqual([]);
+    expect(gatewayBy({ ENABLED_TOOLS: 'jira_getIssue' })).toEqual([]);
+  });
+
+  it('offers only read tools through the gateway in read-only mode', () => {
+    const offered = gatewayBy({ READ_ONLY_MODE: 'true' });
+
+    expect(offered.length).toBeGreaterThan(0);
+    for (const name of offered) {
+      expect(JIRA_TOOL_CATALOG.tools[name].access).toBe('read');
+    }
   });
 
   it('exposes every tool with TOOLSETS=all', () => {

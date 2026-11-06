@@ -321,6 +321,7 @@ tools.registerTool(
 );
 
 registerJiraModuleTools(tools, { instanceType: jiraInstanceType, getPageSize: getDefaultPageSize });
+tools.registerGatewayTools({ prefix: 'jira', product: 'Jira' });
 reportToolsHiddenByPermission(tools.hiddenByPermission());
 
 await connectServer(server);

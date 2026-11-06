@@ -2,8 +2,8 @@ import { mergeToolCatalogs, type ToolCatalog } from '@atlassian-dc-mcp/common';
 import { CONFLUENCE_MODULES_CATALOG } from './tools/index.js';
 
 /**
- * Every Confluence tool with its toolset and access level. The default toolsets expose the
- * same tools this server has always exposed, so setting nothing keeps existing setups unchanged.
+ * Every Confluence tool with its toolset and access level. Default toolsets are listed as tools;
+ * the others are offered through the tool gateway (confluence_searchTools) unless TOOL_GATEWAY=off.
  * A tool registered without an entry here fails at startup.
  */
 /** The tools b1ff/atlassian-dc-mcp shipped; registered directly in index.ts. */
