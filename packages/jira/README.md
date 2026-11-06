@@ -44,13 +44,14 @@ keyring (GNOME Keyring or KWallet). Everything else goes to `~/.atlassian-dc-mcp
 (`%USERPROFILE%\.atlassian-dc-mcp\jira.env` on Windows), which only your user can read. Without a keychain, such as
 on a Linux server, the token goes in that file too.
 
-**2. Connect your client.** Claude Code:
+**2. Connect your client.** `install` registers the server with Claude Code or Claude Desktop for you:
 
 ```bash
-claude mcp add jira -- npx -y mcp-jira-dc
+npx -y mcp-jira-dc install --claude-code      # runs claude mcp add
+npx -y mcp-jira-dc install --claude-desktop   # edits Claude Desktop's config, after backing it up
 ```
 
-Claude Desktop, Cursor, VS Code and other clients with an `mcpServers` file:
+Cursor, VS Code and other clients with an `mcpServers` file:
 
 ```json
 {
@@ -71,6 +72,8 @@ To skip `setup`, put the settings in that entry instead:
 | `npx -y mcp-jira-dc setup` | Asks for your address and token, checks them against Jira, and saves them. |
 | `setup --non-interactive --host <host> --token <token>` | The same from flags, for scripts and CI. Exits non-zero if the token doesn't work. Values you leave out come from your existing settings. |
 | `setup --help` | Lists every option. |
+| `npx -y mcp-jira-dc install --claude-code [--scope user\|project\|local]` | Registers the server with Claude Code by running `claude mcp add`. |
+| `npx -y mcp-jira-dc install --claude-desktop` | Adds the server to Claude Desktop's configuration, after backing it up. |
 | `npx -y mcp-jira-dc doctor` | Checks Node.js, where each setting comes from, the keychain, signing in, and the tools your client will see, and says how to fix what's wrong. The token is masked. |
 
 ## What the agent sees
@@ -195,6 +198,13 @@ keychain.
 | `JIRA_ATTACHMENTS_UPLOAD_ROOTS`, `JIRA_ATTACHMENTS_DOWNLOAD_ROOTS` | Folders allowed for each direction, separated like your OS `PATH`. |
 | `JIRA_ATTACHMENTS_DIR` | One folder used for both directions. |
 | `JIRA_ATTACHMENTS_MAX_UPLOAD_BYTES`, `JIRA_ATTACHMENTS_MAX_DOWNLOAD_BYTES` | Size limits. Default 25 MiB. |
+
+**Audit log**
+
+| Variable | Use |
+|---|---|
+| `ATLASSIAN_DC_MCP_AUDIT` | `1` writes one JSON line per tool call: the time, server, tool, outcome and duration, never the arguments or results. A tool run through the tool search or from `jira_runCode` is recorded too, with `"via"`. |
+| `ATLASSIAN_DC_MCP_AUDIT_FILE` | Where to write it. Default `~/.atlassian-dc-mcp/audit/mcp-jira-dc.jsonl` (mode 0600 on macOS and Linux). It rotates at 5 MB, keeping three old files. |
 
 ## What it guarantees
 

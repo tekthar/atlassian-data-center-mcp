@@ -42,13 +42,14 @@ keyring (GNOME Keyring or KWallet). Everything else goes to `~/.atlassian-dc-mcp
 (`%USERPROFILE%\.atlassian-dc-mcp\bitbucket.env` on Windows), which only your user can read. Without a keychain, such as
 on a Linux server, the token goes in that file too.
 
-**2. Connect your client.** Claude Code:
+**2. Connect your client.** `install` registers the server with Claude Code or Claude Desktop for you:
 
 ```bash
-claude mcp add bitbucket -- npx -y mcp-bitbucket-dc
+npx -y mcp-bitbucket-dc install --claude-code      # runs claude mcp add
+npx -y mcp-bitbucket-dc install --claude-desktop   # edits Claude Desktop's config, after backing it up
 ```
 
-Claude Desktop, Cursor, VS Code and other clients with an `mcpServers` file:
+Cursor, VS Code and other clients with an `mcpServers` file:
 
 ```json
 {
@@ -69,6 +70,8 @@ To skip `setup`, put the settings in that entry instead:
 | `npx -y mcp-bitbucket-dc setup` | Asks for your address and token, checks them against Bitbucket, and saves them. |
 | `setup --non-interactive --host <host> --token <token>` | The same from flags, for scripts and CI. Exits non-zero if the token doesn't work. Values you leave out come from your existing settings. |
 | `setup --help` | Lists every option. |
+| `npx -y mcp-bitbucket-dc install --claude-code [--scope user\|project\|local]` | Registers the server with Claude Code by running `claude mcp add`. |
+| `npx -y mcp-bitbucket-dc install --claude-desktop` | Adds the server to Claude Desktop's configuration, after backing it up. |
 | `npx -y mcp-bitbucket-dc doctor` | Checks Node.js, where each setting comes from, the keychain, signing in, and the tools your client will see, and says how to fix what's wrong. The token is masked. |
 
 ## Tools
@@ -122,6 +125,13 @@ list.
 | `BITBUCKET_MERGE_ALLOWED_TARGET_REFS` | Optional. Branches that may be merged into, such as `develop,refs/heads/release/*`. |
 | `BITBUCKET_DECLINE_ENABLED` | `true` lists `bitbucket_declinePullRequest`. |
 | `BITBUCKET_DECLINE_ALLOWED_REPOS` | Required for declining. Same format as for merging. |
+
+**Audit log**
+
+| Variable | Use |
+|---|---|
+| `ATLASSIAN_DC_MCP_AUDIT` | `1` writes one JSON line per tool call: the time, server, tool, outcome and duration, never the arguments or results. |
+| `ATLASSIAN_DC_MCP_AUDIT_FILE` | Where to write it. Default `~/.atlassian-dc-mcp/audit/mcp-bitbucket-dc.jsonl` (mode 0600 on macOS and Linux). It rotates at 5 MB, keeping three old files. |
 
 ## What it guarantees
 

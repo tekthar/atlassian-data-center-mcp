@@ -1,4 +1,5 @@
 import type { McpServer, RegisteredTool, StandardSchemaWithJSON, ToolAnnotations, ToolCallback } from '@modelcontextprotocol/server';
+import { auditLogFor } from './audit.js';
 import { codeToolName, registerCodeTool } from './code-tool.js';
 import { registerGatewayTools } from './gateway-tools.js';
 import { createToolGateway, type GatewayOperation } from './tool-gateway.js';
@@ -44,8 +45,12 @@ export function createPolicyRegistrar(server: McpServer, catalog: ToolCatalog, p
   const hidden: string[] = [];
   const gateway = createToolGateway();
   const codeCallable = createToolGateway();
+  // Listed tools are audited by the server itself; tools run through the gateway or from code are audited here.
+  const audit = auditLogFor(server);
+  const reachedVia = (operation: GatewayOperation, via: 'gateway' | 'code'): GatewayOperation =>
+    (audit ? { ...operation, cb: audit.wrap(operation.name, operation.cb, via) } : operation);
   const offerToCode = (operation: GatewayOperation, annotations: ToolAnnotations) => {
-    if (policy.codeExecution && operation.access === 'read' && annotations.readOnlyHint !== false) codeCallable.add(operation);
+    if (policy.codeExecution && operation.access === 'read' && annotations.readOnlyHint !== false) codeCallable.add(reachedVia(operation, 'code'));
   };
 
   return {
@@ -64,7 +69,7 @@ export function createPolicyRegistrar(server: McpServer, catalog: ToolCatalog, p
         return server.registerTool(name, { ...config, annotations }, cb);
       }
       if (isGatewayTool(name, entry, policy)) {
-        gateway.add(operation);
+        gateway.add(reachedVia(operation, 'gateway'));
         offerToCode(operation, annotations);
       } else if (isHiddenByPermission(name, entry, policy)) {
         hidden.push(name);
