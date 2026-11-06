@@ -3,7 +3,9 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-## Unreleased
+## [0.45.0](https://github.com/tekthar/jira-dc-mcp/releases/tag/v0.45.0) (2026-11-06)
+
+Jira and Confluence list fewer tools and reach more: everyday tools are listed directly, the rest are one search away, and a sandbox lets the model combine many reads into one answer. The default Jira tool list changes; see **Breaking changes** to keep the old one.
 
 ### Features
 
@@ -15,6 +17,18 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 * **jira:** `jira_links`, `jira_watchers`, `jira_versions` and `jira_development` are no longer listed directly by default; they are reached through the gateway. `jira_unlinkIssues` is destructive, so it now needs `TOOLSETS`. To list these tools directly as before, set `TOOLSETS=default,jira_links,jira_watchers,jira_versions,jira_development`.
 * **jira:** `jira_service_desk` is still off by default and is not offered through the gateway. Turn it on with `TOOLSETS`.
+
+### Documentation
+
+* the repository README is now a landing page for the three servers; maintainer notes moved to `CONTRIBUTING.md`, and the full configuration reference to `docs/configuration.md`
+* the three server READMEs on npm are restyled, with a Commands table, settings grouped by purpose and a "What it guarantees" section
+* **confluence:** the README's tool search section no longer uses Jira examples or mentions a permission filter Confluence doesn't have
+* `ATLASSIAN_DC_MCP_REQUEST_TIMEOUT_MS` is documented in each server's README
+
+### Build
+
+* each server depends on `quickjs-emscripten-core` and `@jitl/quickjs-wasmfile-release-sync` (about 1.4 MB, WebAssembly, no native build). Bitbucket lists them too because it bundles the same shared code, though it has no code tool
+* the release waits for npm to serve a new version before registering it with the MCP Registry
 
 ## [0.44.1](https://github.com/tekthar/jira-dc-mcp/releases/tag/v0.44.1) (2026-11-06)
 

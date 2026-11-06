@@ -272,9 +272,9 @@ tests run on every pull request, on Ubuntu and on Windows:
 
 ## Status and roadmap
 
-The servers are at **0.44** on npm. The tool search and code execution are on `main` and ship in the next release;
-they change which Jira tools are listed by default, and the [changelog](CHANGELOG.md) says how to keep the old list.
-Until 1.0, minor versions may include breaking changes, and the changelog describes them. Coming next:
+This is **0.45**, which added the tool search and code execution. It changed which Jira tools are listed by default,
+and the [changelog](CHANGELOG.md) says how to keep the old list. Until 1.0, minor versions may include breaking
+changes, and the changelog describes them. Coming next:
 
 - Jira Data Center apps (plugins), reached through the tool search so they cost nothing until used
 - Jira administration tools
