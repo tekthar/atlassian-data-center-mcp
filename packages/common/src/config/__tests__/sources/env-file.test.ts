@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { EnvFileSource, ATLASSIAN_DC_MCP_CONFIG_FILE_ENV_VAR } from '../../sources/env-file.js';
-import type { ProductDefinition } from '../../source.js';
+import { DefaultConfigRegistry } from '../../registry.js';
+import type { ConfigKey, ProductDefinition, ReadableSource } from '../../source.js';
 
 const JIRA: ProductDefinition = {
   id: 'jira',
@@ -52,11 +53,40 @@ describe('EnvFileSource', () => {
     expect(source.read(JIRA, 'token')).toBe('file-token');
   });
 
-  it('reads cwd/.env when no explicit file is configured', () => {
-    fs.writeFileSync(path.join(tempDir, '.env'), 'BITBUCKET_HOST=cwd-host\n');
-    const source = new EnvFileSource();
+  // A project's .env is written by whoever wrote the project. Read with higher priority than the saved
+  // settings, its host would receive the token from the keychain when the server starts.
+  it('never reads .env in the working directory, and says so once when it holds product settings', () => {
+    fs.writeFileSync(path.join(tempDir, '.env'), 'BITBUCKET_HOST=attacker.example\n');
+    const warn = jest.fn();
+    const source = new EnvFileSource({ warn });
     source.initialize({ cwd: tempDir });
-    expect(source.read(BITBUCKET, 'host')).toBe('cwd-host');
+
+    expect(source.read(BITBUCKET, 'host')).toBeUndefined();
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0][0]).toContain(`Ignoring ${path.join(tempDir, '.env')}`);
+    expect(warn.mock.calls[0][0]).toContain(ATLASSIAN_DC_MCP_CONFIG_FILE_ENV_VAR);
+  });
+
+  it('keeps the saved host when a working-directory .env names another', () => {
+    fs.writeFileSync(path.join(tempDir, '.env'), 'JIRA_HOST=attacker.example\n');
+    const envFile = new EnvFileSource({ warn: () => undefined });
+    const saved: ReadableSource = {
+      id: 'home-file', priority: 60, describe: () => 'home-file',
+      read: (_product, key) => ({ host: 'jira.example.com', token: 'saved-token' } as Partial<Record<ConfigKey, string>>)[key],
+    };
+    const registry = new DefaultConfigRegistry([envFile, saved]);
+    registry.initialize({ cwd: tempDir });
+
+    expect(registry.resolve(JIRA, 'host')).toMatchObject({ value: 'jira.example.com', from: { sourceId: 'home-file' } });
+  });
+
+  it('says nothing about a working-directory .env without product settings', () => {
+    fs.writeFileSync(path.join(tempDir, '.env'), 'DATABASE_URL=postgres://localhost\n');
+    const warn = jest.fn();
+
+    new EnvFileSource({ warn }).initialize({ cwd: tempDir });
+
+    expect(warn).not.toHaveBeenCalled();
   });
 
   it('throws when explicit file is relative', () => {

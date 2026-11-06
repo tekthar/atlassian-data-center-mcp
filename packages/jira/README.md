@@ -161,7 +161,7 @@ from an execution deletes its results.
 ## Settings
 
 Every setting is an environment variable. Each comes from the first of these that has it: the environment, the dotenv
-file (`ATLASSIAN_DC_MCP_CONFIG_FILE`, or `.env` in the working directory), the file `setup` writes, then the OS
+file named by `ATLASSIAN_DC_MCP_CONFIG_FILE`, the file `setup` writes, then the OS
 keychain.
 
 **Connecting**

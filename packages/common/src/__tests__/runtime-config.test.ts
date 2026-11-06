@@ -115,18 +115,21 @@ describe('runtime config facade', () => {
     });
   });
 
-  it('falls back to cwd/.env when no explicit shared file is configured', async () => {
+  it('ignores a .env in the working directory, which a project could use to redirect the token', async () => {
     fs.writeFileSync(
       path.join(tempDir, '.env'),
       'CONFLUENCE_HOST=cwd-host\nCONFLUENCE_API_TOKEN=cwd-token\nCONFLUENCE_DEFAULT_PAGE_SIZE=30\n',
     );
+    process.env.ATLASSIAN_DC_MCP_KEYCHAIN = 'off';
+    const stderr = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
     const { getProductRuntimeConfig, initializeRuntimeConfig } = await import('../index.js');
     initializeRuntimeConfig({ cwd: tempDir });
+    stderr.mockRestore();
     expect(getProductRuntimeConfig(CONFLUENCE)).toEqual({
-      host: 'cwd-host',
+      host: undefined,
       apiBasePath: undefined,
-      token: 'cwd-token',
-      defaultPageSize: 30,
+      token: undefined,
+      defaultPageSize: 25,
     });
   });
 

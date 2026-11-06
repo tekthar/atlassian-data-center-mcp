@@ -79,7 +79,7 @@ At startup, each MCP server resolves each config key by walking sources in this 
 | Priority | Source | Reads | Written by setup |
 |---------:|--------|-------|------------------|
 | 100 | `process.env` (`JIRA_*`, `CONFLUENCE_*`, `BITBUCKET_*`) | all keys | — |
-| 80  | env file — `ATLASSIAN_DC_MCP_CONFIG_FILE` or `./.env` | all keys | — |
+| 80  | env file — `ATLASSIAN_DC_MCP_CONFIG_FILE` | all keys | — |
 | 60  | home file — `~/.atlassian-dc-mcp/<product>.env` on macOS/Linux, `%USERPROFILE%\.atlassian-dc-mcp\<product>.env` on Windows (mode `0600` on macOS and Linux; on Windows, `setup` limits it to your account) | all keys | host, apiBasePath, defaultPageSize (always); token (non-darwin or keychain fallback) |
 | 40  | OS keychain — service `atlassian-dc-mcp`, account `<product>-token` (macOS Keychain, Windows Credential Manager, Linux Secret Service) | token only | token, when a keychain is available |
 
@@ -87,6 +87,7 @@ Notes:
 
 - Process env wins over everything, so you can always override a stored credential for one session.
 - `ATLASSIAN_DC_MCP_CONFIG_FILE` must be an absolute path; if set and missing, the server fails fast.
+- A `.env` in the working directory is never read. MCP clients often start servers inside the project you have open, and a project's `.env` is written by whoever wrote the project: if it could set the host, the server would send your token there. Versions before 0.47.1 read it; a server that finds one with product settings says it is ignored. To keep using such a file, set `ATLASSIAN_DC_MCP_CONFIG_FILE` to its absolute path in your MCP client's configuration.
 - The keychain is read once, when a server starts, and only if no higher source has the token. Tool calls never touch it.
 - Each server masks its token in every tool result and everything it writes to stderr.
 - If a higher-priority source shadows the value setup is about to save, setup prints a warning naming the env var so you can unset it.

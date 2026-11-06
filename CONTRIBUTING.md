@@ -83,7 +83,7 @@ npm run dev:bitbucket   # For Bitbucket
 
 ### Settings for local development
 
-For local development, create a `.env` file in the root directory, or a shared dotenv-style file anywhere on disk and point `ATLASSIAN_DC_MCP_CONFIG_FILE` to it, with the following variables:
+For local development, create a dotenv-style file, for example `.env` in the root directory (it is git-ignored), and point `ATLASSIAN_DC_MCP_CONFIG_FILE` at its absolute path, e.g. `export ATLASSIAN_DC_MCP_CONFIG_FILE="$PWD/.env"`. The servers never read a `.env` from the working directory on their own. The file holds these variables:
 
 ```
 # Jira configuration - choose one of these options:
@@ -108,7 +108,7 @@ BITBUCKET_API_BASE_PATH=https://jira.example.com/rest
 BITBUCKET_API_TOKEN=your-api-token
 ```
 
-Resolution order for each key is `process.env` → `ATLASSIAN_DC_MCP_CONFIG_FILE` (or `./.env`) → home file (`~/.atlassian-dc-mcp/<product>.env` on macOS/Linux, `%USERPROFILE%\.atlassian-dc-mcp\<product>.env` on Windows) → OS keychain. See the [configuration reference](docs/configuration.md#configuration-sources--precedence).
+Resolution order for each key is `process.env` → `ATLASSIAN_DC_MCP_CONFIG_FILE` → home file (`~/.atlassian-dc-mcp/<product>.env` on macOS/Linux, `%USERPROFILE%\.atlassian-dc-mcp\<product>.env` on Windows) → OS keychain. See the [configuration reference](docs/configuration.md#configuration-sources--precedence).
 
 ### Before you open a pull request
 

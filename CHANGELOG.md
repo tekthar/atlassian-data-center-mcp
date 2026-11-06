@@ -7,6 +7,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Security
 
+* **configuration:** a `.env` in the working directory is no longer read. MCP clients often start servers inside the project you have open, so the author of a project's `.env` could set the host while the token came from your keychain or home file, and the Jira server sent that token to their host when it started. Settings now come only from the environment, a file named by `ATLASSIAN_DC_MCP_CONFIG_FILE`, the file `setup` writes, and the OS keychain. **If you relied on `.env`:** set `ATLASSIAN_DC_MCP_CONFIG_FILE` to its absolute path in your MCP client's configuration; a server that finds an ignored `.env` with product settings says so.
 * **tool search:** with saving downloaded attachments to disk turned on, and the attachments toolset reached through the tool search rather than listed, `jira_downloadAttachment` and `confluence_downloadAttachment` ran through `<product>_runReadTool`, which tells the client it only reads. A client that approves read-only tools without asking could save a file without asking. They now run through `<product>_runWriteTool`, as the directly listed tool already declared. Files were never written outside the configured folders, and never over an existing file.
 
 ## [0.47.0](https://github.com/tekthar/atlassian-data-center-mcp/releases/tag/v0.47.0) (2026-11-06)
