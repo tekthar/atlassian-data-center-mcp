@@ -1,10 +1,17 @@
 name: Release
 
-# Publishing a GitHub release (tag vX.Y.Z) publishes the three servers to npm and the MCP Registry.
-# Run it manually to retry: versions already on npm are skipped.
+# Merging a version bump to main publishes it: npm, then a vX.Y.Z GitHub release, then the MCP Registry.
+# Bump with `node scripts/set-version.js X.Y.Z`. Pushes that leave the version unchanged publish nothing.
+#
+# Keep this file's name and location. Each npm package trusts exactly
+# tekthar/jira-dc-mcp + .github/workflows/release.yml (no environment);
+# renaming the file or the repository breaks publishing until npm is reconfigured.
 on:
-  release:
-    types: [published]
+  push:
+    branches: [main]
+    paths:
+      - 'packages/*/package.json'
+      - 'packages/*/server.json'
   workflow_dispatch:
 
 concurrency:
@@ -16,33 +23,57 @@ permissions:
 
 jobs:
   npm:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      # npm trusted publishing and the MCP Registry both log in with the GitHub OIDC token.
-      id-token: write
+      contents: write # create the vX.Y.Z tag and GitHub release
+      id-token: write # npm trusted publishing
+    outputs:
+      version: ${{ steps.plan.outputs.version }}
+      release: ${{ steps.plan.outputs.pending == 'true' || github.event_name == 'workflow_dispatch' }}
     steps:
       - uses: actions/checkout@v7
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
           node-version: '22.22.2'
+      - name: Check for unpublished versions
+        id: plan
+        run: scripts/publish-npm.sh --check
       # See ci.yml: npm 11 runs through npx because upgrading the runner's npm in place breaks it.
       - name: Install dependencies
+        if: steps.plan.outputs.pending == 'true'
         run: npx -y npm@11.21.1 ci
       - name: Build
+        if: steps.plan.outputs.pending == 'true'
         run: npx -y npm@11.21.1 run build
       - name: Test
+        if: steps.plan.outputs.pending == 'true'
         run: npx -y npm@11.21.1 test
       - name: Publish to npm
-        run: scripts/publish-npm.sh "${{ github.event_name == 'release' && github.event.release.tag_name || '' }}"
+        if: steps.plan.outputs.pending == 'true'
+        run: scripts/publish-npm.sh
+      # A manual run also retries the GitHub release and the MCP Registry, for when npm succeeded but they failed.
+      - name: Create GitHub release
+        if: steps.plan.outputs.pending == 'true' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v${{ steps.plan.outputs.version }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "$TAG already exists."
+          else
+            gh release create "$TAG" --target "$GITHUB_SHA" --generate-notes \
+              $([[ "$TAG" == *-* ]] && echo --prerelease)
+          fi
 
   mcp-registry:
     needs: npm
+    if: needs.npm.outputs.release == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
+      id-token: write # MCP Registry login for the io.github.tekthar namespace
     steps:
       - uses: actions/checkout@v7
       - name: Publish to the MCP Registry

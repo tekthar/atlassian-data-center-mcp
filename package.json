@@ -1,14 +1,14 @@
 {
-  "name": "atlassian-dc-mcp",
+  "name": "jira-dc-mcp",
   "version": "0.1.0",
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/b1ff/atlassian-dc-mcp.git"
+    "url": "git+https://github.com/tekthar/jira-dc-mcp.git"
   },
-  "homepage": "https://github.com/b1ff/atlassian-dc-mcp#readme",
+  "homepage": "https://github.com/tekthar/jira-dc-mcp#readme",
   "bugs": {
-    "url": "https://github.com/b1ff/atlassian-dc-mcp/issues"
+    "url": "https://github.com/tekthar/jira-dc-mcp/issues"
   },
   "type": "module",
   "workspaces": [
@@ -22,15 +22,7 @@
     "dev:bitbucket": "npm run dev --workspace=packages/bitbucket",
     "debug": "node mcp-live-debug.js",
     "debug:verbose": "node mcp-live-debug.js --verbose",
-    "debug:ts": "nodemon --exec tsx",
-    "publish:ci": "node scripts/version-packages.js && lerna publish from-package --yes",
-    "lerna": "lerna"
-  },
-  "overrides": {
-    "tar": "7.5.22",
-    "nx": {
-      "undici": "7.30.1"
-    }
+    "debug:ts": "nodemon --exec tsx"
   },
   "devDependencies": {
     "@modelcontextprotocol/inspector": "2.12.0",
@@ -40,7 +32,6 @@
     "@types/node": "22.20.5",
     "esbuild": "0.28.2",
     "jest": "30.5.2",
-    "lerna": "10.1.1",
     "nodemon": "3.1.14",
     "tsx": "4.23.15",
     "typescript": "7.0.2"

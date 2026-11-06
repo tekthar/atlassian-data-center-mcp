@@ -3,6 +3,24 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.44.1](https://github.com/tekthar/jira-dc-mcp/releases/tag/v0.44.1) (2026-11-06)
+
+First release from this repository's Release workflow, published with npm trusted publishing. The servers' code is unchanged from 0.44.0.
+
+### Build
+
+* publish to npm, GitHub releases and the MCP Registry when a version bump is merged to `main`
+* remove the upstream Lerna release tooling; `scripts/set-version.js` sets the version of all three servers
+* point every package's repository, homepage and issue links at tekthar/jira-dc-mcp
+
+## [0.44.0](https://www.npmjs.com/package/mcp-jira-dc/v/0.44.0) (2026-11-06)
+
+First tekthar release, published by hand as `mcp-jira-dc`, `mcp-confluence-dc` and `mcp-bitbucket-dc`: the DC tools ported from sooperset/mcp-atlassian, toolset and read-only filtering, and Jira permission-aware tool lists.
+
+## Upstream releases
+
+The releases below were published by [b1ff/atlassian-dc-mcp](https://github.com/b1ff/atlassian-dc-mcp) as `@atlassian-dc-mcp/*`. Their links point at upstream, where those tags and issues live.
+
 ## [0.43.2](https://github.com/b1ff/atlassian-dc-mcp/compare/v0.43.1...v0.43.2) (2026-11-01)
 
 ### Bug Fixes

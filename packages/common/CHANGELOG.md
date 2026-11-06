@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+Releases from 0.44.0 on are recorded in the [root CHANGELOG](../../CHANGELOG.md). The entries below are upstream releases of [b1ff/atlassian-dc-mcp](https://github.com/b1ff/atlassian-dc-mcp), and their links point there.
+
 ## [0.43.2](https://github.com/b1ff/atlassian-dc-mcp/compare/v0.43.1...v0.43.2) (2026-11-01)
 
 ### Bug Fixes

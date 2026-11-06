@@ -7,14 +7,14 @@ Private tekthar fork of [b1ff/atlassian-dc-mcp](https://github.com/b1ff/atlassia
 
 ## Releasing
 
-The three servers are released together with one version.
+The three servers are released together with one version. A release is a merged version bump:
 
-1. In a PR, bump `version` in `packages/{jira,confluence,bitbucket}/package.json`, run `node scripts/sync-versions.js` to update each `server.json`, and update the changelogs.
-2. After merging, publish a GitHub release tagged `vX.Y.Z` on `main`.
-3. The Release workflow builds, tests, checks that the tag matches every `package.json` and `server.json`, and publishes each package with `scripts/publish-npm.sh`. Versions already on npm are skipped, so re-running the workflow is safe. Versions with a prerelease suffix (`1.0.0-rc.1`) go to the `next` dist-tag.
-4. It then publishes the servers to the MCP Registry with `scripts/publish-mcp.sh`.
+1. In a PR, run `node scripts/set-version.js X.Y.Z`. It updates each server's `package.json` and `server.json` and `package-lock.json`. Add an entry to `CHANGELOG.md`.
+2. Merge to `main`. `.github/workflows/release.yml` sees an unpublished version, then builds, tests and publishes the three packages to npm, creates the `vX.Y.Z` GitHub release, and publishes the servers to the MCP Registry.
 
-npm auth uses [trusted publishing](https://docs.npmjs.com/trusted-publishers) (GitHub OIDC), so there is no `NPM_TOKEN` secret. Each package needs a trusted publisher on npmjs.com pointing at `tekthar/jira-dc-mcp` and the workflow file `release.yml`, with **npm publish** allowed.
+Pushes that don't change the version publish nothing, and packages already on npm are skipped, so running the workflow by hand (Actions → Release → Run workflow on `main`) only publishes what is missing on npm, then retries the GitHub release and the MCP Registry. A prerelease version (`1.0.0-rc.1`) goes to the `next` dist-tag and is marked as a prerelease.
+
+npm auth is [trusted publishing](https://docs.npmjs.com/trusted-publishers): each package trusts `tekthar/jira-dc-mcp` with the workflow `release.yml` and no environment, and there is no `NPM_TOKEN` secret. The trust lasts until someone changes it, so keep the workflow's file name and the repository name. Renaming either means updating the trusted publisher of all three packages on npmjs.com.
 
 ## Package names
 
@@ -72,8 +72,6 @@ At startup the Jira server asks Jira for the token owner's permissions (`GET /re
 The upstream README follows.
 
 ---
-
-[![MSeeP.ai Security Assessment Badge](https://mseep.net/pr/b1ff-atlassian-dc-mcp-badge.png)](https://mseep.ai/app/b1ff-atlassian-dc-mcp)
 
 # Atlassian Data Center MCP
 
@@ -429,16 +427,13 @@ Use `registerTool` with a full Zod object schema when registering tools and
 import SDK types from `@modelcontextprotocol/server`. Existing stdio client
 configuration, tool names, arguments, and responses remain compatible.
 
-The release command promotes the current 0.x packages to 1.0.0. Subsequent
-releases use the existing conventional-commit version selection.
-
 ## Installation
 
 Clone the repository:
 
 ```bash
-git clone https://github.com/b1ff/atlassian-dc-mcp.git
-cd atlassian-dc-mcp
+git clone https://github.com/tekthar/jira-dc-mcp.git
+cd jira-dc-mcp
 ```
 
 ## Development

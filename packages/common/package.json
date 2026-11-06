@@ -13,12 +13,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/b1ff/atlassian-dc-mcp.git",
+    "url": "git+https://github.com/tekthar/jira-dc-mcp.git",
     "directory": "packages/common"
   },
-  "homepage": "https://github.com/b1ff/atlassian-dc-mcp#readme",
+  "homepage": "https://github.com/tekthar/jira-dc-mcp#readme",
   "bugs": {
-    "url": "https://github.com/b1ff/atlassian-dc-mcp/issues"
+    "url": "https://github.com/tekthar/jira-dc-mcp/issues"
   },
   "scripts": {
     "build": "tsc",
@@ -31,10 +31,6 @@
     "zod": "4.6.7",
     "@modelcontextprotocol/server": "2.4.0"
   },
-  "publishConfig": {
-    "access": "public"
-  },
-  "gitHead": "21ea555d7c02461cde3bab32a4b75c6c6a94e927",
   "engines": {
     "node": ">=22.22.2",
     "npm": ">=11.10.0 <12"
