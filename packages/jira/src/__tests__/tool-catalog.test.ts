@@ -3,15 +3,23 @@ import path from 'node:path';
 import { isGatewayTool, isToolAllowed, resolveToolPolicy } from '@atlassian-dc-mcp/common';
 import { JIRA_PERMISSION_KEYS } from '../permissions.js';
 import { JIRA_CORE_CATALOG, JIRA_TOOL_CATALOG } from '../tool-catalog.js';
+import { XRAY_CATALOG } from '../apps/xray/catalog.js';
 
-/** Tools that change Jira but need nothing beyond browsing the issue or using the customer portal. */
-const UNGATED_WRITE_TOOLS = ['jira_watchIssue', 'jira_unwatchIssue', 'jira_createCustomerRequest'];
+/**
+ * Tools that change Jira but need nothing beyond browsing the issue or using the customer portal,
+ * and Xray test runs, whose executors Xray's own settings decide.
+ */
+const UNGATED_WRITE_TOOLS = ['jira_watchIssue', 'jira_unwatchIssue', 'jira_createCustomerRequest', 'xray_updateTestRun'];
 
 const SOURCE_DIR = path.join(__dirname, '..');
-const TOOLS_DIR = path.join(SOURCE_DIR, 'tools');
+
+const sourceFilesIn = (dir: string): string[] =>
+  fs.readdirSync(dir, { withFileTypes: true, recursive: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.ts'))
+    .map((entry) => path.join(entry.parentPath, entry.name));
 
 const registeredInSource = (): string[] => {
-  const files = [path.join(SOURCE_DIR, 'index.ts'), ...fs.readdirSync(TOOLS_DIR).map((file) => path.join(TOOLS_DIR, file))];
+  const files = [path.join(SOURCE_DIR, 'index.ts'), ...sourceFilesIn(path.join(SOURCE_DIR, 'tools')), ...sourceFilesIn(path.join(SOURCE_DIR, 'apps'))];
   return files.flatMap((file) =>
     [...fs.readFileSync(file, 'utf8').matchAll(/registerTool\(\s*['"]([A-Za-z_]+)['"]/g)].map((match) => match[1]),
   );
@@ -123,5 +131,13 @@ describe('JIRA_TOOL_CATALOG', () => {
     for (const name of readOnly) {
       expect(JIRA_TOOL_CATALOG.tools[name].access).toBe('read');
     }
+  });
+
+  it('offers Xray tools through the gateway by default, and lists them once TOOLSETS names their toolset', () => {
+    const xrayTools = Object.keys(XRAY_CATALOG.tools);
+
+    expect(allowedBy({}).filter((name) => xrayTools.includes(name))).toEqual([]);
+    expect(gatewayBy({}).filter((name) => xrayTools.includes(name))).toEqual(xrayTools);
+    expect(allowedBy({ TOOLSETS: 'default,xray_test_runs' })).toContain('xray_updateTestRun');
   });
 });

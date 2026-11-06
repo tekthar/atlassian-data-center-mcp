@@ -6,6 +6,7 @@ import { getDefaultPageSize, getJiraRuntimeConfig, JIRA_PRODUCT } from './config
 import { JIRA_TOOL_CATALOG } from './tool-catalog.js';
 import { applyJiraPermissionFilter, reportToolsHiddenByPermission } from './permissions.js';
 import { registerJiraModuleTools } from './tools/index.js';
+import { detectJiraApps, registerJiraAppTools } from './apps/index.js';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
@@ -31,7 +32,11 @@ const server = createMcpServer({
   version
 });
 
-const toolPolicy = await applyJiraPermissionFilter(JIRA_TOOL_CATALOG, resolveToolPolicy(JIRA_TOOL_CATALOG));
+const requestedPolicy = resolveToolPolicy(JIRA_TOOL_CATALOG);
+const [toolPolicy, jiraApps] = await Promise.all([
+  applyJiraPermissionFilter(JIRA_TOOL_CATALOG, requestedPolicy),
+  detectJiraApps(requestedPolicy),
+]);
 const tools = createPolicyRegistrar(server, JIRA_TOOL_CATALOG, toolPolicy);
 
 const jiraInstanceType = "JIRA Data Center edition instance";
@@ -320,7 +325,9 @@ tools.registerTool(
   }
 );
 
-registerJiraModuleTools(tools, { instanceType: jiraInstanceType, getPageSize: getDefaultPageSize });
+const toolContext = { instanceType: jiraInstanceType, getPageSize: getDefaultPageSize };
+registerJiraModuleTools(tools, toolContext);
+registerJiraAppTools(tools, toolContext, jiraApps);
 tools.registerGatewayTools({ prefix: 'jira', product: 'Jira' });
 reportToolsHiddenByPermission(tools.hiddenByPermission());
 

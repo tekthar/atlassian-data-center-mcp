@@ -1,5 +1,6 @@
 import { mergeToolCatalogs, type ToolCatalog } from '@atlassian-dc-mcp/common';
 import { PROJECT_ADMIN_PERMISSIONS } from './permissions.js';
+import { JIRA_APPS_CATALOG } from './apps/index.js';
 import { JIRA_MODULES_CATALOG } from './tools/index.js';
 
 /**
@@ -45,5 +46,5 @@ export const JIRA_CORE_CATALOG: ToolCatalog = {
   },
 };
 
-/** Core tools plus every module under tools/. New modules default to off. */
-export const JIRA_TOOL_CATALOG = mergeToolCatalogs(JIRA_CORE_CATALOG, JIRA_MODULES_CATALOG);
+/** Core tools, every module under tools/, and every app under apps/. New modules default to off. */
+export const JIRA_TOOL_CATALOG = mergeToolCatalogs(JIRA_CORE_CATALOG, JIRA_MODULES_CATALOG, JIRA_APPS_CATALOG);
