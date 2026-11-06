@@ -1,131 +1,113 @@
 # mcp-jira-dc
 
-An MCP server for **Jira Data Center and Jira Server**. It lets Claude and other MCP clients search, create, update and transition issues, and, when you turn them on, work with sprints, worklogs, service desk queues, users, fields and more.
+**Connect Claude, Cursor and any other MCP client to Jira Data Center and Jira Server, signed in as you.**
 
-- **63 tools in 18 toolsets.** By default 10 everyday issue tools are listed directly, and 3 gateway tools find and run 43 more, so the rest cost tokens only when used.
-- **Sandboxed code execution:** the model can write a short script that combines many read calls and returns only the answer.
-- **Tools your Jira account can't use are hidden** at startup.
-- **Read-only mode** and an exact tool allowlist for locked-down setups.
-- **One `npx` command:** no Python, no Docker.
-
-Not affiliated with or endorsed by Atlassian. Jira is a trademark of Atlassian.
-
-## Requirements
-
-- Node.js 22.22.2 or later
-- Jira Data Center or Jira Server, and a personal access token. To create one in Jira, open your profile picture, then **Personal Access Tokens** > **Create token**.
-
-## Quick start
-
-1. Save your Jira address and token:
-
-   ```bash
-   npx -y mcp-jira-dc setup
-   ```
-
-   On macOS the token goes to the Keychain. Everything else goes to `~/.atlassian-dc-mcp/jira.env` (on Windows, `%USERPROFILE%\.atlassian-dc-mcp\jira.env`), which only your user can read.
-
-2. Add the server to your MCP client.
-
-   Claude Code:
-
-   ```bash
-   claude mcp add jira -- npx -y mcp-jira-dc
-   ```
-
-   Claude Desktop, Cursor, VS Code and other clients with an `mcpServers` file:
-
-   ```json
-   {
-     "mcpServers": {
-       "jira": { "command": "npx", "args": ["-y", "mcp-jira-dc"] }
-     }
-   }
-   ```
-
-To skip `setup` and pass settings directly, add an `env` block to that entry:
-
-```json
-"env": { "JIRA_HOST": "jira.example.com", "JIRA_API_TOKEN": "<personal access token>" }
-```
-
-## Configuration
-
-| Variable | Purpose |
-| --- | --- |
-| `JIRA_HOST` | Host name and optional port, without `https://`. Example: `jira.example.com` |
-| `JIRA_API_BASE_PATH` | Full REST base URL, used instead of `JIRA_HOST`. Example: `https://example.com/jira/rest` |
-| `JIRA_API_TOKEN` | Personal access token |
-| `JIRA_DEFAULT_PAGE_SIZE` | Page size for list tools. Default 25. |
-| `ATLASSIAN_DC_MCP_CONFIG_FILE` | Absolute path to a dotenv file holding any of these settings, for example one file shared by several tools |
-
-Each setting comes from the first of these places that has it:
-1. environment variables;
-2. the dotenv file (`ATLASSIAN_DC_MCP_CONFIG_FILE`, or `.env` in the working directory);
-3. the file `setup` writes;
-4. the macOS Keychain.
-
-In scripts and CI, `setup` also runs without prompts:
+The server runs on your machine. Your MCP client starts it and talks to it over stdio; it calls Jira's REST API with
+your personal access token, lists the everyday issue tools, and keeps 43 more one search away. Jira's own permissions
+decide what you can do: the server can hide tools, never unlock them.
 
 ```bash
-npx -y mcp-jira-dc setup --non-interactive --host jira.example.com --token "$JIRA_TOKEN"
+npx -y mcp-jira-dc setup                    # saves your Jira address and token
+claude mcp add jira -- npx -y mcp-jira-dc   # connects Claude Code
 ```
 
-`npx -y mcp-jira-dc setup --help` lists every option.
+> Not affiliated with or endorsed by Atlassian. Jira is a trademark of Atlassian.
 
-## Choosing which tools are listed
+## Why run it on your machine?
 
-| Variable | Effect |
-| --- | --- |
-| `TOOLSETS` | Comma-separated toolset names, `default`, or `all`. Example: `default,jira_agile` |
-| `READ_ONLY_MODE` | `true` lists only tools that never change Jira. |
-| `ENABLED_TOOLS` | Comma-separated tool names. Replaces `TOOLSETS`; read-only mode still applies. |
-| `TOOL_GATEWAY` | On by default: tools outside the selected toolsets, apart from destructive ones, are offered through three gateway tools instead of being left out. `off` leaves them out. The gateway is also off while `ENABLED_TOOLS` is set. |
-| `CODE_EXECUTION` | On by default: adds `jira_runCode`, which runs JavaScript in a sandbox that can call the read tools. `off` removes it. It is also off while `ENABLED_TOOLS` is set. |
-| `PERMISSION_FILTER` | On by default: at startup the server asks Jira for your permissions and hides tools you can't use. `off` turns this off. |
-| `JIRA_PERMISSION_PROJECTS` | Comma-separated project keys. Without it, a permission you hold in any project counts. With it, only these projects count. |
+| | A hosted MCP connector | **mcp-jira-dc** |
+|---|---|---|
+| Works with Jira Data Center and Server | depends on the service | **yes** |
+| Reaches a Jira behind your firewall or VPN | only if Jira is exposed to the service | **yes**: wherever your machine can reach |
+| Where your token lives | with the service | **on your machine**: macOS Keychain, or a file only your user can read |
+| Hides tools your account can't use | depends on the service | **yes**: reads your Jira permissions at startup |
+| Who decides which tools the agent sees | the service | **you**, with a few settings |
+| Something to host, approve or pay for | the service | **nothing**: `npx` runs it |
 
-Hiding tools saves tokens and avoids calls that would fail. It is not access control: Jira still checks your permissions on every call.
+[Atlassian's official MCP server](https://github.com/atlassian/atlassian-mcp-server) is a hosted server for Atlassian
+Cloud.
 
-### The tool gateway
+## Install
 
-Listing every tool costs tokens on every request, so only everyday tools are listed directly. The rest are reached through three small tools:
+You need Node.js 22.22.2 or later, Jira Data Center or Jira Server, and a personal access token. To create one, open
+your profile picture in Jira, then **Personal Access Tokens** > **Create token**.
 
-- `jira_searchTools` finds tools by keyword (for example "sprint issues") and returns their descriptions and input schemas. Its own description names the toolsets it can reach.
-- `jira_runReadTool` runs a found tool that only reads Jira.
-- `jira_runWriteTool` runs a found tool that changes Jira. Clients can ask before running it, as they do for any write tool.
+**1. Save your address and token.** `setup` asks for them, checks them with one request to Jira, and saves them:
 
-The gateway applies the same rules as the tool list: read-only mode, the permission filter and the opt-in settings. It never offers destructive tools; turn on their toolset with `TOOLSETS` to use them. A toolset named in `TOOLSETS` is listed directly instead.
+```bash
+npx -y mcp-jira-dc setup
+```
 
-### Running code (`jira_runCode`)
+On macOS the token goes to the Keychain. Everything else goes to `~/.atlassian-dc-mcp/jira.env`
+(`%USERPROFILE%\.atlassian-dc-mcp\jira.env` on Windows), which only your user can read.
 
-Some questions take many tool calls, for example checking every issue in a sprint. `jira_runCode` lets the model write a short JavaScript snippet that makes those calls and returns only the answer, so the intermediate results don't fill the context:
+**2. Connect your client.** Claude Code:
+
+```bash
+claude mcp add jira -- npx -y mcp-jira-dc
+```
+
+Claude Desktop, Cursor, VS Code and other clients with an `mcpServers` file:
+
+```json
+{
+  "mcpServers": {
+    "jira": { "command": "npx", "args": ["-y", "mcp-jira-dc"] }
+  }
+}
+```
+
+To skip `setup`, put the settings in that entry instead:
+`"env": { "JIRA_HOST": "jira.example.com", "JIRA_API_TOKEN": "<personal access token>" }`.
+
+## Commands
+
+| Command | Does |
+|---|---|
+| `npx -y mcp-jira-dc` | Serves Jira over stdio. This is what your MCP client runs. |
+| `npx -y mcp-jira-dc setup` | Asks for your address and token, checks them against Jira, and saves them. |
+| `setup --non-interactive --host <host> --token <token>` | The same from flags, for scripts and CI. Exits non-zero if the token doesn't work. Values you leave out come from your existing settings. |
+| `setup --help` | Lists every option. |
+
+## What the agent sees
+
+The tool list holds the everyday tools for issues, comments, transitions and attachments, plus four more:
+
+| Tool | What it's for |
+|---|---|
+| `jira_searchTools` | Finds any other tool by keyword, such as "sprint issues", and returns its description and input schema. Its own description names every toolset it can reach. |
+| `jira_runReadTool` | Runs a found tool that only reads Jira. |
+| `jira_runWriteTool` | Runs a found tool that changes Jira. Your client can ask you first, as for any write. |
+| `jira_runCode` | Runs a short JavaScript snippet that combines several read calls and returns only the answer. |
+
+For a question that takes many calls, `jira_runCode` keeps the intermediate results out of the context:
 
 ```js
-const sprint = await tools.jira_getSprintIssues({ sprintId: 42 });
-const blocked = sprint.issues.filter((issue) => issue.status === 'Blocked');
-return blocked.map((issue) => issue.key);
+const { issues } = await tools.jira_getSprintIssues({ sprintId: 42 });
+const blocked = issues.filter((issue) => issue.status === 'Blocked');
+return blocked.map((issue) => `${issue.key} ${issue.summary}`);
 ```
 
-- **Read tools only:** code can call the read tools the server offers, listed or through the gateway. Tools that change Jira are not available to code, so a client's approval prompts still see every write. Each call goes through the same checks as calling the tool directly.
-- **Sandboxed:** the code runs in QuickJS, a JavaScript engine compiled to WebAssembly, inside a separate worker thread. It has no network, file, process or timer access, only `tools`, `callTool` and `console`.
-- **Limits:** 30 seconds per run, 50 tool calls with at most 4 at a time, 64 MB of memory, and a 100,000-character result. If the code crashes the engine, only the worker stops; the server keeps running.
-- **Install:** the sandbox is two small npm packages (about 1.4 MB) with no native build, so `npx` installs stay as before.
+The snippet runs in QuickJS, a JavaScript engine compiled to WebAssembly, in its own worker thread. It sees only
+`tools`, `callTool` and `console`: no network, files, processes or timers. It can call read tools only, and stops after
+30 seconds or 50 tool calls (4 at a time), at 64 MB of memory, or with a result over 100,000 characters. If it crashes
+the engine, only that run fails.
 
-Set `CODE_EXECUTION=off` to remove the tool.
+## Toolsets
 
-In the table below, **on** toolsets are listed directly, **gateway** toolsets are reached through the gateway, and **off** toolsets need `TOOLSETS`.
+**On** toolsets are listed directly. **Gateway** toolsets are reached through `jira_searchTools`. **Off** toolsets need
+`TOOLSETS`.
 
 | Toolset | Default | Tools |
-| --- | --- | --- |
+|---|---|---|
 | `jira_issues`: search, read, create and update issues | on | `jira_searchIssues`, `jira_getIssue`, `jira_createIssue`, `jira_updateIssue` |
 | `jira_comments`: read, add and edit issue comments | on | `jira_getIssueComments`, `jira_postIssueComment`, `jira_updateIssueComment` |
 | `jira_transitions`: list and run workflow transitions | on | `jira_getTransitions`, `jira_transitionIssue` |
+| `jira_attachments`: download and upload issue attachments | on | `jira_downloadAttachment`, `jira_uploadAttachment` (opt-in) |
 | `jira_links`: issue link types, link and unlink issues | gateway | `jira_getIssueLinkTypes`, `jira_linkIssues`, `jira_unlinkIssues` (destructive) |
 | `jira_watchers`: watch and unwatch issues as yourself | gateway | `jira_watchIssue`, `jira_unwatchIssue` |
 | `jira_versions`: project versions (releases) | gateway | `jira_getProjectVersions`, `jira_getVersion`, `jira_createVersion`, `jira_updateVersion`, `jira_deleteVersion` (destructive, opt-in) |
 | `jira_development`: branches, commits and pull requests linked to issues | gateway | `jira_getIssueDevelopmentInfo` |
-| `jira_attachments`: download and upload issue attachments | on | `jira_downloadAttachment`, `jira_uploadAttachment` (opt-in) |
 | `jira_issue_management`: list a project's issues, bulk-create, assign and delete issues | gateway | `jira_getProjectIssues`, `jira_batchCreateIssues`, `jira_assignIssue`, `jira_deleteIssue` (destructive) |
 | `jira_watcher_management`: list an issue's watchers and add or remove other users | gateway | `jira_getIssueWatchers`, `jira_addWatcher`, `jira_removeWatcher` |
 | `jira_users`: look up user profiles and assignable users | gateway | `jira_getUserProfile`, `jira_searchAssignableUsers` |
@@ -134,37 +116,82 @@ In the table below, **on** toolsets are listed directly, **gateway** toolsets ar
 | `jira_agile`: boards and sprints, their issues, sprint planning | gateway | `jira_getAgileBoards`, `jira_getBoardIssues`, `jira_getSprintsFromBoard`, `jira_getSprintIssues`, `jira_createSprint`, `jira_updateSprint`, `jira_addIssuesToSprint`, `jira_moveIssuesToBacklog` |
 | `jira_worklog`: read and log work time | gateway | `jira_getWorklog`, `jira_addWorklog` |
 | `jira_remote_links`: add web links to issues and move issues into epics | gateway | `jira_createRemoteIssueLink`, `jira_linkToEpic` |
-| `jira_service_desk`: Jira Service Management desks, queues, request types and requests | off | `jira_getServiceDeskForProject`, `jira_getServiceDeskQueues`, `jira_getQueueIssues`, `jira_getRequestTypes`, `jira_getRequestTypeFields`, `jira_createCustomerRequest` |
 | `jira_analytics`: issue timelines, SLAs, epic hierarchy, cross-project links, development info in bulk | gateway | `jira_getIssueDates`, `jira_getIssueSla`, `jira_getProjectEpicHierarchy`, `jira_getCrossProjectDependencies`, `jira_getIssuesDevelopmentInfo` |
+| `jira_service_desk`: Jira Service Management desks, queues, request types and requests | off | `jira_getServiceDeskForProject`, `jira_getServiceDeskQueues`, `jira_getQueueIssues`, `jira_getRequestTypes`, `jira_getRequestTypeFields`, `jira_createCustomerRequest` |
 
-### Tools that need an extra setting
+The tool search never offers a destructive tool. To use one, turn on its toolset with `TOOLSETS`.
 
-- **Deleting versions:** `jira_deleteVersion` is listed only with `JIRA_VERSION_DELETE_ENABLED=true`.
-- **Attachments on disk:** `jira_uploadAttachment`, and saving downloaded attachments to disk, work only inside folders you name. Without these settings, `jira_downloadAttachment` returns file contents inline and never touches the disk.
+## Settings
 
-| Variable | Purpose |
-| --- | --- |
-| `JIRA_ATTACHMENTS_UPLOAD_ENABLED`, `JIRA_ATTACHMENTS_DOWNLOAD_ENABLED` | Turn each direction on. Default off. |
-| `JIRA_ATTACHMENTS_UPLOAD_ROOTS`, `JIRA_ATTACHMENTS_DOWNLOAD_ROOTS` | Folders allowed for each direction, separated like your OS `PATH` |
-| `JIRA_ATTACHMENTS_DIR` | One folder used for both directions |
+Every setting is an environment variable. Each comes from the first of these that has it: the environment, the dotenv
+file (`ATLASSIAN_DC_MCP_CONFIG_FILE`, or `.env` in the working directory), the file `setup` writes, then the macOS
+Keychain.
+
+**Connecting**
+
+| Variable | Use |
+|---|---|
+| `JIRA_HOST` | Host name and optional port, without `https://`, e.g. `jira.example.com`. |
+| `JIRA_API_BASE_PATH` | Full REST base URL, used instead of `JIRA_HOST`, e.g. `https://example.com/jira/rest`. |
+| `JIRA_API_TOKEN` | Personal access token. |
+| `JIRA_DEFAULT_PAGE_SIZE` | Page size for list tools. Default 25. |
+| `ATLASSIAN_DC_MCP_CONFIG_FILE` | Absolute path to a dotenv file with any of these settings, e.g. one file shared by several servers. |
+| `ATLASSIAN_DC_MCP_REQUEST_TIMEOUT_MS` | How long a request to Jira may take. Default 30000. |
+
+**Choosing tools**
+
+| Variable | Use |
+|---|---|
+| `TOOLSETS` | Toolsets to list directly: names, `default`, or `all`, e.g. `default,jira_agile`. |
+| `READ_ONLY_MODE` | `true` offers only tools that never change Jira. |
+| `ENABLED_TOOLS` | An exact list of tool names. Replaces `TOOLSETS`, and turns the tool search and `jira_runCode` off. |
+| `TOOL_GATEWAY` | `off` turns the tool search off: tools outside the selected toolsets are left out. |
+| `CODE_EXECUTION` | `off` removes `jira_runCode`. |
+| `PERMISSION_FILTER` | `off` lists tools without asking Jira for your permissions first. |
+| `JIRA_PERMISSION_PROJECTS` | Project keys, e.g. `ACS,BPO`. Without it, a permission you hold in any project counts; with it, only these projects count. |
+
+**Turning on risky tools**
+
+| Variable | Use |
+|---|---|
+| `JIRA_VERSION_DELETE_ENABLED` | `true` lists `jira_deleteVersion`. |
+| `JIRA_ATTACHMENTS_UPLOAD_ENABLED`, `JIRA_ATTACHMENTS_DOWNLOAD_ENABLED` | `true` lets attachments be uploaded from, or saved to, your disk. Default off: downloads come back inline and never touch the disk. |
+| `JIRA_ATTACHMENTS_UPLOAD_ROOTS`, `JIRA_ATTACHMENTS_DOWNLOAD_ROOTS` | Folders allowed for each direction, separated like your OS `PATH`. |
+| `JIRA_ATTACHMENTS_DIR` | One folder used for both directions. |
 | `JIRA_ATTACHMENTS_MAX_UPLOAD_BYTES`, `JIRA_ATTACHMENTS_MAX_DOWNLOAD_BYTES` | Size limits. Default 25 MiB. |
 
-## Security notes
+## What it guarantees
 
-- **Clients can ask before risky calls.** Every tool tells the client whether it only reads, changes data, or deletes.
-- **Treat Jira content as data, not instructions.** Issue text, comments and attachments are written by other people. `jira_downloadAttachment` shows an image to the model only when asked to, with `returnContent: 'image'`.
+- **It never widens access.** Every request carries your token, so Jira decides what you can do. Hiding a tool trims
+  what the agent sees; it never unlocks anything.
+- **Writes stay visible.** Every tool tells your client whether it reads, changes or deletes, so the client can ask you
+  first. `jira_runCode` can only call read tools.
+- **Deleting is always your decision.** Delete tools appear only in toolsets you turn on, never through the tool search
+  or `jira_runCode`, and `jira_deleteVersion` also needs its own setting.
+- **It never retries a call on its own.** If a request fails, the agent sees Jira's error and decides what to do.
+- **It stays out of your files.** Attachments are read from and saved to only the folders you name, and a saved file
+  never overwrites an existing one.
+
+Issue text, comments and attachments are written by other people, so treat them as data, not instructions.
+`jira_downloadAttachment` shows an image to the model only when asked to, with `returnContent: 'image'`.
 
 ## Related projects
 
-- [mcp-confluence-dc](https://www.npmjs.com/package/mcp-confluence-dc) and [mcp-bitbucket-dc](https://www.npmjs.com/package/mcp-bitbucket-dc): the same approach for Confluence and Bitbucket Data Center.
-- [Atlassian's official MCP server](https://github.com/atlassian/atlassian-mcp-server): a remote server for Atlassian Cloud.
-- [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian): a Python server for Jira and Confluence, Cloud and Data Center.
+- [mcp-confluence-dc](https://www.npmjs.com/package/mcp-confluence-dc) and
+  [mcp-bitbucket-dc](https://www.npmjs.com/package/mcp-bitbucket-dc): the same approach for Confluence and Bitbucket
+  Data Center.
+- [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian): a Python server for Jira and Confluence, Cloud
+  and Data Center.
 - [jira-dc-mcp](https://www.npmjs.com/package/jira-dc-mcp): another Jira Data Center server, with semantic search.
 
 ## Acknowledgments
 
-mcp-jira-dc builds on two MIT-licensed projects: [b1ff/atlassian-dc-mcp](https://github.com/b1ff/atlassian-dc-mcp), and [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian), whose Data Center tools were adapted for this server. Their copyright notices are in [LICENSE](LICENSE).
+mcp-jira-dc builds on two MIT-licensed projects: [b1ff/atlassian-dc-mcp](https://github.com/b1ff/atlassian-dc-mcp), and
+[sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian), whose Data Center tools were adapted for this
+server. Their copyright notices are in [LICENSE](LICENSE).
 
 ## License
 
-MIT
+MIT. Part of [Atlassian Data Center MCP](https://github.com/tekthar/jira-dc-mcp), with
+[mcp-confluence-dc](https://www.npmjs.com/package/mcp-confluence-dc) and
+[mcp-bitbucket-dc](https://www.npmjs.com/package/mcp-bitbucket-dc).

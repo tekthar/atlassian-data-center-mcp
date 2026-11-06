@@ -1,120 +1,103 @@
 # mcp-confluence-dc
 
-An MCP server for **Confluence Data Center and Confluence Server**. It lets Claude and other MCP clients search, read, create and update pages, and, when you turn them on, browse page trees, compare page versions, and manage labels, comments, restrictions and attachments.
+**Connect Claude, Cursor and any other MCP client to Confluence Data Center and Confluence Server, signed in as you.**
 
-- **26 tools in 11 toolsets.** By default 6 everyday page tools are listed directly, and 3 gateway tools find and run 17 more, so the rest cost tokens only when used.
-- **Sandboxed code execution:** the model can write a short script that combines many read calls and returns only the answer.
-- **Read-only mode** and an exact tool allowlist for locked-down setups.
-- **One `npx` command:** no Python, no Docker.
-
-Not affiliated with or endorsed by Atlassian. Confluence is a trademark of Atlassian.
-
-## Requirements
-
-- Node.js 22.22.2 or later
-- Confluence Data Center or Confluence Server, and a personal access token. To create one in Confluence, open your profile picture, then **Settings** > **Personal Access Tokens** > **Create token**.
-
-## Quick start
-
-1. Save your Confluence address and token:
-
-   ```bash
-   npx -y mcp-confluence-dc setup
-   ```
-
-   On macOS the token goes to the Keychain. Everything else goes to `~/.atlassian-dc-mcp/confluence.env` (on Windows, `%USERPROFILE%\.atlassian-dc-mcp\confluence.env`), which only your user can read.
-
-2. Add the server to your MCP client.
-
-   Claude Code:
-
-   ```bash
-   claude mcp add confluence -- npx -y mcp-confluence-dc
-   ```
-
-   Claude Desktop, Cursor, VS Code and other clients with an `mcpServers` file:
-
-   ```json
-   {
-     "mcpServers": {
-       "confluence": { "command": "npx", "args": ["-y", "mcp-confluence-dc"] }
-     }
-   }
-   ```
-
-To skip `setup` and pass settings directly, add an `env` block to that entry:
-
-```json
-"env": { "CONFLUENCE_HOST": "confluence.example.com", "CONFLUENCE_API_TOKEN": "<personal access token>" }
-```
-
-## Configuration
-
-| Variable | Purpose |
-| --- | --- |
-| `CONFLUENCE_HOST` | Host name and optional port, without `https://`. Example: `confluence.example.com` |
-| `CONFLUENCE_API_BASE_PATH` | Full REST API URL, used instead of `CONFLUENCE_HOST`. Example: `https://example.com/wiki/rest/api` |
-| `CONFLUENCE_API_TOKEN` | Personal access token |
-| `CONFLUENCE_DEFAULT_PAGE_SIZE` | Page size for search and list tools. Default 25. |
-| `ATLASSIAN_DC_MCP_CONFIG_FILE` | Absolute path to a dotenv file holding any of these settings, for example one file shared by several tools |
-
-Each setting comes from the first of these places that has it:
-1. environment variables;
-2. the dotenv file (`ATLASSIAN_DC_MCP_CONFIG_FILE`, or `.env` in the working directory);
-3. the file `setup` writes;
-4. the macOS Keychain.
-
-In scripts and CI, `setup` also runs without prompts:
+The server runs on your machine. Your MCP client starts it and talks to it over stdio; it calls Confluence's REST API
+with your personal access token, lists the everyday page tools, and keeps 17 more one search away. Confluence's own
+permissions decide what you can do: the server can hide tools, never unlock them.
 
 ```bash
-npx -y mcp-confluence-dc setup --non-interactive --host confluence.example.com --token "$CONFLUENCE_TOKEN"
+npx -y mcp-confluence-dc setup                          # saves your Confluence address and token
+claude mcp add confluence -- npx -y mcp-confluence-dc   # connects Claude Code
 ```
 
-`npx -y mcp-confluence-dc setup --help` lists every option.
+> Not affiliated with or endorsed by Atlassian. Confluence is a trademark of Atlassian.
 
-## Choosing which tools are listed
+## Why run it on your machine?
 
-| Variable | Effect |
-| --- | --- |
-| `TOOLSETS` | Comma-separated toolset names, `default`, or `all`. Example: `default,confluence_page_tree` |
-| `READ_ONLY_MODE` | `true` lists only tools that never change Confluence. |
-| `ENABLED_TOOLS` | Comma-separated tool names. Replaces `TOOLSETS`; read-only mode still applies. |
-| `TOOL_GATEWAY` | On by default: tools outside the selected toolsets, apart from destructive ones, are offered through three gateway tools instead of being left out. `off` leaves them out. The gateway is also off while `ENABLED_TOOLS` is set. |
-| `CODE_EXECUTION` | On by default: adds `confluence_runCode`, which runs JavaScript in a sandbox that can call the read tools. `off` removes it. It is also off while `ENABLED_TOOLS` is set. |
+| | A hosted MCP connector | **mcp-confluence-dc** |
+|---|---|---|
+| Works with Confluence Data Center and Server | depends on the service | **yes** |
+| Reaches a Confluence behind your firewall or VPN | only if Confluence is exposed to the service | **yes**: wherever your machine can reach |
+| Where your token lives | with the service | **on your machine**: macOS Keychain, or a file only your user can read |
+| Who decides which tools the agent sees | the service | **you**, with a few settings |
+| Something to host, approve or pay for | the service | **nothing**: `npx` runs it |
 
-Hiding tools saves tokens and avoids calls that would fail. It is not access control: Confluence still checks your permissions on every call.
+[Atlassian's official MCP server](https://github.com/atlassian/atlassian-mcp-server) is a hosted server for Atlassian
+Cloud.
 
-### The tool gateway
+## Install
 
-Listing every tool costs tokens on every request, so only everyday tools are listed directly. The rest are reached through three small tools:
+You need Node.js 22.22.2 or later, Confluence Data Center or Confluence Server, and a personal access token. To create
+one, open your profile picture in Confluence, then **Settings** > **Personal Access Tokens** > **Create token**.
 
-- `confluence_searchTools` finds tools by keyword (for example "sprint issues") and returns their descriptions and input schemas. Its own description names the toolsets it can reach.
-- `confluence_runReadTool` runs a found tool that only reads Confluence.
-- `confluence_runWriteTool` runs a found tool that changes Confluence. Clients can ask before running it, as they do for any write tool.
+**1. Save your address and token.** `setup` asks for them, checks them with one request to Confluence, and saves them:
 
-The gateway applies the same rules as the tool list: read-only mode, the permission filter and the opt-in settings. It never offers destructive tools; turn on their toolset with `TOOLSETS` to use them. A toolset named in `TOOLSETS` is listed directly instead.
+```bash
+npx -y mcp-confluence-dc setup
+```
 
-### Running code (`confluence_runCode`)
+On macOS the token goes to the Keychain. Everything else goes to `~/.atlassian-dc-mcp/confluence.env`
+(`%USERPROFILE%\.atlassian-dc-mcp\confluence.env` on Windows), which only your user can read.
 
-Some questions take many tool calls, for example checking every issue in a sprint. `confluence_runCode` lets the model write a short JavaScript snippet that makes those calls and returns only the answer, so the intermediate results don't fill the context:
+**2. Connect your client.** Claude Code:
+
+```bash
+claude mcp add confluence -- npx -y mcp-confluence-dc
+```
+
+Claude Desktop, Cursor, VS Code and other clients with an `mcpServers` file:
+
+```json
+{
+  "mcpServers": {
+    "confluence": { "command": "npx", "args": ["-y", "mcp-confluence-dc"] }
+  }
+}
+```
+
+To skip `setup`, put the settings in that entry instead:
+`"env": { "CONFLUENCE_HOST": "confluence.example.com", "CONFLUENCE_API_TOKEN": "<personal access token>" }`.
+
+## Commands
+
+| Command | Does |
+|---|---|
+| `npx -y mcp-confluence-dc` | Serves Confluence over stdio. This is what your MCP client runs. |
+| `npx -y mcp-confluence-dc setup` | Asks for your address and token, checks them against Confluence, and saves them. |
+| `setup --non-interactive --host <host> --token <token>` | The same from flags, for scripts and CI. Exits non-zero if the token doesn't work. Values you leave out come from your existing settings. |
+| `setup --help` | Lists every option. |
+
+## What the agent sees
+
+The tool list holds the everyday tools for pages, spaces and attachments, plus four more:
+
+| Tool | What it's for |
+|---|---|
+| `confluence_searchTools` | Finds any other tool by keyword, such as "page history" or "labels", and returns its description and input schema. Its own description names every toolset it can reach. |
+| `confluence_runReadTool` | Runs a found tool that only reads Confluence. |
+| `confluence_runWriteTool` | Runs a found tool that changes Confluence. Your client can ask you first, as for any write. |
+| `confluence_runCode` | Runs a short JavaScript snippet that combines several read calls and returns only the answer. |
+
+For a question that takes many calls, `confluence_runCode` keeps the intermediate results out of the context:
 
 ```js
-const results = await tools.confluence_searchContent({ cql: 'space = DOCS and label = runbook' });
-console.log('found', results.results.length);
-return results.results.map((page) => page.title);
+const found = await tools.confluence_searchContent({ cql: 'space = OPS and label = runbook', limit: 50 });
+console.log(`found ${found.results.length} runbooks`);
+return found.results.map((result) => result.title);
 ```
 
-- **Read tools only:** code can call the read tools the server offers, listed or through the gateway. Tools that change Confluence are not available to code, so a client's approval prompts still see every write. Each call goes through the same checks as calling the tool directly.
-- **Sandboxed:** the code runs in QuickJS, a JavaScript engine compiled to WebAssembly, inside a separate worker thread. It has no network, file, process or timer access, only `tools`, `callTool` and `console`.
-- **Limits:** 30 seconds per run, 50 tool calls with at most 4 at a time, 64 MB of memory, and a 100,000-character result. If the code crashes the engine, only the worker stops; the server keeps running.
-- **Install:** the sandbox is two small npm packages (about 1.4 MB) with no native build, so `npx` installs stay as before.
+The snippet runs in QuickJS, a JavaScript engine compiled to WebAssembly, in its own worker thread. It sees only
+`tools`, `callTool` and `console`: no network, files, processes or timers. It can call read tools only, and stops after
+30 seconds or 50 tool calls (4 at a time), at 64 MB of memory, or with a result over 100,000 characters. If it crashes
+the engine, only that run fails.
 
-Set `CODE_EXECUTION=off` to remove the tool.
+## Toolsets
 
-In the table below, **on** toolsets are listed directly and **gateway** toolsets are reached through the gateway.
+**On** toolsets are listed directly. **Gateway** toolsets are reached through `confluence_searchTools`.
 
 | Toolset | Default | Tools |
-| --- | --- | --- |
+|---|---|---|
 | `confluence_pages`: search, read, create and update pages | on | `confluence_getContent`, `confluence_searchContent`, `confluence_createContent`, `confluence_updateContent` |
 | `confluence_spaces`: search spaces | on | `confluence_searchSpace` |
 | `confluence_attachments`: download and upload page attachments | on | `confluence_downloadAttachment`, `confluence_uploadAttachment` (opt-in) |
@@ -127,34 +110,76 @@ In the table below, **on** toolsets are listed directly and **gateway** toolsets
 | `confluence_attachment_management`: list attachment details and delete attachments | gateway | `confluence_getAttachments`, `confluence_deleteAttachment` (destructive) |
 | `confluence_users`: search users by name or username | gateway | `confluence_searchUser` |
 
-Page bodies are read and written in Confluence storage format (XHTML).
+The tool search never offers a destructive tool. To use one, turn on its toolset with `TOOLSETS`. Page bodies are read
+and written in Confluence storage format (XHTML).
 
-### Attachments on disk
+## Settings
 
-`confluence_uploadAttachment`, and saving downloaded attachments to disk, work only inside folders you name. Without these settings, `confluence_downloadAttachment` returns file contents inline and never touches the disk.
+Every setting is an environment variable. Each comes from the first of these that has it: the environment, the dotenv
+file (`ATLASSIAN_DC_MCP_CONFIG_FILE`, or `.env` in the working directory), the file `setup` writes, then the macOS
+Keychain.
 
-| Variable | Purpose |
-| --- | --- |
-| `CONFLUENCE_ATTACHMENTS_UPLOAD_ENABLED`, `CONFLUENCE_ATTACHMENTS_DOWNLOAD_ENABLED` | Turn each direction on. Default off. |
-| `CONFLUENCE_ATTACHMENTS_UPLOAD_ROOTS`, `CONFLUENCE_ATTACHMENTS_DOWNLOAD_ROOTS` | Folders allowed for each direction, separated like your OS `PATH` |
-| `CONFLUENCE_ATTACHMENTS_DIR` | One folder used for both directions |
+**Connecting**
+
+| Variable | Use |
+|---|---|
+| `CONFLUENCE_HOST` | Host name and optional port, without `https://`, e.g. `confluence.example.com`. |
+| `CONFLUENCE_API_BASE_PATH` | Full REST API URL, used instead of `CONFLUENCE_HOST`, e.g. `https://example.com/wiki/rest/api`. |
+| `CONFLUENCE_API_TOKEN` | Personal access token. |
+| `CONFLUENCE_DEFAULT_PAGE_SIZE` | Page size for search and list tools. Default 25. |
+| `ATLASSIAN_DC_MCP_CONFIG_FILE` | Absolute path to a dotenv file with any of these settings, e.g. one file shared by several servers. |
+| `ATLASSIAN_DC_MCP_REQUEST_TIMEOUT_MS` | How long a request to Confluence may take. Default 30000. |
+
+**Choosing tools**
+
+| Variable | Use |
+|---|---|
+| `TOOLSETS` | Toolsets to list directly: names, `default`, or `all`, e.g. `default,confluence_page_tree`. |
+| `READ_ONLY_MODE` | `true` offers only tools that never change Confluence. |
+| `ENABLED_TOOLS` | An exact list of tool names. Replaces `TOOLSETS`, and turns the tool search and `confluence_runCode` off. |
+| `TOOL_GATEWAY` | `off` turns the tool search off: tools outside the selected toolsets are left out. |
+| `CODE_EXECUTION` | `off` removes `confluence_runCode`. |
+
+**Attachments on disk**
+
+| Variable | Use |
+|---|---|
+| `CONFLUENCE_ATTACHMENTS_UPLOAD_ENABLED`, `CONFLUENCE_ATTACHMENTS_DOWNLOAD_ENABLED` | `true` lets attachments be uploaded from, or saved to, your disk. Default off: downloads come back inline and never touch the disk. |
+| `CONFLUENCE_ATTACHMENTS_UPLOAD_ROOTS`, `CONFLUENCE_ATTACHMENTS_DOWNLOAD_ROOTS` | Folders allowed for each direction, separated like your OS `PATH`. |
+| `CONFLUENCE_ATTACHMENTS_DIR` | One folder used for both directions. |
 | `CONFLUENCE_ATTACHMENTS_MAX_UPLOAD_BYTES`, `CONFLUENCE_ATTACHMENTS_MAX_DOWNLOAD_BYTES` | Size limits. Default 25 MiB. |
 
-## Security notes
+## What it guarantees
 
-- **Clients can ask before risky calls.** Every tool tells the client whether it only reads, changes data, or deletes.
-- **Treat Confluence content as data, not instructions.** Pages, comments and attachments are written by other people. `confluence_downloadAttachment` shows an image to the model only when asked to, with `returnContent: 'image'`.
+- **It never widens access.** Every request carries your token, so Confluence decides what you can do. Hiding a tool
+  trims what the agent sees; it never unlocks anything.
+- **Writes stay visible.** Every tool tells your client whether it reads, changes or deletes, so the client can ask you
+  first. `confluence_runCode` can only call read tools.
+- **Deleting is always your decision.** Delete tools appear only in toolsets you turn on, never through the tool search
+  or `confluence_runCode`.
+- **It never retries a call on its own.** If a request fails, the agent sees Confluence's error and decides what to do.
+- **It stays out of your files.** Attachments are read from and saved to only the folders you name, and a saved file
+  never overwrites an existing one.
+
+Pages, comments and attachments are written by other people, so treat them as data, not instructions.
+`confluence_downloadAttachment` shows an image to the model only when asked to, with `returnContent: 'image'`.
 
 ## Related projects
 
-- [mcp-jira-dc](https://www.npmjs.com/package/mcp-jira-dc) and [mcp-bitbucket-dc](https://www.npmjs.com/package/mcp-bitbucket-dc): the same approach for Jira and Bitbucket Data Center.
-- [Atlassian's official MCP server](https://github.com/atlassian/atlassian-mcp-server): a remote server for Atlassian Cloud.
-- [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian): a Python server for Jira and Confluence, Cloud and Data Center.
+- [mcp-jira-dc](https://www.npmjs.com/package/mcp-jira-dc) and
+  [mcp-bitbucket-dc](https://www.npmjs.com/package/mcp-bitbucket-dc): the same approach for Jira and Bitbucket Data
+  Center.
+- [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian): a Python server for Jira and Confluence, Cloud
+  and Data Center.
 
 ## Acknowledgments
 
-mcp-confluence-dc builds on two MIT-licensed projects: [b1ff/atlassian-dc-mcp](https://github.com/b1ff/atlassian-dc-mcp), and [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian), whose Data Center tools were adapted for this server. Their copyright notices are in [LICENSE](LICENSE).
+mcp-confluence-dc builds on two MIT-licensed projects: [b1ff/atlassian-dc-mcp](https://github.com/b1ff/atlassian-dc-mcp),
+and [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian), whose Data Center tools were adapted for this
+server. Their copyright notices are in [LICENSE](LICENSE).
 
 ## License
 
-MIT
+MIT. Part of [Atlassian Data Center MCP](https://github.com/tekthar/jira-dc-mcp), with
+[mcp-jira-dc](https://www.npmjs.com/package/mcp-jira-dc) and
+[mcp-bitbucket-dc](https://www.npmjs.com/package/mcp-bitbucket-dc).
