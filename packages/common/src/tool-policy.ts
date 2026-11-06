@@ -8,6 +8,11 @@ import type { ToolAnnotations } from '@modelcontextprotocol/server';
  * - `READ_ONLY_MODE`: when true, only tools that never change Jira or Confluence are exposed.
  * - `ENABLED_TOOLS`: comma-separated exact tool names. When set it replaces `TOOLSETS`;
  *   `READ_ONLY_MODE` still applies.
+ * - `TOOL_GATEWAY`: on by default. Tools outside the selected toolsets are offered through three
+ *   gateway tools (search, run read, run write) instead of being hidden; `off` hides them as before.
+ *   The gateway is off while `ENABLED_TOOLS` is set, and never offers destructive tools.
+ * - `CODE_EXECUTION`: on by default. Adds a tool that runs JavaScript in a sandbox, where it can call
+ *   the read tools the server offers. `off` removes it; it is also off while `ENABLED_TOOLS` is set.
  * - `PERMISSION_FILTER`: on by default. A server that can read the user's permissions at startup
  *   also hides tools the user could never run successfully; `off` turns that check off.
  *
@@ -21,6 +26,8 @@ export interface ToolsetDefinition {
   description: string;
   /** Exposed when `TOOLSETS` is unset or includes `default`. */
   default: boolean;
+  /** `false` keeps the toolset out of the tool gateway: its tools are listed directly or not at all. */
+  gateway?: boolean;
 }
 
 export interface ToolCatalogEntry {
@@ -43,6 +50,10 @@ export interface ToolPolicy {
   readOnly: boolean;
   /** Exact tool names to expose; `null` when `ENABLED_TOOLS` is unset. */
   enabledTools: ReadonlySet<string> | null;
+  /** Toolsets whose unselected tools are offered through the gateway; absent means no gateway. */
+  gatewayToolsets?: ReadonlySet<string>;
+  /** Offer the sandboxed code tool; absent means off. */
+  codeExecution?: boolean;
   /** Set by servers that read the user's permissions at startup; absent means no permission filtering. */
   permissionCheck?: PermissionCheck;
 }
@@ -51,6 +62,8 @@ export const TOOLSETS_ENV_VAR = 'TOOLSETS';
 export const READ_ONLY_ENV_VAR = 'READ_ONLY_MODE';
 export const ENABLED_TOOLS_ENV_VAR = 'ENABLED_TOOLS';
 export const PERMISSION_FILTER_ENV_VAR = 'PERMISSION_FILTER';
+export const TOOL_GATEWAY_ENV_VAR = 'TOOL_GATEWAY';
+export const CODE_EXECUTION_ENV_VAR = 'CODE_EXECUTION';
 
 type Env = Record<string, string | undefined>;
 type Warn = (message: string) => void;
@@ -105,11 +118,20 @@ export function resolveToolPolicy(catalog: ToolCatalog, env: Env = process.env, 
     warn(`${ENABLED_TOOLS_ENV_VAR} is set, so ${TOOLSETS_ENV_VAR} is ignored.`);
   }
 
+  const gatewayOn = enabledTools.length === 0 && !isFalsy(env[TOOL_GATEWAY_ENV_VAR]);
   return {
     toolsets: resolveToolsets(catalog, env[TOOLSETS_ENV_VAR], warn),
     readOnly: isTruthy(env[READ_ONLY_ENV_VAR]),
     enabledTools: enabledTools.length > 0 ? new Set(enabledTools) : null,
+    gatewayToolsets: new Set(gatewayOn ? gatewayToolsetNames(catalog) : []),
+    codeExecution: enabledTools.length === 0 && !isFalsy(env[CODE_EXECUTION_ENV_VAR]),
   };
+}
+
+function gatewayToolsetNames(catalog: ToolCatalog): string[] {
+  return Object.entries(catalog.toolsets)
+    .filter(([, definition]) => definition.gateway !== false)
+    .map(([name]) => name);
 }
 
 function isSelected(name: string, entry: ToolCatalogEntry, policy: ToolPolicy): boolean {
@@ -127,13 +149,27 @@ function hasRequiredPermission(entry: ToolCatalogEntry, policy: ToolPolicy): boo
   return required.length === 0 || !policy.permissionCheck || policy.permissionCheck(required);
 }
 
+function isGatewayEligible(name: string, entry: ToolCatalogEntry, policy: ToolPolicy): boolean {
+  if (entry.access === 'destructive' || (policy.readOnly && entry.access !== 'read')) {
+    return false;
+  }
+  return !isSelected(name, entry, policy) && (policy.gatewayToolsets?.has(entry.toolset) ?? false);
+}
+
+/** True when the tool is listed directly. */
 export function isToolAllowed(name: string, entry: ToolCatalogEntry, policy: ToolPolicy): boolean {
   return isSelected(name, entry, policy) && hasRequiredPermission(entry, policy);
 }
 
-/** True when the other settings would expose the tool and only the permission check hides it. */
+/** True when the tool is not listed directly but can be found and run through the tool gateway. */
+export function isGatewayTool(name: string, entry: ToolCatalogEntry, policy: ToolPolicy): boolean {
+  return isGatewayEligible(name, entry, policy) && hasRequiredPermission(entry, policy);
+}
+
+/** True when the other settings would offer the tool, directly or through the gateway, and only the permission check hides it. */
 export function isHiddenByPermission(name: string, entry: ToolCatalogEntry, policy: ToolPolicy): boolean {
-  return isSelected(name, entry, policy) && !hasRequiredPermission(entry, policy);
+  const offered = isSelected(name, entry, policy) || isGatewayEligible(name, entry, policy);
+  return offered && !hasRequiredPermission(entry, policy);
 }
 
 export function toolsHiddenByPermissions(catalog: ToolCatalog, policy: ToolPolicy): string[] {

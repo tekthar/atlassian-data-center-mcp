@@ -40,19 +40,41 @@ The bundled `dist/` starts in about 0.3 seconds. `npm start` runs the unbundled 
 
 ## Choosing which tools are exposed (Jira and Confluence)
 
-Each server reads these optional environment variables at startup. Unset, a server offers the same tools it always has, minus any Jira tools your account lacks the permissions for (see the next section).
+Each server reads these optional environment variables at startup. Unset, a server lists its everyday tools directly and offers the rest through the tool gateway, minus any Jira tools your account lacks the permissions for (see the next section).
 
 | Variable | Effect |
 | --- | --- |
 | `TOOLSETS` | Comma-separated toolset names, `default`, or `all`. Example: `default,jira_agile`. An unknown name is ignored with a warning; if every name is unknown, no tools are exposed. |
 | `READ_ONLY_MODE` | `true` exposes only tools that never change Jira or Confluence. |
 | `ENABLED_TOOLS` | Comma-separated exact tool names. Replaces `TOOLSETS`; `READ_ONLY_MODE` still applies. |
+| `CODE_EXECUTION` | On by default. Adds `<product>_runCode`, which runs JavaScript in a sandbox that can call the read tools. `off` removes it; `ENABLED_TOOLS` also turns it off. |
+| `TOOL_GATEWAY` | On by default. Tools outside the selected toolsets are offered through `<product>_searchTools`, `<product>_runReadTool` and `<product>_runWriteTool` instead of being left out. `off` leaves them out; `ENABLED_TOOLS` also turns it off. |
 
 Opt-in flags such as `JIRA_VERSION_DELETE_ENABLED` and the attachment upload settings still gate their tools as before.
 
 Toolsets and each tool's access level (read, write or destructive) are listed in `packages/jira/src/tool-catalog.ts` and `packages/confluence/src/tool-catalog.ts`. The access level also sets each tool's MCP `readOnlyHint` and `destructiveHint`.
 
 Hiding a tool reduces what the model sees and the tokens it costs. It is not access control: Jira and Confluence still enforce the token owner's permissions on every call.
+
+### The tool gateway
+
+Every listed tool's schema is sent with every request, so a long tool list costs tokens even when the tools go unused. The gateway lists three tools instead of the long tail: a keyword search that returns tools with their input schemas, and a read and a write tool that run what the search found. It is built in `packages/common/src/tool-gateway.ts` and `gateway-tools.ts`, and `createPolicyRegistrar` routes each tool:
+
+- **Listed directly:** its toolset is selected (`TOOLSETS`, or a toolset marked `default: true`).
+- **Through the gateway:** otherwise, unless the tool is destructive, read-only mode excludes it, or its toolset sets `gateway: false` (Jira service desk). The permission filter and opt-in settings still apply.
+- **Not offered:** everything else.
+
+The read and write run tools keep the read and write split visible to clients, so a client can still ask before a write. New tool modules and future app (plugin) integrations only need catalog entries: unless their toolset is marked `default: true`, their tools go to the gateway.
+
+### Code execution
+
+`<product>_runCode` runs model-written JavaScript that calls read tools with `await tools.<name>(args)`. The code gets each tool's `data`, and a failed call throws with its error. The run returns only what the code returns, plus `console.log` output.
+
+- **Engine:** QuickJS, through `quickjs-emscripten-core` and `@jitl/quickjs-wasmfile-release-sync`. It is WebAssembly, so there is no native build.
+- **Isolation:** QuickJS runs inside a `worker_thread` (`packages/common/src/code-sandbox.ts`). The worker source is plain JavaScript in `code-sandbox-worker-source.ts`, run with `eval: true`, so tsc, swc and esbuild never rewrite it. The worker loads QuickJS with dynamic `import()` from paths the parent resolves, which works the same from `src/` under Jest, from `build/` and from the bundled `dist/`.
+- **Why a worker:** some operations, such as `JSON.stringify` of a deeply nested array, overflow the native stack inside WebAssembly, past QuickJS's own stack limit. In the main thread that would crash the server. In a worker it fails only that run, and the parent also terminates the worker at the time limit, even while the code waits on a promise that never settles.
+- **What code can reach:** only tools that are read-only after their annotations are applied. For example, `jira_downloadAttachment` is left out when saving to disk is enabled. Every call goes through the same argument validation as `runReadTool`.
+- **Limits:** set in `DEFAULT_SANDBOX_LIMITS`.
 
 ### Hiding Jira tools your account can't use
 

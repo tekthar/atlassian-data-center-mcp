@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## Unreleased
+
+### Features
+
+* **tool gateway:** Jira and Confluence list only their everyday tools directly. The other tools are reached through `<product>_searchTools`, `<product>_runReadTool` and `<product>_runWriteTool`, so their schemas cost tokens only when the model looks them up. This makes 43 more Jira tools and 17 more Confluence tools available without turning on their toolsets. `TOOL_GATEWAY=off` turns the gateway off, and it is also off while `ENABLED_TOOLS` is set. The gateway never offers destructive tools.
+
+* **code execution:** `<product>_runCode` runs model-written JavaScript in a sandbox that can call the server's read tools, so a question that takes many calls returns only its answer. The sandbox is QuickJS (WebAssembly) in a worker thread, with no network, file or process access, a 30-second limit and a 50-call limit. Tools that change Jira or Confluence cannot be called from code. On by default; `CODE_EXECUTION=off` removes it.
+
+### Breaking changes
+
+* **jira:** `jira_links`, `jira_watchers`, `jira_versions` and `jira_development` are no longer listed directly by default; they are reached through the gateway. `jira_unlinkIssues` is destructive, so it now needs `TOOLSETS`. To list these tools directly as before, set `TOOLSETS=default,jira_links,jira_watchers,jira_versions,jira_development`.
+* **jira:** `jira_service_desk` is still off by default and is not offered through the gateway. Turn it on with `TOOLSETS`.
+
 ## [0.44.1](https://github.com/tekthar/jira-dc-mcp/releases/tag/v0.44.1) (2026-11-06)
 
 First release from this repository's Release workflow, published with npm trusted publishing. The servers' code is unchanged from 0.44.0.

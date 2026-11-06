@@ -273,5 +273,6 @@ tools.registerTool(
   });
 
 registerConfluenceModuleTools(tools, { instanceType: confluenceInstanceType, getPageSize: getDefaultPageSize });
+tools.registerGatewayTools({ prefix: 'confluence', product: 'Confluence' });
 
 await connectServer(server);
