@@ -148,6 +148,23 @@ describe('createPolicyRegistrar with the gateway', () => {
     expect(tools.map((tool: { name: string }) => tool.name)).toEqual(['getSprint', 'createSprint']);
     expect(tools[0]).toMatchObject({ access: 'read', inputSchema: { required: ['sprintId'] } });
   });
+
+  // A read tool can change something when a setting turns on a write, such as saving a downloaded attachment to
+  // disk. Through the gateway it must run as a write, so the client sees readOnlyHint: false and can ask first.
+  it('runs a read tool that marks itself as writing through the write tool, never the read-only one', async () => {
+    const fake = fakeServer();
+    const tools = createPolicyRegistrar(fake.server, catalog, resolveToolPolicy(catalog, {}, () => undefined));
+    tools.registerTool('getSprint', { description: 'Download a sprint report, saving it to disk when asked',
+      inputSchema: z.object({ save: z.boolean() }), annotations: { readOnlyHint: false } }, async () => ok('saved'));
+    tools.registerGatewayTools({ prefix: 'jira', product: 'Jira' });
+    const search = JSON.parse((await fake.callbacks.get('jira_searchTools')!({ query: 'sprint' }, {})).content[0].text);
+    const runRead = fake.callbacks.get('jira_runReadTool');
+    const runWrite = fake.callbacks.get('jira_runWriteTool')!;
+
+    expect(search.tools[0]).toMatchObject({ name: 'getSprint', access: 'write' });
+    expect(runRead).toBeUndefined();
+    expect((await runWrite({ tool: 'getSprint', arguments: { save: true } }, {})).content[0].text).toBe('saved');
+  });
 });
 
 describe('createPolicyRegistrar with code execution', () => {

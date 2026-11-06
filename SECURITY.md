@@ -24,7 +24,7 @@ Please include:
 
 - what the problem is and what an attacker could do with it;
 - the server and its version: `npx -y mcp-jira-dc` runs the latest one unless your MCP client's config pins a
-  version such as `mcp-jira-dc@0.47.0`. Add your Jira, Confluence or Bitbucket version if it matters;
+  version such as `mcp-jira-dc@0.47.1`. Add your Jira, Confluence or Bitbucket version if it matters;
 - the settings involved (`TOOLSETS`, `READ_ONLY_MODE`, attachment folders and so on), with tokens and hostnames removed;
 - the smallest steps or tool calls that show it;
 - whether you have told anyone else.

@@ -60,8 +60,10 @@ export function createPolicyRegistrar(server: McpServer, catalog: ToolCatalog, p
         throw new Error(`Tool "${name}" is missing from the tool catalog. Add it with a toolset and an access level.`);
       }
       const annotations = { ...annotationsFor(entry.access), ...config.annotations };
+      // A read tool that a setting lets write (saving a download to disk) runs as a write through the gateway.
+      const access = entry.access === 'read' && annotations.readOnlyHint === false ? 'write' : entry.access;
       const operation: GatewayOperation = {
-        name, toolset: entry.toolset, access: entry.access, description: config.description ?? '', inputSchema: config.inputSchema, cb: cb as GatewayOperation['cb'],
+        name, toolset: entry.toolset, access, description: config.description ?? '', inputSchema: config.inputSchema, cb: cb as GatewayOperation['cb'],
       };
       if (isToolAllowed(name, entry, policy)) {
         registered.push(name);
