@@ -54,8 +54,12 @@ function trimToUndefined(value: string | undefined): string | undefined {
   return trimmed.length === 0 ? undefined : trimmed;
 }
 
-/** npm package that runs each product's server; Bitbucket still uses the upstream package. */
-const PACKAGE_NAMES: Readonly<Record<string, string>> = { jira: 'mcp-jira-dc', confluence: 'mcp-confluence-dc' };
+/** npm package that runs each product's server. */
+const PACKAGE_NAMES: Readonly<Record<string, string>> = {
+  jira: 'mcp-jira-dc',
+  confluence: 'mcp-confluence-dc',
+  bitbucket: 'mcp-bitbucket-dc',
+};
 
 const packageNameFor =(productId: string): string => PACKAGE_NAMES[productId] ?? `@atlassian-dc-mcp/${productId}`;
 

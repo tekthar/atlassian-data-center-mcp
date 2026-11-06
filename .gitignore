@@ -58,3 +58,6 @@ temp/
 
 # Claude
 .claude/settings.local.json
+
+# Copied from the root LICENSE by scripts/bundle-server.mjs
+packages/*/LICENSE

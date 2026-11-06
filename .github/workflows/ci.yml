@@ -31,8 +31,9 @@ jobs:
       # The published packages run the bundled dist/; loading each setup entry checks the bundle resolves.
       - name: Bundle servers
         run: |
-          npx -y npm@11.21.1 run bundle --workspace=packages/jira --workspace=packages/confluence
+          npx -y npm@11.21.1 run bundle --workspace=packages/jira --workspace=packages/confluence --workspace=packages/bitbucket
           node packages/jira/bin/run.js setup --help
           node packages/confluence/bin/run.js setup --help
+          node packages/bitbucket/bin/run.js setup --help
       - name: Test
         run: npx -y npm@11.21.1 test

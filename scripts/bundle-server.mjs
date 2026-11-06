@@ -22,6 +22,9 @@ if (dependencies.includes(common.name)) {
   throw new Error(`${pkg.name} must not depend on ${common.name}; it is bundled.`);
 }
 
+// The MIT notices of every project this code builds on ship with each package.
+fs.copyFileSync(path.join(packageDir, '..', '..', 'LICENSE'), path.join(packageDir, 'LICENSE'));
+
 fs.rmSync(path.join(packageDir, 'dist'), { recursive: true, force: true });
 await build({
   absWorkingDir: packageDir,

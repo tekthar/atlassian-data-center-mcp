@@ -11,8 +11,9 @@ Private tekthar fork of [b1ff/atlassian-dc-mcp](https://github.com/b1ff/atlassia
 | --- | --- | --- |
 | Jira | `mcp-jira-dc` | `io.github.tekthar/mcp-jira-dc` |
 | Confluence | `mcp-confluence-dc` | `io.github.tekthar/mcp-confluence-dc` |
+| Bitbucket | `mcp-bitbucket-dc` | `io.github.tekthar/mcp-bitbucket-dc` |
 
-In the upstream README below, read `@atlassian-dc-mcp/jira` as `mcp-jira-dc` and `@atlassian-dc-mcp/confluence` as `mcp-confluence-dc`. Bitbucket keeps the upstream package. Configuration files are shared with upstream (`~/.atlassian-dc-mcp/*.env`).
+In the upstream README below, read `@atlassian-dc-mcp/<product>` as `mcp-<product>-dc`. Configuration files are shared with upstream (`~/.atlassian-dc-mcp/*.env`), so moving from the upstream packages means changing only the package name in the MCP client config. Each package's own README (published to npm) credits both projects, and their MIT notices ship in each package's `LICENSE`, copied from the root `LICENSE` at bundle time.
 
 **How common ships:** `@atlassian-dc-mcp/common` is a private workspace and is never published. That npm scope belongs to upstream, so depending on it would install their shared code instead of ours. Each server's `prepack` script builds the workspace and runs `scripts/bundle-server.mjs`, which writes `dist/` with common inlined and every npm dependency left external. The bundle script stops if a server doesn't list one of common's runtime dependencies.
 
@@ -21,7 +22,7 @@ In the upstream README below, read `@atlassian-dc-mcp/jira` as `mcp-jira-dc` and
 ```bash
 cd packages/jira
 npm pack
-npm install -g ./mcp-jira-dc-0.43.2.tgz
+npm install -g ./mcp-jira-dc-0.44.0.tgz
 ```
 
 The bundled `dist/` starts in about 0.3 seconds. `npm start` runs the unbundled `build/` instead.

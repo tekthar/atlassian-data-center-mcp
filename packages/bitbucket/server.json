@@ -1,18 +1,18 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.b1ff/atlassian-dc-mcp-bitbucket",
-  "description": "MCP server for Atlassian Bitbucket Data Center - interact with repositories and code",
+  "name": "io.github.tekthar/mcp-bitbucket-dc",
+  "description": "MCP server for Bitbucket Data Center and Bitbucket Server",
   "repository": {
-    "url": "https://github.com/b1ff/atlassian-dc-mcp",
+    "url": "https://github.com/tekthar/jira-dc-mcp",
     "source": "github"
   },
-  "version": "0.9.0",
+  "version": "0.44.0",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
-      "identifier": "@atlassian-dc-mcp/bitbucket",
-      "version": "0.9.0",
+      "identifier": "mcp-bitbucket-dc",
+      "version": "0.44.0",
       "transport": {
         "type": "stdio"
       },

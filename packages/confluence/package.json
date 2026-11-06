@@ -1,6 +1,6 @@
 {
   "name": "mcp-confluence-dc",
-  "version": "0.43.2",
+  "version": "0.44.0",
   "description": "MCP server for Confluence Data Center and Confluence Server: search, read, create and update pages, with page trees, history, labels, comments and attachments. Not affiliated with Atlassian.",
   "keywords": [
     "mcp",
@@ -14,15 +14,17 @@
     "ai",
     "claude"
   ],
+  "license": "MIT",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "mcp-confluence-dc": "./bin/run.js"
+    "mcp-confluence-dc": "bin/run.js"
   },
   "files": [
     "bin",
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "private": false,
   "repository": {
@@ -58,7 +60,6 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=22.22.2",
-    "npm": ">=11.10.0 <12"
+    "node": ">=22.22.2"
   }
 }
