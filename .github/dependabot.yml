@@ -1,4 +1,5 @@
 version: 2
+# No custom labels: Dependabot then adds its default ones, and creates them if the repository lacks them.
 updates:
   # npm dependencies of every workspace, through the root package-lock.json. The cooldown matches
   # .npmrc's min-release-age=7: a release must be a week old before we take it.
@@ -10,8 +11,6 @@ updates:
     cooldown:
       default-days: 7
     open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
     ignore:
       # The servers support Node 22 and later, so the Node types stay on 22: newer ones would let code
       # use APIs that Node 22 doesn't have.
@@ -42,9 +41,6 @@ updates:
     cooldown:
       default-days: 7
     open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "github-actions"
     groups:
       actions:
         patterns:
