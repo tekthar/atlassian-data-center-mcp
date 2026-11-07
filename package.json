@@ -25,7 +25,7 @@
     "debug:ts": "nodemon --exec tsx"
   },
   "devDependencies": {
-    "@modelcontextprotocol/inspector": "2.12.0",
+    "@modelcontextprotocol/inspector": "2.13.0",
     "@swc/core": "1.16.20",
     "@swc/jest": "0.2.39",
     "@types/jest": "30.0.0",
