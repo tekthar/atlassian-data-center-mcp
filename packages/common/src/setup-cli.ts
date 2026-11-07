@@ -1,4 +1,3 @@
-import { confirm as inquirerConfirm, input as inquirerInput, password as inquirerPassword } from '@inquirer/prompts';
 import { buildDefaultRegistry, type ConfigRegistry } from './config/registry.js';
 import { maskToken } from './redact.js';
 import type { ProductRuntimeConfig } from './config/runtime-config.js';
@@ -61,10 +60,16 @@ export type SetupDeps = {
   args?: ParsedSetupArgs;
 };
 
+/*
+ * Loaded only when setup asks a question, so the server never loads it. @inquirer/prompts is ESM-only, and a static
+ * import would also break every Jest suite that reaches this module: Jest runs them as CommonJS.
+ */
+const loadPrompts = () => import('@inquirer/prompts');
+
 const DEFAULT_PROMPTS: SetupPrompts = {
-  input: (opts) => inquirerInput(opts as any),
-  password: (opts) => inquirerPassword(opts as any),
-  confirm: (opts) => inquirerConfirm(opts as any),
+  input: async (opts) => (await loadPrompts()).input(opts),
+  password: async (opts) => (await loadPrompts()).password(opts),
+  confirm: async (opts) => (await loadPrompts()).confirm(opts),
 };
 
 export async function runSetupCli(
