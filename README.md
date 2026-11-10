@@ -80,6 +80,7 @@ The Jira server also has tools for these Marketplace apps:
 | App | Versions | Status |
 |---|---|---|
 | Xray, test management | 8 | Beta |
+| ScriptRunner, scripting and automation | 9 | Beta, read-only so far |
 | Jira Service Management | not recorded | Beta |
 
 Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](docs/supported-apps.md) lists the
@@ -327,8 +328,8 @@ This is **0.47**, which added the token in the OS keychain on every platform, `d
 Jira app support starting with Xray. The [changelog](CHANGELOG.md) lists every change and what to do when upgrading.
 Until 1.0, minor versions may include breaking changes, and the changelog describes them. Coming next:
 
-- more Jira apps (plugins), reached through the tool search so they cost nothing until used. Xray, for test
-  management, is the first
+- more apps (plugins), reached through the tool search so they cost nothing until used. Xray was the first and
+  ScriptRunner is under way; [Supported apps](docs/supported-apps.md#roadmap) has the order
 - Jira administration tools
 
 ## Have a question? Want to help?

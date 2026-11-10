@@ -9,6 +9,9 @@ import {
 } from '@atlassian-dc-mcp/common';
 import { withTimeout } from '../permissions.js';
 import type { JiraToolContext } from '../tools/context.js';
+import { SCRIPTRUNNER_CATALOG } from './scriptrunner/catalog.js';
+import { startScriptRunnerRequest } from './scriptrunner/client.js';
+import { registerScriptRunnerReadTools } from './scriptrunner/read-tools.js';
 import { XRAY_CATALOG } from './xray/catalog.js';
 import { startXrayRequest } from './xray/client.js';
 import { registerXrayReadTools } from './xray/read-tools.js';
@@ -47,6 +50,14 @@ export const JIRA_APPS: JiraApp[] = [
       registerXrayReadTools(tools, context);
       registerXrayWriteTools(tools, context);
     },
+  },
+  {
+    id: 'scriptrunner',
+    name: 'ScriptRunner',
+    catalog: SCRIPTRUNNER_CATALOG,
+    // Any signed-in user may read the JQL function docs, unlike most ScriptRunner routes.
+    probe: (timeoutMs) => withTimeout(startScriptRunnerRequest('scriptrunner-jira', { method: 'GET', url: '/jqlfunctions/docs' }), timeoutMs),
+    register: registerScriptRunnerReadTools,
   },
 ];
 

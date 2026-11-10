@@ -3,6 +3,7 @@ import path from 'node:path';
 import { isGatewayTool, isToolAllowed, resolveToolPolicy } from '@atlassian-dc-mcp/common';
 import { JIRA_PERMISSION_KEYS } from '../permissions.js';
 import { JIRA_CORE_CATALOG, JIRA_TOOL_CATALOG } from '../tool-catalog.js';
+import { SCRIPTRUNNER_CATALOG } from '../apps/scriptrunner/catalog.js';
 import { XRAY_CATALOG } from '../apps/xray/catalog.js';
 
 /**
@@ -133,11 +134,14 @@ describe('JIRA_TOOL_CATALOG', () => {
     }
   });
 
-  it('offers Xray tools through the gateway by default, and lists them once TOOLSETS names their toolset', () => {
-    const xrayTools = Object.keys(XRAY_CATALOG.tools);
+  it.each([
+    ['Xray', XRAY_CATALOG, 'xray_test_runs', 'xray_updateTestRun'],
+    ['ScriptRunner', SCRIPTRUNNER_CATALOG, 'scriptrunner_script_editor', 'scriptrunner_getScriptFile'],
+  ])('offers %s tools through the gateway by default, and lists them once TOOLSETS names their toolset', (_app, catalog, toolset, tool) => {
+    const appTools = Object.keys(catalog.tools);
 
-    expect(allowedBy({}).filter((name) => xrayTools.includes(name))).toEqual([]);
-    expect(gatewayBy({}).filter((name) => xrayTools.includes(name))).toEqual(xrayTools);
-    expect(allowedBy({ TOOLSETS: 'default,xray_test_runs' })).toContain('xray_updateTestRun');
+    expect(allowedBy({}).filter((name) => appTools.includes(name))).toEqual([]);
+    expect(gatewayBy({}).filter((name) => appTools.includes(name))).toEqual(appTools);
+    expect(allowedBy({ TOOLSETS: `default,${toolset}` })).toContain(tool);
   });
 });

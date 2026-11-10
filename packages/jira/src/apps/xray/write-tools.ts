@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { PolicyRegistrar } from '@atlassian-dc-mcp/common';
 import type { JiraToolContext } from '../../tools/context.js';
 import * as xray from './operations.js';
-import { invalid, respond } from './read-tools.js';
+import { invalid, respond } from '../respond.js';
 import { xrayToolSchemas as schemas } from './schemas.js';
 
 function registerAddTestsTools(tools: PolicyRegistrar, context: JiraToolContext): void {

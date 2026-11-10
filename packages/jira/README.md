@@ -4,7 +4,7 @@
 
 The server runs on your machine. Your MCP client starts it and talks to it over stdio; it calls Jira's REST API with
 your personal access token, lists the everyday issue tools, and keeps 43 more one search away, plus the tools of
-supported Jira apps such as Xray when they're installed. Jira's own permissions
+supported Jira apps such as Xray and ScriptRunner when they're installed. Jira's own permissions
 decide what you can do: the server can hide tools, never unlock them.
 
 ```bash
@@ -130,14 +130,16 @@ The tool search never offers a destructive tool. To use one, turn on its toolset
 
 ## Jira apps
 
-The server also works with Jira apps from the Atlassian Marketplace. Xray's tools are offered only when Xray is
-installed: at startup the server makes one request to check, and leaves Xray out if it isn't there. Its toolsets are
-off by default, so its tools are reached through `jira_searchTools` and cost nothing until used. Jira Service
-Management's tools are the `jira_service_desk` toolset in [Toolsets](#toolsets), which you turn on with `TOOLSETS`.
+The server also works with Jira apps from the Atlassian Marketplace. An app's tools are offered only when the app is
+installed: at startup the server makes one request per app to check, and leaves out the apps that aren't there. Their
+toolsets are off by default, so their tools are reached through `jira_searchTools` and cost nothing until used. Jira
+Service Management's tools are the `jira_service_desk` toolset in [Toolsets](#toolsets), which you turn on with
+`TOOLSETS`.
 
 | App | Versions | Status |
 |---|---|---|
 | Xray, test management | 8 | Beta |
+| ScriptRunner, scripting and automation | 9 | Beta, read-only so far |
 | Jira Service Management | not recorded | Beta |
 
 Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists the
@@ -157,6 +159,19 @@ With `jira_runCode`, one question like *"which tests failed in QA-20, and what d
 script: list the execution's tests, then read the failed runs. Adding tests needs Edit Issues on the execution, plan or
 set. Xray's own settings decide who may record test results. Removing tests isn't offered yet, because removing a test
 from an execution deletes its results.
+
+**ScriptRunner** tools, all read-only for now:
+
+| Toolset | Tools |
+|---|---|
+| `scriptrunner_script_editor`: the script roots and their files | `scriptrunner_listScriptFiles`, `scriptrunner_getScriptFile` |
+| `scriptrunner_builtin_scripts`: built-in scripts and the parameters they ask for | `scriptrunner_listBuiltInScripts`, `scriptrunner_getBuiltInScriptParams` |
+| `scriptrunner_features`: script listeners, and the JQL functions ScriptRunner adds | `scriptrunner_getListeners`, `scriptrunner_getJqlFunctions` |
+| `scriptrunner_behaviours`: behaviours and where they apply | `scriptrunner_getBehaviours` |
+
+ScriptRunner decides who may use these: mostly Jira administrators, or the users its own permission settings allow.
+Anyone else gets a 403 that says so. Only the JQL function docs are open to every user. Running scripts and saving
+script files will come as opt-in tools that stay off until you turn each one on.
 
 ## Settings
 
@@ -187,7 +202,7 @@ keychain.
 | `CODE_EXECUTION` | `off` removes `jira_runCode`. |
 | `PERMISSION_FILTER` | `off` lists tools without asking Jira for your permissions first. |
 | `JIRA_PERMISSION_PROJECTS` | Project keys, e.g. `ACS,BPO`. Without it, a permission you hold in any project counts; with it, only these projects count. |
-| `JIRA_APPS` | Which [Jira apps](#jira-apps) to offer. Unset or `auto` checks which are installed; a list such as `xray` offers those without checking; `off` offers none. |
+| `JIRA_APPS` | Which [Jira apps](#jira-apps) to offer. Unset or `auto` checks which are installed; a list such as `xray,scriptrunner` offers those without checking; `off` offers none. |
 
 **Turning on risky tools**
 
