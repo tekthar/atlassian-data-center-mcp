@@ -12,6 +12,7 @@ import type { JiraToolContext } from '../tools/context.js';
 import { SCRIPTRUNNER_CATALOG } from './scriptrunner/catalog.js';
 import { startScriptRunnerRequest } from './scriptrunner/client.js';
 import { registerScriptRunnerReadTools } from './scriptrunner/read-tools.js';
+import { registerScriptRunnerOptInTools } from './scriptrunner/opt-in-tools.js';
 import { XRAY_CATALOG } from './xray/catalog.js';
 import { startXrayRequest } from './xray/client.js';
 import { registerXrayReadTools } from './xray/read-tools.js';
@@ -57,7 +58,10 @@ export const JIRA_APPS: JiraApp[] = [
     catalog: SCRIPTRUNNER_CATALOG,
     // Any signed-in user may read the JQL function docs, unlike most ScriptRunner routes.
     probe: (timeoutMs) => withTimeout(startScriptRunnerRequest('scriptrunner-jira', { method: 'GET', url: '/jqlfunctions/docs' }), timeoutMs),
-    register: registerScriptRunnerReadTools,
+    register: (tools, context) => {
+      registerScriptRunnerReadTools(tools, context);
+      registerScriptRunnerOptInTools(tools, context);
+    },
   },
 ];
 

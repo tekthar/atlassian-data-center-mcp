@@ -9,8 +9,8 @@ import { asRecord } from '../tools/context.js';
  * their calls go through its request core, as the service desk tools do.
  */
 
-/** A request to an app's REST API, with `url` relative to the app's base path. */
-export type AppRequest = Omit<ApiRequestOptions, 'mediaType' | 'url'> & { url: string };
+/** A request to an app's REST API, with `url` relative to the app's base path. Bodies are JSON unless `mediaType` says otherwise. */
+export type AppRequest = Omit<ApiRequestOptions, 'url'> & { url: string };
 
 /** What to say instead of a bare 404, or a 401 or 403 when given. */
 export interface AppErrorMessages {
@@ -18,9 +18,9 @@ export interface AppErrorMessages {
   forbidden?: (status: number) => string;
 }
 
-/** Starts a JSON request to `/rest<basePath><url>`. */
+/** Starts a request to `/rest<basePath><url>`. */
 export function startAppRequest<T>(basePath: string, options: AppRequest): CancelablePromise<T> {
-  return __request<T>(OpenAPI, { ...options, url: `${basePath}${options.url}`, mediaType: 'application/json' });
+  return __request<T>(OpenAPI, { ...options, url: `${basePath}${options.url}`, mediaType: options.mediaType ?? 'application/json' });
 }
 
 /** Calls an app, explaining the errors `messages` covers and passing the rest through. */

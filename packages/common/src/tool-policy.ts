@@ -74,7 +74,8 @@ const defaultWarn: Warn = (message) => console.error(message);
 export const splitList = (value: string | undefined): string[] =>
   (value ?? '').split(',').map((item) => item.trim()).filter(Boolean);
 
-const isTruthy = (value: string | undefined): boolean =>
+/** True for `1`, `true`, `yes` or `on`, ignoring case and surrounding spaces. */
+export const isTruthy = (value: string | undefined): boolean =>
   ['1', 'true', 'yes', 'on'].includes((value ?? '').trim().toLowerCase());
 
 const isFalsy = (value: string | undefined): boolean =>

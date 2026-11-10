@@ -6,7 +6,7 @@ The Confluence and Bitbucket servers don't support any apps yet.
 | App | Versions | Status |
 |---|---|---|
 | [Xray](#xray), test management | 8 | Beta |
-| [ScriptRunner](#scriptrunner), scripting and automation | 9 | Beta, read-only so far |
+| [ScriptRunner](#scriptrunner), scripting and automation | 9 | Beta |
 | [Jira Service Management](#jira-service-management) | not recorded | Beta |
 
 - **Tested** means the tools were run against a live instance of that app version.
@@ -62,8 +62,8 @@ in the next release.
 |---|---|
 | Built from | ScriptRunner for Jira **9.46.0** for Data Center (Marketplace build 1011110, released 2026-10-20) |
 | Jira | 10.0 to 10.7, as this build's Marketplace listing gives. Its REST resources use `javax.ws.rs` |
-| REST APIs used | `/rest/scriptrunner/latest` for the script editor and built-in scripts; `/rest/scriptrunner-jira/latest` for listeners and JQL functions; `/rest/scriptrunner/behaviours/latest` for behaviours |
-| Tools | 7, all read-only, in the toolsets `scriptrunner_script_editor`, `scriptrunner_builtin_scripts`, `scriptrunner_features` and `scriptrunner_behaviours` |
+| REST APIs used | `/rest/scriptrunner/latest` for the script editor, built-in scripts and the script console; `/rest/scriptrunner-jira/latest` for listeners and JQL functions; `/rest/scriptrunner/behaviours/latest` for behaviours |
+| Tools | 7 that read, in the toolsets `scriptrunner_script_editor`, `scriptrunner_builtin_scripts`, `scriptrunner_features` and `scriptrunner_behaviours`; 3 opt-in tools that run or save code, in `scriptrunner_console`, `scriptrunner_builtin_scripts` and `scriptrunner_script_editor` |
 | Detection | `GET /rest/scriptrunner-jira/latest/jqlfunctions/docs` at startup, which any signed-in user may read, unless `JIRA_APPS` names the apps to offer |
 | Status | Beta: not yet run against a live ScriptRunner instance |
 
@@ -75,16 +75,42 @@ their resource classes gave 69 routes under `/scriptrunner`, 43 under `/scriptru
 - the script editor sends a file's content as base64, which `scriptrunner_getScriptFile` decodes;
 - it lists each script root's files as a map from path to file details;
 - a built-in script is described by its `className`, `name`, `description`, `tags` and `helpUrl`;
-- the parameters route calls ScriptRunner's own parameter builder, which returns the form and runs nothing.
+- the parameters route calls ScriptRunner's own parameter builder, which returns the form and runs nothing;
+- the script console takes `{ "script": ... }` or `{ "scriptPath": ... }`. It answers `{ output, snapshot }`, whose
+  snapshot holds the run's log and time. A failed script answers 500 with the exception, its stack trace and the
+  snapshot;
+- a built-in script runs with its parameter values as a JSON object, the same keys the parameters route returns;
+- the script editor saves a file from its base64-encoded content, sent as `application/octet-stream`. `POST` refuses
+  to replace an existing file and `PUT` replaces it.
 
 **Who may use them.** ScriptRunner filters most of these routes itself: to Jira administrators, or to the users its own
 permission settings allow. Only the JQL function docs are open to every signed-in user. Read tools are never hidden by
 `PERMISSION_FILTER`, so a user ScriptRunner doesn't allow gets a 403, and the tool says who ScriptRunner lets in.
 
+**Running and saving code.** `scriptrunner_runConsoleScript`, `scriptrunner_runBuiltInScript` and
+`scriptrunner_saveScriptFile` can change anything on the instance, so each is guarded in four ways:
+
+- It is destructive.
+- It is registered only when its own setting is `true`: `JIRA_SCRIPTRUNNER_CONSOLE_ENABLED`,
+  `JIRA_SCRIPTRUNNER_BUILTIN_RUN_ENABLED` or `JIRA_SCRIPTRUNNER_FILE_SAVE_ENABLED`.
+- It is listed only when `TOOLSETS` names its toolset.
+- It is hidden from anyone `PERMISSION_FILTER` doesn't find to be a Jira administrator.
+
+The tool search and `jira_runCode` never offer them. Saving creates a file unless you pass `overwrite: true`. A failed
+console script returns its exception, the first 15 lines of the stack trace and its log, rather than the whole trace.
+
 **How they were checked.**
 
 - Unit tests check the exact URL, method, query and body each tool sends, the base64 decoding, the built-in script
   search, and the 403 and 404 messages.
+- They also check that each tool that runs or saves code is registered only with its own setting. The catalog test
+  checks that the tool search never offers them, even with `TOOLSETS=all`, and that `READ_ONLY_MODE` leaves them out.
+- The bundled server was driven with `JIRA_SCRIPTRUNNER_CONSOLE_ENABLED`:
+  - with the setting and `TOOLSETS` naming `scriptrunner_console`, `scriptrunner_runConsoleScript` was listed as
+    destructive and ran one script;
+  - with either one alone, it wasn't listed;
+  - the tool search never offered it, `jira_runReadTool` and `jira_runWriteTool` didn't know it, and a `jira_runCode`
+    script that called it was refused before anything reached ScriptRunner.
 - Detection is tested with both Xray and ScriptRunner installed, with only one of them, and with the `JIRA_APPS`
   settings.
 - The bundled server was driven against a test HTTP server answering ScriptRunner's routes. Detection found
@@ -93,9 +119,9 @@ permission settings allow. Only the JQL function docs are open to every signed-i
 
 **Other 9.x versions** are expected to work, but only 9.46.0 was read, so an earlier version may lack a route.
 
-**Not covered yet:** running Groovy in the script console, running a built-in script, and creating or saving script
-editor files. These are next on the [roadmap](#roadmap). They will be destructive tools, each off until its own
-setting turns it on, and never offered by the tool search or `jira_runCode`.
+**Not covered yet:** scripted fields, scheduled jobs, REST endpoints, fragments and workflow functions, and changing
+behaviours. The [roadmap](#roadmap) has the order. Previewing or validating a built-in script before running it is
+left out too: those routes exist, but this build doesn't show that they never change anything.
 
 ## Jira Service Management
 
@@ -119,7 +145,7 @@ Apps are added in this order, each step in its own release-ready change.
 1. **ScriptRunner for Jira**
    - [x] Read: script editor files, built-in scripts and the parameters they ask for, listeners, JQL functions,
      behaviours
-   - [ ] Opt-in, off by default: run Groovy in the script console, run a built-in script, create and save script
+   - [x] Opt-in, off by default: run Groovy in the script console, run a built-in script, create and save script
      editor files. Each is destructive, has its own setting, and is never offered by the tool search or
      `jira_runCode`
    - [ ] More to read: scripted fields, scheduled jobs, REST endpoints, fragments, workflow functions

@@ -139,7 +139,7 @@ Service Management's tools are the `jira_service_desk` toolset in [Toolsets](#to
 | App | Versions | Status |
 |---|---|---|
 | Xray, test management | 8 | Beta |
-| ScriptRunner, scripting and automation | 9 | Beta, read-only so far |
+| ScriptRunner, scripting and automation | 9 | Beta |
 | Jira Service Management | not recorded | Beta |
 
 Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists the
@@ -160,18 +160,23 @@ script: list the execution's tests, then read the failed runs. Adding tests need
 set. Xray's own settings decide who may record test results. Removing tests isn't offered yet, because removing a test
 from an execution deletes its results.
 
-**ScriptRunner** tools, all read-only for now:
+**ScriptRunner** tools:
 
 | Toolset | Tools |
 |---|---|
-| `scriptrunner_script_editor`: the script roots and their files | `scriptrunner_listScriptFiles`, `scriptrunner_getScriptFile` |
-| `scriptrunner_builtin_scripts`: built-in scripts and the parameters they ask for | `scriptrunner_listBuiltInScripts`, `scriptrunner_getBuiltInScriptParams` |
+| `scriptrunner_script_editor`: the script roots and their files | `scriptrunner_listScriptFiles`, `scriptrunner_getScriptFile`, `scriptrunner_saveScriptFile` (destructive, opt-in) |
+| `scriptrunner_builtin_scripts`: built-in scripts and the parameters they ask for | `scriptrunner_listBuiltInScripts`, `scriptrunner_getBuiltInScriptParams`, `scriptrunner_runBuiltInScript` (destructive, opt-in) |
 | `scriptrunner_features`: script listeners, and the JQL functions ScriptRunner adds | `scriptrunner_getListeners`, `scriptrunner_getJqlFunctions` |
 | `scriptrunner_behaviours`: behaviours and where they apply | `scriptrunner_getBehaviours` |
+| `scriptrunner_console`: run Groovy on the Jira server | `scriptrunner_runConsoleScript` (destructive, opt-in) |
 
 ScriptRunner decides who may use these: mostly Jira administrators, or the users its own permission settings allow.
-Anyone else gets a 403 that says so. Only the JQL function docs are open to every user. Running scripts and saving
-script files will come as opt-in tools that stay off until you turn each one on.
+Anyone else gets a 403 that says so. Only the JQL function docs are open to every user.
+
+Running Groovy, running a built-in script and saving a script file can change anything on your Jira, and nothing
+undoes them. Each of those tools is off until its own setting in [Turning on risky tools](#settings) is `true`,
+appears only when `TOOLSETS` names its toolset, and is shown only to Jira administrators. The tool search and
+`jira_runCode` never offer them, and your client can ask you before each run.
 
 ## Settings
 
@@ -209,6 +214,9 @@ keychain.
 | Variable | Use |
 |---|---|
 | `JIRA_VERSION_DELETE_ENABLED` | `true` lists `jira_deleteVersion`. |
+| `JIRA_SCRIPTRUNNER_CONSOLE_ENABLED` | `true` turns on `scriptrunner_runConsoleScript`, which runs Groovy on the Jira server. Also name `scriptrunner_console` in `TOOLSETS`. |
+| `JIRA_SCRIPTRUNNER_BUILTIN_RUN_ENABLED` | `true` turns on `scriptrunner_runBuiltInScript`. Also name `scriptrunner_builtin_scripts` in `TOOLSETS`. |
+| `JIRA_SCRIPTRUNNER_FILE_SAVE_ENABLED` | `true` turns on `scriptrunner_saveScriptFile`, which creates or replaces script files. Also name `scriptrunner_script_editor` in `TOOLSETS`. |
 | `JIRA_ATTACHMENTS_UPLOAD_ENABLED`, `JIRA_ATTACHMENTS_DOWNLOAD_ENABLED` | `true` lets attachments be uploaded from, or saved to, your disk. Default off: downloads come back inline and never touch the disk. |
 | `JIRA_ATTACHMENTS_UPLOAD_ROOTS`, `JIRA_ATTACHMENTS_DOWNLOAD_ROOTS` | Folders allowed for each direction, separated like your OS `PATH`. |
 | `JIRA_ATTACHMENTS_DIR` | One folder used for both directions. |

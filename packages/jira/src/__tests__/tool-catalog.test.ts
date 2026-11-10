@@ -138,10 +138,19 @@ describe('JIRA_TOOL_CATALOG', () => {
     ['Xray', XRAY_CATALOG, 'xray_test_runs', 'xray_updateTestRun'],
     ['ScriptRunner', SCRIPTRUNNER_CATALOG, 'scriptrunner_script_editor', 'scriptrunner_getScriptFile'],
   ])('offers %s tools through the gateway by default, and lists them once TOOLSETS names their toolset', (_app, catalog, toolset, tool) => {
-    const appTools = Object.keys(catalog.tools);
+    const appTools = Object.entries(catalog.tools).filter(([, entry]) => entry.access !== 'destructive').map(([name]) => name);
 
     expect(allowedBy({}).filter((name) => appTools.includes(name))).toEqual([]);
     expect(gatewayBy({}).filter((name) => appTools.includes(name))).toEqual(appTools);
     expect(allowedBy({ TOOLSETS: `default,${toolset}` })).toContain(tool);
+  });
+
+  it('keeps the ScriptRunner tools that run or save code out of the tool search, listing them only once TOOLSETS names their toolset', () => {
+    const runOrSave = ['scriptrunner_runConsoleScript', 'scriptrunner_runBuiltInScript', 'scriptrunner_saveScriptFile'];
+
+    expect(gatewayBy({ TOOLSETS: 'all' }).filter((name) => runOrSave.includes(name))).toEqual([]);
+    expect(gatewayBy({}).filter((name) => runOrSave.includes(name))).toEqual([]);
+    expect(allowedBy({ TOOLSETS: 'default,scriptrunner_console' })).toContain('scriptrunner_runConsoleScript');
+    expect(allowedBy({ TOOLSETS: 'default,scriptrunner_console', READ_ONLY_MODE: 'true' })).not.toContain('scriptrunner_runConsoleScript');
   });
 });

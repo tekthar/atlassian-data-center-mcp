@@ -80,7 +80,7 @@ The Jira server also has tools for these Marketplace apps:
 | App | Versions | Status |
 |---|---|---|
 | Xray, test management | 8 | Beta |
-| ScriptRunner, scripting and automation | 9 | Beta, read-only so far |
+| ScriptRunner, scripting and automation | 9 | Beta |
 | Jira Service Management | not recorded | Beta |
 
 Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](docs/supported-apps.md) lists the

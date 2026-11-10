@@ -50,7 +50,8 @@ settings allow. In scope:
   its own run.
 - **Tools that do more than they declare**: a tool marked read-only that changes data; the tool search or the code
   sandbox offering a destructive tool; or a way around `READ_ONLY_MODE`, `ENABLED_TOOLS`, `TOOLSETS`, the opt-in
-  settings such as `JIRA_VERSION_DELETE_ENABLED`, or Bitbucket's merge and decline allowlists.
+  settings such as `JIRA_VERSION_DELETE_ENABLED` and `JIRA_SCRIPTRUNNER_CONSOLE_ENABLED`, or Bitbucket's merge and
+  decline allowlists.
 - **Files**: reading or writing outside the configured attachment folders (for example through `..` or a symbolic
   link), or a saved attachment overwriting an existing file.
 - **Credentials**: a token written to logs, error messages or tool results; sent to a host other than the configured
