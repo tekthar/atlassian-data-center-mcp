@@ -21,6 +21,16 @@ const answer = (outcome: () => unknown) =>
 
 const apiError = (status: number, statusText: string) => Object.assign(new Error(statusText), { status, statusText });
 
+const XRAY_PROBE = '/raven/1.0/api/settings/teststatuses';
+const SCRIPTRUNNER_PROBE = '/scriptrunner-jira/latest/jqlfunctions/docs';
+
+/** Answer each app's check by its URL. */
+function answerProbes(outcomes: Record<string, () => unknown>) {
+  mockedRequest.mockImplementation((_config: unknown, options: { url: string }) => answer(outcomes[options.url]));
+}
+
+const probedUrls = () => mockedRequest.mock.calls.map((call) => (call[1] as { url: string }).url).sort();
+
 const policy = (env: Record<string, string> = {}) => resolveToolPolicy(JIRA_TOOL_CATALOG, env, () => undefined);
 
 async function detect(env: Record<string, string>, timeoutMs = 50) {
@@ -32,21 +42,28 @@ async function detect(env: Record<string, string>, timeoutMs = 50) {
 describe('detectJiraApps', () => {
   beforeEach(() => jest.resetAllMocks());
 
-  it('asks Xray for its test statuses when JIRA_APPS is unset, and offers it when that works', async () => {
-    mockedRequest.mockReturnValue(answer(() => [{ name: 'PASS' }]));
+  it('asks each app for something cheap when JIRA_APPS is unset, and offers the apps that answer', async () => {
+    answerProbes({ [XRAY_PROBE]: () => [{ name: 'PASS' }], [SCRIPTRUNNER_PROBE]: () => ({}) });
 
-    expect(await detect({})).toEqual({ ids: ['xray'], warnings: [] });
-    expect(mockedRequest.mock.calls[0][1]).toMatchObject({ method: 'GET', url: '/raven/1.0/api/settings/teststatuses' });
+    expect(await detect({})).toEqual({ ids: ['xray', 'scriptrunner'], warnings: [] });
+    expect(probedUrls()).toEqual([XRAY_PROBE, SCRIPTRUNNER_PROBE].sort());
+    expect(mockedRequest.mock.calls.every((call) => call[1].method === 'GET')).toBe(true);
   });
 
-  it('leaves Xray out quietly when the instance answers 404', async () => {
+  it('offers only the apps that are installed', async () => {
+    answerProbes({ [XRAY_PROBE]: () => { throw apiError(404, 'Not Found'); }, [SCRIPTRUNNER_PROBE]: () => ({}) });
+
+    expect(await detect({})).toEqual({ ids: ['scriptrunner'], warnings: [] });
+  });
+
+  it('leaves the apps out quietly when the instance answers 404', async () => {
     mockedRequest.mockReturnValue(answer(() => { throw apiError(404, 'Not Found'); }));
 
     expect(await detect({ JIRA_APPS: 'auto' })).toEqual({ ids: [], warnings: [] });
   });
 
-  it('leaves Xray out with a warning when the check fails another way', async () => {
-    mockedRequest.mockReturnValue(answer(() => { throw apiError(500, 'Server Error'); }));
+  it('leaves an app out with a warning when its check fails another way', async () => {
+    answerProbes({ [XRAY_PROBE]: () => { throw apiError(500, 'Server Error'); }, [SCRIPTRUNNER_PROBE]: () => { throw apiError(404, 'Not Found'); } });
 
     const { ids, warnings } = await detect({});
 
@@ -65,8 +82,8 @@ describe('detectJiraApps', () => {
   });
 
   it('offers named apps without checking, and warns about unknown names', async () => {
-    expect(await detect({ JIRA_APPS: 'xray, zephyr' })).toEqual({
-      ids: ['xray'],
+    expect(await detect({ JIRA_APPS: 'xray, ScriptRunner, zephyr' })).toEqual({
+      ids: ['xray', 'scriptrunner'],
       warnings: [expect.stringContaining('Ignoring unknown app "zephyr"')],
     });
     expect(mockedRequest).not.toHaveBeenCalled();

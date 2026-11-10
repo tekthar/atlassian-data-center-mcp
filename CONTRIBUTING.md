@@ -213,8 +213,10 @@ example to copy:
 - **`catalog.ts`**: the app's toolsets and tools. Toolsets are `default: false`, so the tools are reached through the
   tool search. Writes name the Jira permission they need in `anyOfPermissions`, unless the app decides who may make
   them (then add the tool to `UNGATED_WRITE_TOOLS` in the catalog test, with the reason).
-- **`client.ts`**: calls the app's REST API through the generated Jira client's `request` core, relative to `/rest`.
+- **`client.ts`**: calls the app's REST API with `callApp` from `apps/request.ts`, which sends JSON relative to `/rest`
+  and replaces a 404 (and a 401 or 403, if you give a message) with one that says what to check.
 - **`operations.ts`**, **`read-tools.ts`**, **`write-tools.ts`**: one function per call, and the tool registrations.
+  `respond` in `apps/respond.ts` turns a call's result or error into the tool's response.
 - **An entry in `JIRA_APPS`** in `apps/index.ts`: the id used in the `JIRA_APPS` setting, the catalog, a `probe`
   (one cheap request that fails with 404 when the app isn't installed) and `register`.
 

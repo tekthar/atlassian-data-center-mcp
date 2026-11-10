@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## Unreleased
+
+### Features
+
+* **jira:** ScriptRunner for Jira support, starting with reading. Seven tools, reached through `jira_searchTools` when ScriptRunner is installed:
+  * the script editor's roots and files;
+  * built-in scripts, and the parameters each asks for;
+  * script listeners;
+  * the JQL functions ScriptRunner adds;
+  * behaviours.
+
+  ScriptRunner decides who may use them, mostly Jira administrators. Built from ScriptRunner 9.46.0. Running scripts and saving script files come next, as opt-in tools that are off by default. See [Supported apps](docs/supported-apps.md#scriptrunner).
+
 ## [0.47.1](https://github.com/tekthar/atlassian-data-center-mcp/releases/tag/v0.47.1) (2026-11-06)
 
 Two security fixes from a security review. **Upgrade promptly**, and see the first entry if you kept settings in a `.env` file.

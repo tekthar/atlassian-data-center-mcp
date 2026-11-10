@@ -1,13 +1,9 @@
 import { z } from 'zod';
-import { formatToolResponse, handleApiOperation, type PolicyRegistrar } from '@atlassian-dc-mcp/common';
+import type { PolicyRegistrar } from '@atlassian-dc-mcp/common';
 import type { JiraToolContext } from '../../tools/context.js';
+import { invalid, respond } from '../respond.js';
 import * as xray from './operations.js';
 import { xrayToolSchemas as schemas } from './schemas.js';
-
-export const respond = async <T>(operation: () => Promise<T>, errorPrefix: string) =>
-  formatToolResponse(await handleApiOperation(operation, errorPrefix));
-
-export const invalid = (error: string) => formatToolResponse({ success: false, error });
 
 function registerTestTools(tools: PolicyRegistrar, context: JiraToolContext): void {
   tools.registerTool('xray_getTests', {
