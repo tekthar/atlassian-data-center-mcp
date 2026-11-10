@@ -14,7 +14,13 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
   * the JQL functions ScriptRunner adds;
   * behaviours.
 
-  ScriptRunner decides who may use them, mostly Jira administrators. Built from ScriptRunner 9.46.0. Running scripts and saving script files come next, as opt-in tools that are off by default. See [Supported apps](docs/supported-apps.md#scriptrunner).
+  ScriptRunner decides who may use them, mostly Jira administrators. Built from ScriptRunner 9.46.0. See [Supported apps](docs/supported-apps.md#scriptrunner).
+* **jira:** opt-in ScriptRunner tools that run or save code. Each is off until its own setting is `true`:
+  * `scriptrunner_runConsoleScript` runs Groovy in the script console (`JIRA_SCRIPTRUNNER_CONSOLE_ENABLED`);
+  * `scriptrunner_runBuiltInScript` runs a built-in script (`JIRA_SCRIPTRUNNER_BUILTIN_RUN_ENABLED`);
+  * `scriptrunner_saveScriptFile` creates a script file, or replaces one when asked (`JIRA_SCRIPTRUNNER_FILE_SAVE_ENABLED`).
+
+  They are destructive and shown only to Jira administrators. Each is listed only when `TOOLSETS` names its toolset, and the tool search and `jira_runCode` never offer them.
 
 ## [0.47.1](https://github.com/tekthar/atlassian-data-center-mcp/releases/tag/v0.47.1) (2026-11-06)
 
