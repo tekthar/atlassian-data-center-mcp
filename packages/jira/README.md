@@ -166,7 +166,7 @@ from an execution deletes its results.
 |---|---|
 | `scriptrunner_script_editor`: the script roots and their files | `scriptrunner_listScriptFiles`, `scriptrunner_getScriptFile`, `scriptrunner_saveScriptFile` (destructive, opt-in) |
 | `scriptrunner_builtin_scripts`: built-in scripts and the parameters they ask for | `scriptrunner_listBuiltInScripts`, `scriptrunner_getBuiltInScriptParams`, `scriptrunner_runBuiltInScript` (destructive, opt-in) |
-| `scriptrunner_features`: script listeners, and the JQL functions ScriptRunner adds | `scriptrunner_getListeners`, `scriptrunner_getJqlFunctions` |
+| `scriptrunner_features`: listeners, scripted fields, scheduled jobs, REST endpoints, fragments, workflow functions, and the JQL functions ScriptRunner adds | `scriptrunner_getListeners`, `scriptrunner_getScriptedFields`, `scriptrunner_getScheduledJobs`, `scriptrunner_getRestEndpoints`, `scriptrunner_getFragments`, `scriptrunner_getWorkflowFunctions`, `scriptrunner_getJqlFunctions` |
 | `scriptrunner_behaviours`: behaviours and where they apply | `scriptrunner_getBehaviours` |
 | `scriptrunner_console`: run Groovy on the Jira server | `scriptrunner_runConsoleScript` (destructive, opt-in) |
 

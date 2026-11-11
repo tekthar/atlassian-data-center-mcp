@@ -7,10 +7,10 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Features
 
-* **jira:** ScriptRunner for Jira support, starting with reading. Seven tools, reached through `jira_searchTools` when ScriptRunner is installed:
+* **jira:** ScriptRunner for Jira support. Twelve read tools, reached through `jira_searchTools` when ScriptRunner is installed:
   * the script editor's roots and files;
   * built-in scripts, and the parameters each asks for;
-  * script listeners;
+  * script listeners, scripted fields, scheduled jobs, REST endpoints, UI fragments and workflow functions;
   * the JQL functions ScriptRunner adds;
   * behaviours.
 

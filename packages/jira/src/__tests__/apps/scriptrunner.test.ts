@@ -137,6 +137,22 @@ describe('ScriptRunner tools', () => {
     expect(sent(3).path).toEqual({ id: '3' });
   });
 
+  it.each([
+    ['scriptrunner_getScriptedFields', '/scriptrunner-jira/latest/scriptfields', 'id'],
+    ['scriptrunner_getScheduledJobs', '/scriptrunner/latest/scheduled-jobs', 'id'],
+    ['scriptrunner_getRestEndpoints', '/scriptrunner/latest/custom/customadmin', 'id'],
+    ['scriptrunner_getFragments', '/scriptrunner/latest/fragments', 'id'],
+    ['scriptrunner_getWorkflowFunctions', '/scriptrunner-jira/latest/workflowFunctions', 'workflowName'],
+  ])('%s lists every item from %s, or reads one', async (tool, url, key) => {
+    routeRequests({ [url]: [{ id: 'a1' }], [`${url}/{${key}}`]: { id: 'a1' } });
+    const tools = setup();
+
+    expect(await tools.callJson(tool, {})).toEqual({ success: true, data: [{ id: 'a1' }] });
+    expect(await tools.callJson(tool, { [key]: 'a1' })).toEqual({ success: true, data: { id: 'a1' } });
+    expect(sent(0)).toMatchObject({ method: 'GET', url });
+    expect(sent(1)).toMatchObject({ method: 'GET', url: `${url}/{${key}}`, path: { [key]: 'a1' } });
+  });
+
   it('explains a refusal in terms of who ScriptRunner lets in', async () => {
     routeRequests({ '/scriptrunner-jira/latest/listeners': apiError(403, 'Forbidden') });
 

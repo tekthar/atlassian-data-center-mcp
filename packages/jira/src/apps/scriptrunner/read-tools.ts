@@ -44,6 +44,33 @@ function registerFeatureTools(tools: PolicyRegistrar, context: JiraToolContext):
   }, async () => respond(() => scriptRunner.getJqlFunctions(), 'Error fetching ScriptRunner JQL functions'));
 }
 
+function registerConfiguredFeatureTools(tools: PolicyRegistrar, context: JiraToolContext): void {
+  tools.registerTool('scriptrunner_getScriptedFields', {
+    description: `List ScriptRunner's scripted fields in the ${context.instanceType}, or get one by id: its custom field, template and script.`,
+    inputSchema: z.object(schemas.getScriptedFields),
+  }, async ({ id }) => respond(() => scriptRunner.getScriptedFields(id), 'Error fetching ScriptRunner scripted fields'));
+
+  tools.registerTool('scriptrunner_getScheduledJobs', {
+    description: `List ScriptRunner's scheduled jobs in the ${context.instanceType}, or get one by id: what it runs, as which user, and its schedule.`,
+    inputSchema: z.object(schemas.getScheduledJobs),
+  }, async ({ id }) => respond(() => scriptRunner.getScheduledJobs(id), 'Error fetching ScriptRunner scheduled jobs'));
+
+  tools.registerTool('scriptrunner_getRestEndpoints', {
+    description: `List the custom REST endpoints ScriptRunner serves in the ${context.instanceType}, or get one by id, with its script. They answer under /rest/scriptrunner/latest/custom/.`,
+    inputSchema: z.object(schemas.getRestEndpoints),
+  }, async ({ id }) => respond(() => scriptRunner.getRestEndpoints(id), 'Error fetching ScriptRunner REST endpoints'));
+
+  tools.registerTool('scriptrunner_getFragments', {
+    description: `List ScriptRunner's UI fragments in the ${context.instanceType}, such as web items, panels and resources, or get one by id with its conditions and script.`,
+    inputSchema: z.object(schemas.getFragments),
+  }, async ({ id }) => respond(() => scriptRunner.getFragments(id), 'Error fetching ScriptRunner fragments'));
+
+  tools.registerTool('scriptrunner_getWorkflowFunctions', {
+    description: `List the ScriptRunner conditions, validators and post functions in the ${context.instanceType}'s workflows, or in one workflow by name, with the transitions they run on.`,
+    inputSchema: z.object(schemas.getWorkflowFunctions),
+  }, async ({ workflowName }) => respond(() => scriptRunner.getWorkflowFunctions(workflowName), 'Error fetching ScriptRunner workflow functions'));
+}
+
 function registerBehaviourTools(tools: PolicyRegistrar, context: JiraToolContext): void {
   tools.registerTool('scriptrunner_getBehaviours', {
     description: `List ScriptRunner behaviours in the ${context.instanceType}, or get one by id with its fields, initialiser and field scripts, and the projects and issue types it is mapped to.`,
@@ -55,5 +82,6 @@ export function registerScriptRunnerReadTools(tools: PolicyRegistrar, context: J
   registerScriptEditorTools(tools, context);
   registerBuiltInScriptTools(tools, context);
   registerFeatureTools(tools, context);
+  registerConfiguredFeatureTools(tools, context);
   registerBehaviourTools(tools, context);
 }

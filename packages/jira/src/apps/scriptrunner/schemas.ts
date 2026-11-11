@@ -7,6 +7,9 @@ const className = z.string().regex(CLASS_NAME, 'Expected a class name from scrip
 
 const rootPath = z.string().min(1).describe('The script root the file is in, as scriptrunner_listScriptFiles gives it');
 
+const itemId = (item: string, list: string) =>
+  z.string().min(1).optional().describe(`A ${item}'s id, from ${list} without one, to get only that ${item}; leave out to list them all`);
+
 /** Largest script or file the tools send, in characters. */
 export const MAX_SCRIPT_CHARS = 200_000;
 
@@ -31,6 +34,13 @@ export const scriptRunnerToolSchemas = {
   getJqlFunctions: {},
   getBehaviours: {
     id: z.string().min(1).optional().describe('A behaviour\'s id, to get its fields, scripts and mappings; leave out to list every behaviour'),
+  },
+  getScriptedFields: { id: itemId('scripted field', 'scriptrunner_getScriptedFields') },
+  getScheduledJobs: { id: itemId('job', 'scriptrunner_getScheduledJobs') },
+  getRestEndpoints: { id: itemId('REST endpoint', 'scriptrunner_getRestEndpoints') },
+  getFragments: { id: itemId('fragment', 'scriptrunner_getFragments') },
+  getWorkflowFunctions: {
+    workflowName: z.string().min(1).optional().describe('Only this workflow\'s functions, by its exact name; leave out for every workflow'),
   },
   runConsoleScript: {
     script: z.string().min(1).max(MAX_SCRIPT_CHARS).optional().describe('Groovy to run. Its last expression is returned as the output.'),
