@@ -63,7 +63,7 @@ in the next release.
 | Built from | ScriptRunner for Jira **9.46.0** for Data Center (Marketplace build 1011110, released 2026-10-20) |
 | Jira | 10.0 to 10.7, as this build's Marketplace listing gives. Its REST resources use `javax.ws.rs` |
 | REST APIs used | `/rest/scriptrunner/latest` for the script editor, built-in scripts, the script console, scheduled jobs, REST endpoints and fragments; `/rest/scriptrunner-jira/latest` for listeners, scripted fields, workflow functions and JQL functions; `/rest/scriptrunner/behaviours/latest` for behaviours |
-| Tools | 12 that read, in the toolsets `scriptrunner_script_editor`, `scriptrunner_builtin_scripts`, `scriptrunner_features` and `scriptrunner_behaviours`; 3 opt-in tools that run or save code, in `scriptrunner_console`, `scriptrunner_builtin_scripts` and `scriptrunner_script_editor` |
+| Tools | 12 that read, in the toolsets `scriptrunner_script_editor`, `scriptrunner_builtin_scripts`, `scriptrunner_features` and `scriptrunner_behaviours`; 7 opt-in tools that run or save code or change behaviours, in `scriptrunner_console`, `scriptrunner_builtin_scripts`, `scriptrunner_script_editor` and `scriptrunner_behaviours` |
 | Detection | `GET /rest/scriptrunner-jira/latest/jqlfunctions/docs` at startup, which any signed-in user may read, unless `JIRA_APPS` names the apps to offer |
 | Status | Beta: not yet run against a live ScriptRunner instance |
 
@@ -87,23 +87,39 @@ one. `javap` on those base classes gave the inherited routes.
   snapshot;
 - a built-in script runs with its parameter values as a JSON object, the same keys the parameters route returns;
 - the script editor saves a file from its base64-encoded content, sent as `application/octet-stream`. `POST` refuses
-  to replace an existing file and `PUT` replaces it.
+  to replace an existing file and `PUT` replaces it;
+- a behaviour is saved whole, by `POST /admin/behaviour`, as the same object `GET /admin/behaviour/{id}` returns.
+  That object has its `id`, `name`, `description`, `disabled`, `guideWorkflow`, the initialiser `init`, and
+  `fields`, each with its rules and scripts. Without an `id`, the post creates a behaviour;
+- a mapping is added with `{ behaviourId, type, projectIds, issueTypeIds }`, or `serviceDesk` and `requestTypes` for
+  `SERVICEDESK`. It is removed by `DELETE /admin/mapping` with the behaviour `id`, `type`, and the mapping's `pid`
+  and `issueTypeId`, or its `serviceDeskId` and `requestTypeId`.
 
 **Who may use them.** ScriptRunner filters most of these routes itself: to Jira administrators, or to the users its own
 permission settings allow. Only the JQL function docs are open to every signed-in user. Read tools are never hidden by
 `PERMISSION_FILTER`, so a user ScriptRunner doesn't allow gets a 403, and the tool says who ScriptRunner lets in.
 
-**Running and saving code.** `scriptrunner_runConsoleScript`, `scriptrunner_runBuiltInScript` and
-`scriptrunner_saveScriptFile` can change anything on the instance, so each is guarded in four ways:
+**Running and saving code, and changing behaviours.** `scriptrunner_runConsoleScript`,
+`scriptrunner_runBuiltInScript`, `scriptrunner_saveScriptFile` and the four behaviour tools
+(`scriptrunner_saveBehaviour`, `scriptrunner_setBehaviourEnabled`, `scriptrunner_mapBehaviour` and
+`scriptrunner_unmapBehaviour`) can change anything on the instance, or the screens of everyone who uses it. So each is
+guarded in four ways:
 
 - It is destructive.
 - It is registered only when its own setting is `true`: `JIRA_SCRIPTRUNNER_CONSOLE_ENABLED`,
-  `JIRA_SCRIPTRUNNER_BUILTIN_RUN_ENABLED` or `JIRA_SCRIPTRUNNER_FILE_SAVE_ENABLED`.
+  `JIRA_SCRIPTRUNNER_BUILTIN_RUN_ENABLED`, `JIRA_SCRIPTRUNNER_FILE_SAVE_ENABLED`, or, for all four behaviour tools,
+  `JIRA_SCRIPTRUNNER_BEHAVIOURS_EDIT_ENABLED`.
 - It is listed only when `TOOLSETS` names its toolset.
 - It is hidden from anyone `PERMISSION_FILTER` doesn't find to be a Jira administrator.
 
 The tool search and `jira_runCode` never offer them. Saving creates a file unless you pass `overwrite: true`. A failed
 console script returns its exception, the first 15 lines of the stack trace and its log, rather than the whole trace.
+
+The behaviour tools also refuse three things before calling ScriptRunner:
+
+- replacing a behaviour without its `fields`, because a behaviour saved without them loses its field rules;
+- a mapping that names nothing to map to;
+- removing a mapping without both of its ids, so one call never removes more than one mapping.
 
 **How they were checked.**
 
@@ -117,6 +133,10 @@ console script returns its exception, the first 15 lines of the stack trace and 
   - with either one alone, it wasn't listed;
   - the tool search never offered it, `jira_runReadTool` and `jira_runWriteTool` didn't know it, and a `jira_runCode`
     script that called it was refused before anything reached ScriptRunner.
+- The bundled server was driven with `JIRA_SCRIPTRUNNER_BEHAVIOURS_EDIT_ENABLED` and `scriptrunner_behaviours` in
+  `TOOLSETS`. The four behaviour tools were listed as destructive, and switching a behaviour off sent one `POST` to its
+  `disable` route. The tool search didn't offer them, and a `jira_runCode` script was refused. Without the setting,
+  only `scriptrunner_getBehaviours` was listed.
 - Detection is tested with both Xray and ScriptRunner installed, with only one of them, and with the `JIRA_APPS`
   settings.
 - The bundled server was driven against a test HTTP server answering ScriptRunner's routes. Detection found
@@ -127,13 +147,15 @@ console script returns its exception, the first 15 lines of the stack trace and 
 
 **Other 9.x versions** are expected to work, but only 9.46.0 was read, so an earlier version may lack a route.
 
-**Not covered yet:** changing behaviours, which is next on the [roadmap](#roadmap). Three more are left out on
-purpose:
+**Left out on purpose:**
 
+- **Deleting a behaviour.** Switching one off keeps it and its mappings, and can be undone.
 - **Previewing or validating a built-in script before running it.** Those routes exist, but this build doesn't show
   that they never change anything.
 - **ScriptRunner's resources.** These are database and other connections, and their settings can hold passwords.
 - **Script search.** It lists the same files as the script editor.
+
+The XML behaviours configuration (`/config`) isn't used: the JSON admin routes cover the same behaviours.
 
 ## Jira Service Management
 
@@ -161,7 +183,7 @@ Apps are added in this order, each step in its own release-ready change.
      editor files. Each is destructive, has its own setting, and is never offered by the tool search or
      `jira_runCode`
    - [x] More to read: scripted fields, scheduled jobs, REST endpoints, fragments, workflow functions
-   - [ ] Changing behaviours
+   - [x] Changing behaviours: create or replace one, switch it on or off, and add or remove its mappings (opt-in)
 2. **draw.io for Confluence** (`com.mxgraph.confluence.plugins.diagramly`). The Confluence server needs app support
    first, like the Jira server's.
 3. **draw.io for Jira** (`com.mxgraph.jira.plugins.drawio`)

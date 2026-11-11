@@ -2,16 +2,21 @@ import { z } from 'zod';
 import { isTruthy, type PolicyRegistrar } from '@atlassian-dc-mcp/common';
 import type { JiraToolContext } from '../../tools/context.js';
 import { invalid, respond } from '../respond.js';
+import { registerBehaviourEditTools } from './behaviour-tools.js';
 import * as scriptRunner from './opt-in-operations.js';
 import { scriptRunnerToolSchemas as schemas } from './schemas.js';
 
 type Env = Record<string, string | undefined>;
 
-/** The setting that turns on each tool that runs or saves code. All are off unless set to true. */
+/** The setting that turns on each tool that runs or saves code; one setting covers every behaviour change. All are off unless set to true. */
 export const SCRIPTRUNNER_OPT_IN_SETTINGS = {
   scriptrunner_runConsoleScript: 'JIRA_SCRIPTRUNNER_CONSOLE_ENABLED',
   scriptrunner_runBuiltInScript: 'JIRA_SCRIPTRUNNER_BUILTIN_RUN_ENABLED',
   scriptrunner_saveScriptFile: 'JIRA_SCRIPTRUNNER_FILE_SAVE_ENABLED',
+  scriptrunner_saveBehaviour: 'JIRA_SCRIPTRUNNER_BEHAVIOURS_EDIT_ENABLED',
+  scriptrunner_setBehaviourEnabled: 'JIRA_SCRIPTRUNNER_BEHAVIOURS_EDIT_ENABLED',
+  scriptrunner_mapBehaviour: 'JIRA_SCRIPTRUNNER_BEHAVIOURS_EDIT_ENABLED',
+  scriptrunner_unmapBehaviour: 'JIRA_SCRIPTRUNNER_BEHAVIOURS_EDIT_ENABLED',
 } as const;
 
 function registerConsoleTool(tools: PolicyRegistrar, context: JiraToolContext): void {
@@ -45,4 +50,5 @@ export function registerScriptRunnerOptInTools(tools: PolicyRegistrar, context: 
   if (isTruthy(env[SCRIPTRUNNER_OPT_IN_SETTINGS.scriptrunner_runConsoleScript])) registerConsoleTool(tools, context);
   if (isTruthy(env[SCRIPTRUNNER_OPT_IN_SETTINGS.scriptrunner_runBuiltInScript])) registerBuiltInRunTool(tools, context);
   if (isTruthy(env[SCRIPTRUNNER_OPT_IN_SETTINGS.scriptrunner_saveScriptFile])) registerFileSaveTool(tools, context);
+  if (isTruthy(env[SCRIPTRUNNER_OPT_IN_SETTINGS.scriptrunner_saveBehaviour])) registerBehaviourEditTools(tools, context);
 }

@@ -167,14 +167,14 @@ from an execution deletes its results.
 | `scriptrunner_script_editor`: the script roots and their files | `scriptrunner_listScriptFiles`, `scriptrunner_getScriptFile`, `scriptrunner_saveScriptFile` (destructive, opt-in) |
 | `scriptrunner_builtin_scripts`: built-in scripts and the parameters they ask for | `scriptrunner_listBuiltInScripts`, `scriptrunner_getBuiltInScriptParams`, `scriptrunner_runBuiltInScript` (destructive, opt-in) |
 | `scriptrunner_features`: listeners, scripted fields, scheduled jobs, REST endpoints, fragments, workflow functions, and the JQL functions ScriptRunner adds | `scriptrunner_getListeners`, `scriptrunner_getScriptedFields`, `scriptrunner_getScheduledJobs`, `scriptrunner_getRestEndpoints`, `scriptrunner_getFragments`, `scriptrunner_getWorkflowFunctions`, `scriptrunner_getJqlFunctions` |
-| `scriptrunner_behaviours`: behaviours and where they apply | `scriptrunner_getBehaviours` |
+| `scriptrunner_behaviours`: behaviours and where they apply | `scriptrunner_getBehaviours`, `scriptrunner_saveBehaviour`, `scriptrunner_setBehaviourEnabled`, `scriptrunner_mapBehaviour`, `scriptrunner_unmapBehaviour` (all four destructive, opt-in) |
 | `scriptrunner_console`: run Groovy on the Jira server | `scriptrunner_runConsoleScript` (destructive, opt-in) |
 
 ScriptRunner decides who may use these: mostly Jira administrators, or the users its own permission settings allow.
 Anyone else gets a 403 that says so. Only the JQL function docs are open to every user.
 
-Running Groovy, running a built-in script and saving a script file can change anything on your Jira, and nothing
-undoes them. Each of those tools is off until its own setting in [Turning on risky tools](#settings) is `true`,
+Running Groovy, running a built-in script, saving a script file and changing behaviours can change anything on your
+Jira, or everyone's screens, and nothing undoes them. Each of those tools is off until its own setting in [Turning on risky tools](#settings) is `true`,
 appears only when `TOOLSETS` names its toolset, and is shown only to Jira administrators. The tool search and
 `jira_runCode` never offer them, and your client can ask you before each run.
 
@@ -217,6 +217,7 @@ keychain.
 | `JIRA_SCRIPTRUNNER_CONSOLE_ENABLED` | `true` turns on `scriptrunner_runConsoleScript`, which runs Groovy on the Jira server. Also name `scriptrunner_console` in `TOOLSETS`. |
 | `JIRA_SCRIPTRUNNER_BUILTIN_RUN_ENABLED` | `true` turns on `scriptrunner_runBuiltInScript`. Also name `scriptrunner_builtin_scripts` in `TOOLSETS`. |
 | `JIRA_SCRIPTRUNNER_FILE_SAVE_ENABLED` | `true` turns on `scriptrunner_saveScriptFile`, which creates or replaces script files. Also name `scriptrunner_script_editor` in `TOOLSETS`. |
+| `JIRA_SCRIPTRUNNER_BEHAVIOURS_EDIT_ENABLED` | `true` turns on the four tools that create, replace, switch on or off, and map behaviours. Also name `scriptrunner_behaviours` in `TOOLSETS`. |
 | `JIRA_ATTACHMENTS_UPLOAD_ENABLED`, `JIRA_ATTACHMENTS_DOWNLOAD_ENABLED` | `true` lets attachments be uploaded from, or saved to, your disk. Default off: downloads come back inline and never touch the disk. |
 | `JIRA_ATTACHMENTS_UPLOAD_ROOTS`, `JIRA_ATTACHMENTS_DOWNLOAD_ROOTS` | Folders allowed for each direction, separated like your OS `PATH`. |
 | `JIRA_ATTACHMENTS_DIR` | One folder used for both directions. |

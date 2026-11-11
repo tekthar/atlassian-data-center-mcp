@@ -4,8 +4,8 @@ import type { ToolCatalog } from '@atlassian-dc-mcp/common';
  * ScriptRunner toolsets are off by default and offered through the tool search. ScriptRunner itself
  * decides who may use its routes: mostly Jira administrators, or the users its own permission
  * settings allow, and it answers anyone else with a 403. The read tools are left ungated, like every
- * read tool. Running a script or saving a script file can change anything on the instance, so those
- * tools are destructive: registered only when their own setting turns them on, listed only when
+ * read tool. Running a script, saving a script file or changing a behaviour can change anything on
+ * the instance or everyone's screens, so those tools are destructive: registered only when their own setting turns them on, listed only when
  * TOOLSETS names their toolset, never offered by the tool search or jira_runCode, and hidden from
  * anyone who isn't a Jira administrator.
  */
@@ -35,5 +35,9 @@ export const SCRIPTRUNNER_CATALOG: ToolCatalog = {
     scriptrunner_runConsoleScript: { toolset: 'scriptrunner_console', access: 'destructive', anyOfPermissions: ADMINISTRATORS },
     scriptrunner_runBuiltInScript: { toolset: 'scriptrunner_builtin_scripts', access: 'destructive', anyOfPermissions: ADMINISTRATORS },
     scriptrunner_saveScriptFile: { toolset: 'scriptrunner_script_editor', access: 'destructive', anyOfPermissions: ADMINISTRATORS },
+    scriptrunner_saveBehaviour: { toolset: 'scriptrunner_behaviours', access: 'destructive', anyOfPermissions: ADMINISTRATORS },
+    scriptrunner_setBehaviourEnabled: { toolset: 'scriptrunner_behaviours', access: 'destructive', anyOfPermissions: ADMINISTRATORS },
+    scriptrunner_mapBehaviour: { toolset: 'scriptrunner_behaviours', access: 'destructive', anyOfPermissions: ADMINISTRATORS },
+    scriptrunner_unmapBehaviour: { toolset: 'scriptrunner_behaviours', access: 'destructive', anyOfPermissions: ADMINISTRATORS },
   },
 };
