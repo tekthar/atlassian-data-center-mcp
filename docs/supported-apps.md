@@ -62,15 +62,21 @@ in the next release.
 |---|---|
 | Built from | ScriptRunner for Jira **9.46.0** for Data Center (Marketplace build 1011110, released 2026-10-20) |
 | Jira | 10.0 to 10.7, as this build's Marketplace listing gives. Its REST resources use `javax.ws.rs` |
-| REST APIs used | `/rest/scriptrunner/latest` for the script editor, built-in scripts and the script console; `/rest/scriptrunner-jira/latest` for listeners and JQL functions; `/rest/scriptrunner/behaviours/latest` for behaviours |
-| Tools | 7 that read, in the toolsets `scriptrunner_script_editor`, `scriptrunner_builtin_scripts`, `scriptrunner_features` and `scriptrunner_behaviours`; 3 opt-in tools that run or save code, in `scriptrunner_console`, `scriptrunner_builtin_scripts` and `scriptrunner_script_editor` |
+| REST APIs used | `/rest/scriptrunner/latest` for the script editor, built-in scripts, the script console, scheduled jobs, REST endpoints and fragments; `/rest/scriptrunner-jira/latest` for listeners, scripted fields, workflow functions and JQL functions; `/rest/scriptrunner/behaviours/latest` for behaviours |
+| Tools | 12 that read, in the toolsets `scriptrunner_script_editor`, `scriptrunner_builtin_scripts`, `scriptrunner_features` and `scriptrunner_behaviours`; 3 opt-in tools that run or save code, in `scriptrunner_console`, `scriptrunner_builtin_scripts` and `scriptrunner_script_editor` |
 | Detection | `GET /rest/scriptrunner-jira/latest/jqlfunctions/docs` at startup, which any signed-in user may read, unless `JIRA_APPS` names the apps to offer |
 | Status | Beta: not yet run against a live ScriptRunner instance |
 
 **How the tools were built.** ScriptRunner publishes no OpenAPI description of these routes, so every path, query
 parameter and body comes from the 9.46.0 app itself. Its `atlassian-plugin.xml` gave the REST modules, and `javap` on
 their resource classes gave 69 routes under `/scriptrunner`, 43 under `/scriptrunner-jira` and 26 under
-`/scriptrunner/behaviours`. `javap -c` on the endpoints gave the response shapes the tools rely on:
+`/scriptrunner/behaviours`.
+
+Scripted fields, scheduled jobs, REST endpoints and fragments declare only their base path. Their routes come from
+ScriptRunner's shared base endpoints, which answer `GET <path>` with every configured item and `GET <path>/{id}` with
+one. `javap` on those base classes gave the inherited routes.
+
+`javap -c` on the endpoints gave the response shapes the tools rely on:
 
 - the script editor sends a file's content as base64, which `scriptrunner_getScriptFile` decodes;
 - it lists each script root's files as a map from path to file details;
@@ -116,12 +122,18 @@ console script returns its exception, the first 15 lines of the stack trace and 
 - The bundled server was driven against a test HTTP server answering ScriptRunner's routes. Detection found
   ScriptRunner and quietly left out Xray, which answered 404. The tool search found all seven tools, and
   `jira_runReadTool` ran one of them. A `jira_runCode` script listed the script files and read one.
+- With the feature tools added, the tool search ranked the right tool first for "scheduled jobs", "scripted field",
+  "rest endpoint", "workflow post function" and "web panel fragment". A `jira_runCode` script read the scheduled jobs.
 
 **Other 9.x versions** are expected to work, but only 9.46.0 was read, so an earlier version may lack a route.
 
-**Not covered yet:** scripted fields, scheduled jobs, REST endpoints, fragments and workflow functions, and changing
-behaviours. The [roadmap](#roadmap) has the order. Previewing or validating a built-in script before running it is
-left out too: those routes exist, but this build doesn't show that they never change anything.
+**Not covered yet:** changing behaviours, which is next on the [roadmap](#roadmap). Three more are left out on
+purpose:
+
+- **Previewing or validating a built-in script before running it.** Those routes exist, but this build doesn't show
+  that they never change anything.
+- **ScriptRunner's resources.** These are database and other connections, and their settings can hold passwords.
+- **Script search.** It lists the same files as the script editor.
 
 ## Jira Service Management
 
@@ -148,7 +160,7 @@ Apps are added in this order, each step in its own release-ready change.
    - [x] Opt-in, off by default: run Groovy in the script console, run a built-in script, create and save script
      editor files. Each is destructive, has its own setting, and is never offered by the tool search or
      `jira_runCode`
-   - [ ] More to read: scripted fields, scheduled jobs, REST endpoints, fragments, workflow functions
+   - [x] More to read: scripted fields, scheduled jobs, REST endpoints, fragments, workflow functions
    - [ ] Changing behaviours
 2. **draw.io for Confluence** (`com.mxgraph.confluence.plugins.diagramly`). The Confluence server needs app support
    first, like the Jira server's.

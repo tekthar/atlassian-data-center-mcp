@@ -77,8 +77,26 @@ export const getListeners = () => get('scriptrunner-jira', '/listeners', 'The Sc
 /** The documentation of ScriptRunner's JQL functions; this route leaves out each function's script file. */
 export const getJqlFunctions = () => get('scriptrunner-jira', '/jqlfunctions/docs', 'The ScriptRunner JQL functions');
 
-export function getBehaviours(id: string | undefined) {
+/** Every configured item of a ScriptRunner feature, or one by id: each route answers `GET <url>` and `GET <url>/{id}`. */
+function getConfigured(api: ScriptRunnerApi, url: string, feature: string, item: string, id: string | undefined) {
   return id === undefined
-    ? get('scriptrunner/behaviours', '/admin/behaviour', 'The behaviours')
-    : get('scriptrunner/behaviours', '/admin/behaviour/{id}', `Behaviour ${id}`, undefined, { id });
+    ? get(api, url, `The ScriptRunner ${feature}`)
+    : get(api, `${url}/{id}`, `${item} ${id}`, undefined, { id });
+}
+
+export const getBehaviours = (id?: string) => getConfigured('scriptrunner/behaviours', '/admin/behaviour', 'behaviours', 'Behaviour', id);
+
+export const getScriptedFields = (id?: string) => getConfigured('scriptrunner-jira', '/scriptfields', 'scripted fields', 'Scripted field', id);
+
+export const getScheduledJobs = (id?: string) => getConfigured('scriptrunner', '/scheduled-jobs', 'scheduled jobs', 'Scheduled job', id);
+
+export const getRestEndpoints = (id?: string) => getConfigured('scriptrunner', '/custom/customadmin', 'REST endpoints', 'REST endpoint', id);
+
+export const getFragments = (id?: string) => getConfigured('scriptrunner', '/fragments', 'fragments', 'Fragment', id);
+
+/** The script workflow functions (conditions, validators, post functions) of every workflow, or of one. */
+export function getWorkflowFunctions(workflowName: string | undefined) {
+  return workflowName === undefined
+    ? get('scriptrunner-jira', '/workflowFunctions', 'The ScriptRunner workflow functions')
+    : get('scriptrunner-jira', '/workflowFunctions/{workflowName}', `Workflow ${workflowName}`, undefined, { workflowName });
 }
