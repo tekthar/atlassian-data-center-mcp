@@ -258,3 +258,75 @@ describe('ScriptRunner tools that run or save code', () => {
     expect(created).toEqual({ success: true, data: { rootPath: '/r', filePath: 'a/B.groovy', saved: true, bytes: Buffer.byteLength(content) } });
   });
 });
+
+describe('ScriptRunner tools that change behaviours', () => {
+  beforeEach(() => jest.resetAllMocks());
+
+  const BEHAVIOURS_ON = { JIRA_SCRIPTRUNNER_BEHAVIOURS_EDIT_ENABLED: 'true' };
+  const ADMIN = '/scriptrunner/behaviours/latest/admin';
+
+  it('registers all four with their one setting, and none without it', () => {
+    expect(setupOptIns(BEHAVIOURS_ON).registrar.registeredTools().sort()).toEqual(
+      ['scriptrunner_mapBehaviour', 'scriptrunner_saveBehaviour', 'scriptrunner_setBehaviourEnabled', 'scriptrunner_unmapBehaviour'],
+    );
+    expect(setupOptIns({ JIRA_SCRIPTRUNNER_CONSOLE_ENABLED: 'true' }).registrar.registeredTools()).not.toContain('scriptrunner_saveBehaviour');
+  });
+
+  it('saves a new behaviour by posting it whole', async () => {
+    routeRequests({ [`${ADMIN}/behaviour`]: { id: 'b7' } });
+    const behaviour = { name: 'Hide due date', fields: [{ id: 'duedate', hidden: true }], extra: 'kept' };
+
+    const result = await setupOptIns(BEHAVIOURS_ON).callJson('scriptrunner_saveBehaviour', { behaviour });
+
+    expect(sent()).toMatchObject({ method: 'POST', body: behaviour });
+    expect(result).toEqual({ success: true, data: { id: 'b7' } });
+  });
+
+  it('refuses to replace a behaviour without its fields, which would drop its field rules', async () => {
+    const result = await setupOptIns(BEHAVIOURS_ON).callJson('scriptrunner_saveBehaviour', { behaviour: { id: 'b7', name: 'Renamed' } });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('send its fields too');
+    expect(mockedRequest).not.toHaveBeenCalled();
+  });
+
+  it('switches a behaviour on and off', async () => {
+    routeRequests({ [`${ADMIN}/behaviour/{id}/enable`]: undefined, [`${ADMIN}/behaviour/{id}/disable`]: undefined });
+    const tools = setupOptIns(BEHAVIOURS_ON);
+
+    await tools.callJson('scriptrunner_setBehaviourEnabled', { id: 'b7', enabled: true });
+    await tools.callJson('scriptrunner_setBehaviourEnabled', { id: 'b7', enabled: false });
+
+    expect([sent(0).url, sent(1).url]).toEqual([`${ADMIN}/behaviour/{id}/enable`, `${ADMIN}/behaviour/{id}/disable`]);
+    expect(sent(1)).toMatchObject({ method: 'POST', path: { id: 'b7' } });
+  });
+
+  it('maps a behaviour to projects and issue types, a PROJECT mapping unless told otherwise', async () => {
+    routeRequests({ [`${ADMIN}/mapping`]: {} });
+
+    await setupOptIns(BEHAVIOURS_ON).callJson('scriptrunner_mapBehaviour', { behaviourId: 'b7', projectIds: [10000], issueTypeIds: [3] });
+
+    expect(sent()).toMatchObject({ method: 'POST', body: { behaviourId: 'b7', type: 'PROJECT', projectIds: [10000], issueTypeIds: [3] } });
+  });
+
+  it('refuses a mapping that names nothing to map to', async () => {
+    const tools = setupOptIns(BEHAVIOURS_ON);
+
+    expect((await tools.callJson('scriptrunner_mapBehaviour', { behaviourId: 'b7' })).error).toBe('A PROJECT mapping needs projectIds.');
+    expect((await tools.callJson('scriptrunner_mapBehaviour', { behaviourId: 'b7', type: 'SERVICEDESK', serviceDesk: 2 })).error)
+      .toBe('A SERVICEDESK mapping needs serviceDesk and requestTypes.');
+    expect(mockedRequest).not.toHaveBeenCalled();
+  });
+
+  it('removes exactly one mapping, named by both of its ids', async () => {
+    routeRequests({ [`${ADMIN}/mapping`]: undefined });
+    const tools = setupOptIns(BEHAVIOURS_ON);
+
+    expect((await tools.callJson('scriptrunner_unmapBehaviour', { behaviourId: 'b7', projectId: 10000 })).error)
+      .toBe('Give projectId and issueTypeId of the mapping to remove.');
+    await tools.callJson('scriptrunner_unmapBehaviour', { behaviourId: 'b7', projectId: 10000, issueTypeId: 3 });
+
+    expect(mockedRequest).toHaveBeenCalledTimes(1);
+    expect(sent()).toMatchObject({ method: 'DELETE', query: { type: 'PROJECT', id: 'b7', pid: 10000, issueTypeId: 3 } });
+  });
+});
