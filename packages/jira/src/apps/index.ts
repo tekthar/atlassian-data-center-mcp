@@ -9,6 +9,9 @@ import {
   type ToolPolicy,
 } from '@atlassian-dc-mcp/common';
 import type { JiraToolContext } from '../tools/context.js';
+import { DRAWIO_CATALOG } from './drawio/catalog.js';
+import { startDrawioRequest } from './drawio/client.js';
+import { registerDrawioReadTools } from './drawio/read-tools.js';
 import { SCRIPTRUNNER_CATALOG } from './scriptrunner/catalog.js';
 import { startScriptRunnerRequest } from './scriptrunner/client.js';
 import { registerScriptRunnerReadTools } from './scriptrunner/read-tools.js';
@@ -45,6 +48,14 @@ export const JIRA_APPS: JiraApp[] = [
       registerScriptRunnerReadTools(tools, context);
       registerScriptRunnerOptInTools(tools, context);
     },
+  },
+  {
+    id: 'drawio',
+    name: 'draw.io',
+    catalog: DRAWIO_CATALOG,
+    // Every signed-in user has a list of shape libraries, often empty.
+    probe: (timeoutMs) => withTimeout(startDrawioRequest({ method: 'GET', url: '/library/list' }), timeoutMs),
+    register: registerDrawioReadTools,
   },
 ];
 

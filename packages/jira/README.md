@@ -4,7 +4,7 @@
 
 The server runs on your machine. Your MCP client starts it and talks to it over stdio; it calls Jira's REST API with
 your personal access token, lists the everyday issue tools, and keeps 43 more one search away, plus the tools of
-supported Jira apps such as Xray and ScriptRunner when they're installed. Jira's own permissions
+supported Jira apps such as Xray, ScriptRunner and draw.io when they're installed. Jira's own permissions
 decide what you can do: the server can hide tools, never unlock them.
 
 ```bash
@@ -140,6 +140,7 @@ Service Management's tools are the `jira_service_desk` toolset in [Toolsets](#to
 |---|---|---|
 | Xray, test management | 8 | Beta |
 | ScriptRunner, scripting and automation | 9 | Beta |
+| draw.io, diagrams | 11 | Beta, read-only |
 | Jira Service Management | not recorded | Beta |
 
 Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists the
@@ -178,6 +179,15 @@ Jira, or everyone's screens, and nothing undoes them. Each of those tools is off
 appears only when `TOOLSETS` names its toolset, and is shown only to Jira administrators. The tool search and
 `jira_runCode` never offer them, and your client can ask you before each run.
 
+**draw.io** tools, in the `drawio_diagrams` toolset:
+
+| Tool | What it's for |
+|---|---|
+| `drawio_listIssueDiagrams` | Lists the draw.io diagrams attached to an issue. |
+| `drawio_getDiagram` | Reads one. By default it returns each of its pages as the shapes it holds and the connections between them, by label; `format: "xml"` returns draw.io's XML instead. |
+
+Creating and editing diagrams isn't offered yet: draw.io saves need a preview image that this server can't render.
+
 ## Settings
 
 Every setting is an environment variable. Each comes from the first of these that has it: the environment, the dotenv
@@ -207,7 +217,7 @@ keychain.
 | `CODE_EXECUTION` | `off` removes `jira_runCode`. |
 | `PERMISSION_FILTER` | `off` lists tools without asking Jira for your permissions first. |
 | `JIRA_PERMISSION_PROJECTS` | Project keys, e.g. `ACS,BPO`. Without it, a permission you hold in any project counts; with it, only these projects count. |
-| `JIRA_APPS` | Which [Jira apps](#jira-apps) to offer. Unset or `auto` checks which are installed; a list such as `xray,scriptrunner` offers those without checking; `off` offers none. |
+| `JIRA_APPS` | Which [Jira apps](#jira-apps) to offer. Unset or `auto` checks which are installed; a list such as `xray,scriptrunner,drawio` offers those without checking; `off` offers none. |
 
 **Turning on risky tools**
 

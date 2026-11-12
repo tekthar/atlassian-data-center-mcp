@@ -7,6 +7,11 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Features
 
+* **jira:** draw.io for Jira, with two read tools reached through `jira_searchTools`:
+  * `drawio_listIssueDiagrams` lists an issue's diagrams;
+  * `drawio_getDiagram` reads one as its shapes and connections, by label, or as XML.
+
+  The draw.io file decoding and the summary are now in the common package and shared with the Confluence server. Built from draw.io for Jira 11.2.1. Creating and editing diagrams isn't offered for either product yet, because draw.io saves need a preview image this server can't render. See [Supported apps](docs/supported-apps.md#drawio-for-jira).
 * **confluence:** app support, as the Jira server has. Apps are found at startup, and `CONFLUENCE_APPS` names the ones to offer without checking. The first app is draw.io, with three read tools reached through `confluence_searchTools`:
   * `drawio_searchDiagrams` finds diagrams by name, space or who changed them last;
   * `drawio_listPageDiagrams` lists the diagrams a page shows, including embedded ones;

@@ -8,7 +8,8 @@ Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and th
 | [Xray](#xray), test management | Jira | 8 | Beta |
 | [ScriptRunner](#scriptrunner), scripting and automation | Jira | 9 | Beta |
 | [Jira Service Management](#jira-service-management) | Jira | not recorded | Beta |
-| [draw.io](#drawio-for-confluence), diagrams | Confluence | 16 | Beta, read-only so far |
+| [draw.io](#drawio-for-confluence), diagrams | Confluence | 16 | Beta, read-only |
+| [draw.io](#drawio-for-jira), diagrams | Jira | 11 | Beta, read-only |
 
 - **Tested** means the tools were run against a live instance of that app version.
 - **Beta** means the tools were built and checked as described below, but not yet run against a live instance. Please
@@ -202,8 +203,54 @@ Labels attached to a connection are read too. A page lists at most 300 shapes an
   draw.io, and no draw.io tool was listed directly. The tool search found all three. A `confluence_runCode` script
   listed a page's diagrams and read a compressed one: "API" connected to "Database" by "SQL".
 
-**Not covered yet:** creating and editing diagrams, which is next on the [roadmap](#roadmap). Revision history is
-left out too: its route needs the diagram attachment's id and version, which the other routes don't return together.
+**Creating and editing diagrams isn't offered.** draw.io's save routes require a PNG preview of the diagram along with
+its XML. The preview is the image Confluence shows in PDF and Word exports, emails and some views, and the editor
+renders it in the browser. Without one, the save fails: the preview writer throws "Not supported". This server can't
+render a diagram to an image, so the [roadmap](#roadmap) lists the options.
+
+Revision history is left out too: its route needs the diagram attachment's id and version, which the other routes don't
+return together.
+
+**The draw.io file format** is shared with [draw.io for Jira](#drawio-for-jira): the decoding and the summary are in
+the common package (`drawio-file.ts`).
+
+## draw.io for Jira
+
+Diagrams by Seibert (draw.io), Marketplace key `com.mxgraph.jira.plugins.drawio`. Added after 0.47.1, in the next
+release.
+
+| | |
+|---|---|
+| Built from | draw.io for Jira **11.2.1** for Data Center (Marketplace build 1100200100) |
+| REST API used | `/rest/drawio/1.0` |
+| Tools | 2, both read-only, in the toolset `drawio_diagrams` |
+| Detection | `GET /rest/drawio/1.0/library/list` at startup: every signed-in user has a list of shape libraries, often empty. `JIRA_APPS` can name the apps to offer instead |
+| Status | Beta: not yet run against a live draw.io instance |
+
+**How the tools were built.** Diagrams are attachments on issues. `javap` on the app's Jakarta REST resources gave its
+routes:
+
+- `GET /diagram/list/{issueKey}` lists an issue's diagrams, as the same diagram objects draw.io for Confluence uses,
+  plus a `displayName`;
+- `GET /diagram/crud/{diagramName}/{issueKey}` reads one, with its file as `xml`.
+
+Both check that the user may browse the issue.
+
+**Reading a diagram** works as in [draw.io for Confluence](#drawio-for-confluence). `drawio_getDiagram` returns each
+page as shapes and connections by label, or as XML with `format: "xml"`. Compressed pages are inflated.
+
+**How they were checked.** Unit tests check both tools' requests, the summary of a compressed diagram, the 404 message
+and the issue key check. Detection is tested with all three Jira apps installed, with only some of them, and with
+`JIRA_APPS`. The catalog test checks that the tools are reached through the tool search unless `TOOLSETS` names
+`drawio_diagrams`.
+
+The bundled Jira server was driven against a test HTTP server answering draw.io's routes. Detection found draw.io, and
+neither tool was listed directly. The tool search found both, and a `jira_runCode` script listed an issue's diagrams
+and read a compressed one: "Client" connected to "Gateway" by "HTTPS".
+
+**Not covered yet:** creating and editing diagrams. As in Confluence, a save needs a PNG preview ("A save reached the
+image writer with no preview"); see the [roadmap](#roadmap). Revision history needs the attachment's id and version
+too.
 
 ## Jira Service Management
 
@@ -236,8 +283,13 @@ Apps are added in this order, each step in its own release-ready change.
    - [x] App support in the Confluence server: detection, `CONFLUENCE_APPS`, and app toolsets reached through the tool
      search
    - [x] Read: find diagrams, list a page's diagrams, and read one as shapes and connections or as XML
-   - [ ] Write: create a diagram on a page and update one
+   - [ ] Write: **blocked, needs a decision.** draw.io's save routes require a PNG preview, which this server can't
+     render (see [draw.io for Confluence](#drawio-for-confluence)). The options are to send a placeholder preview that
+     the editor replaces on its next save, but which shows in exports until then, or to render previews in the
+     server, which means a heavy dependency. Until then, diagrams are read-only.
 3. **draw.io for Jira** (`com.mxgraph.jira.plugins.drawio`)
+   - [x] Read: list an issue's diagrams, and read one as shapes and connections or as XML
+   - [ ] Write: blocked in the same way
 4. **Zephyr** by SmartBear, formerly Zephyr Scale (`com.kanoah.test-manager`)
 5. **BigPicture** by Appfire (`eu.softwareplant.bigpicture`)
 6. Then a review of the apps above for bugs and gaps, followed by the most popular Data Center apps for Jira,

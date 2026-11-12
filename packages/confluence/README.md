@@ -128,7 +128,7 @@ used.
 
 | App | Versions | Status |
 |---|---|---|
-| draw.io, diagrams | 16 | Beta, read-only so far |
+| draw.io, diagrams | 16 | Beta, read-only |
 
 **draw.io** tools, in the `drawio_diagrams` toolset:
 
@@ -138,7 +138,8 @@ used.
 | `drawio_listPageDiagrams` | Lists the diagrams a page shows, including ones embedded from other pages. |
 | `drawio_getDiagram` | Reads a diagram. By default it returns each of its pages as the shapes it holds and the connections between them, by label; `format: "xml"` returns draw.io's XML instead. |
 
-The Jira server, `mcp-jira-dc`, has tools for Xray, ScriptRunner and Jira Service Management.
+Creating and editing diagrams isn't offered yet: draw.io saves need a preview image that this server can't render.
+The Jira server, `mcp-jira-dc`, has tools for Xray, ScriptRunner, Jira Service Management and draw.io.
 [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists every
 app with the versions its tools were built from.
 
