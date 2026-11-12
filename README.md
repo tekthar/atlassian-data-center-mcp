@@ -82,7 +82,8 @@ The servers also have tools for these Marketplace apps:
 | Xray, test management | Jira | 8 | Beta |
 | ScriptRunner, scripting and automation | Jira | 9 | Beta |
 | Jira Service Management | Jira | not recorded | Beta |
-| draw.io, diagrams | Confluence | 16 | Beta, read-only so far |
+| draw.io, diagrams | Confluence | 16 | Beta, read-only |
+| draw.io, diagrams | Jira | 11 | Beta, read-only |
 
 Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](docs/supported-apps.md) lists the
 exact versions each app's tools were built from and how they were checked.

@@ -7,12 +7,17 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Features
 
+* **jira:** draw.io for Jira, with two read tools reached through `jira_searchTools`:
+  * `drawio_listIssueDiagrams` lists an issue's diagrams;
+  * `drawio_getDiagram` reads one as its shapes and connections, by label, or as XML.
+
+  The draw.io file decoding and the summary are now in the common package and shared with the Confluence server. Built from draw.io for Jira 11.2.1. Creating and editing diagrams isn't offered for either product yet, because draw.io saves need a preview image this server can't render. See [Supported apps](docs/supported-apps.md#drawio-for-jira).
 * **confluence:** app support, as the Jira server has. Apps are found at startup, and `CONFLUENCE_APPS` names the ones to offer without checking. The first app is draw.io, with three read tools reached through `confluence_searchTools`:
   * `drawio_searchDiagrams` finds diagrams by name, space or who changed them last;
   * `drawio_listPageDiagrams` lists the diagrams a page shows, including embedded ones;
   * `drawio_getDiagram` reads a diagram as its shapes and connections, by label, or as draw.io XML.
 
-  It reads compressed diagrams too. Built from draw.io 16.1.12. See [Supported apps](docs/supported-apps.md#drawio-for-confluence).
+  It reads compressed diagrams too. Files and page bodies are read in one pass, so a crafted diagram can't stall the server. Built from draw.io 16.1.12. See [Supported apps](docs/supported-apps.md#drawio-for-confluence).
 * **jira:** ScriptRunner for Jira support. Twelve read tools, reached through `jira_searchTools` when ScriptRunner is installed:
   * the script editor's roots and files;
   * built-in scripts, and the parameters each asks for;

@@ -2,7 +2,6 @@ import { deflateRawSync } from 'node:zlib';
 import { createRecordingRegistrar } from '@atlassian-dc-mcp/common';
 import { request } from '../../confluence-client/core/request.js';
 import { DRAWIO_CATALOG } from '../../apps/drawio/catalog.js';
-import { plainLabel, readPages, summarizePage } from '../../apps/drawio/diagram-xml.js';
 import { findPageDiagrams } from '../../apps/drawio/page-macros.js';
 import { registerDrawioReadTools } from '../../apps/drawio/read-tools.js';
 
@@ -48,42 +47,7 @@ const MODEL = `<mxGraphModel><root>
 
 const compress = (xml: string) => deflateRawSync(Buffer.from(encodeURIComponent(xml))).toString('base64');
 
-describe('draw.io diagram files', () => {
-  it('reads each page, inflating compressed ones', () => {
-    const file = `<mxfile><diagram id="p1" name="Flow">${MODEL}</diagram><diagram id="p2" name="Old &amp; packed">${compress(MODEL)}</diagram></mxfile>`;
-
-    const pages = readPages(file);
-
-    expect(pages.map((page) => page.name)).toEqual(['Flow', 'Old & packed']);
-    expect(pages[1].xml).toBe(MODEL);
-  });
-
-  it('treats a bare model as one page', () => {
-    expect(readPages(MODEL)).toEqual([{ name: 'Page-1', xml: MODEL }]);
-  });
-
-  it('summarizes a page as labelled shapes and the connections between them', () => {
-    expect(summarizePage({ name: 'Flow', xml: MODEL })).toEqual({
-      name: 'Flow',
-      shapes: [
-        { id: 'b', label: 'Pay', shape: 'ellipse', in: 'Checkout' },
-        { id: 'lane', label: 'Checkout', shape: 'swimlane' },
-        { id: 'a', label: 'Cart page', in: 'Checkout' },
-      ],
-      connections: [
-        { from: 'Cart page', to: 'Pay', label: 'submit' },
-        { from: 'Pay', to: '(unconnected)', label: 'retry' },
-      ],
-    });
-  });
-
-  it('reads a label as the text it shows: tags dropped, line breaks as spaces, escaped characters as written', () => {
-    expect(plainLabel('&lt;div&gt;Order&lt;br&gt;service&lt;/div&gt;&lt;div&gt;v2&lt;/div&gt;')).toBe('Order service v2');
-    expect(plainLabel('&lt;b&gt;Ca&lt;/b&gt;rt')).toBe('Cart');
-    expect(plainLabel('a &amp;lt;script&amp;gt; tag')).toBe('a <script> tag');
-    expect(plainLabel(undefined)).toBe('');
-  });
-
+describe('draw.io page macros', () => {
   it('finds the diagrams a page shows, including one embedded from another page', () => {
     const storage = '<p>Intro</p>'
       + '<ac:structured-macro ac:name="drawio" ac:schema-version="1"><ac:parameter ac:name="diagramName">Flow</ac:parameter><ac:parameter ac:name="revision">3</ac:parameter></ac:structured-macro>'
@@ -94,6 +58,23 @@ describe('draw.io diagram files', () => {
       { macro: 'drawio', diagramName: 'Flow', pageId: '100', revision: 3 },
       { macro: 'inc-drawio', diagramName: 'Arch', pageId: '555' },
     ]);
+  });
+
+  it('reads parameters inside CDATA, and diagrams inside other macros', () => {
+    const storage = '<ac:structured-macro ac:name="expand"><ac:rich-text-body>'
+      + '<ac:structured-macro ac:name="drawio"><ac:parameter ac:name="diagramName"><![CDATA[Nested <one>]]></ac:parameter></ac:structured-macro>'
+      + '</ac:rich-text-body></ac:structured-macro>';
+
+    expect(findPageDiagrams(storage, '100')).toEqual([{ macro: 'drawio', diagramName: 'Nested <one>', pageId: '100' }]);
+  });
+
+  it('reads a crafted page body in linear time', () => {
+    const crafted = '<ac:structured-macro ac:name="drawio">'.repeat(20_000) + '<ac:parameter ac:name="diagramName">'.repeat(20_000);
+    const started = Date.now();
+
+    findPageDiagrams(crafted, '100');
+
+    expect(Date.now() - started).toBeLessThan(2000);
   });
 });
 
