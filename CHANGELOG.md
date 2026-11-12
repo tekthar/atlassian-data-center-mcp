@@ -7,6 +7,12 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Features
 
+* **confluence:** app support, as the Jira server has. Apps are found at startup, and `CONFLUENCE_APPS` names the ones to offer without checking. The first app is draw.io, with three read tools reached through `confluence_searchTools`:
+  * `drawio_searchDiagrams` finds diagrams by name, space or who changed them last;
+  * `drawio_listPageDiagrams` lists the diagrams a page shows, including embedded ones;
+  * `drawio_getDiagram` reads a diagram as its shapes and connections, by label, or as draw.io XML.
+
+  It reads compressed diagrams too. Built from draw.io 16.1.12. See [Supported apps](docs/supported-apps.md#drawio-for-confluence).
 * **jira:** ScriptRunner for Jira support. Twelve read tools, reached through `jira_searchTools` when ScriptRunner is installed:
   * the script editor's roots and files;
   * built-in scripts, and the parameters each asks for;

@@ -205,10 +205,12 @@ At startup the Jira server asks Jira for the token owner's permissions (`GET /re
 - **If Jira doesn't answer within 5 seconds, or the call fails:** the server hides only the admin tools and lists the rest.
 - **Confluence:** not filtered. No Confluence tool needs an admin permission yet, and Confluence has no single call that reports a user's permissions.
 
-## Adding a Jira app
+## Adding an app
 
-Jira apps (Marketplace plugins) live in `packages/jira/src/apps/`, one folder per app. Xray (`apps/xray/`) is the
-example to copy:
+Apps (Marketplace plugins) live in each server's `src/apps/` folder, one folder per app. Detection and the apps setting
+(`JIRA_APPS`, `CONFLUENCE_APPS`) come from `detectApps` in the common package. For Jira, Xray (`apps/xray/`) is the
+example to copy. For Confluence it's draw.io (`apps/drawio/`), whose base path starts at `/rest`, because the Confluence
+client's base is the context root:
 
 - **`catalog.ts`**: the app's toolsets and tools. Toolsets are `default: false`, so the tools are reached through the
   tool search. Writes name the Jira permission they need in `anyOfPermissions`, unless the app decides who may make
@@ -216,7 +218,8 @@ example to copy:
 - **`client.ts`**: calls the app's REST API with `callApp` from `apps/request.ts`, which sends JSON relative to `/rest`
   and replaces a 404 (and a 401 or 403, if you give a message) with one that says what to check.
 - **`operations.ts`**, **`read-tools.ts`**, **`write-tools.ts`**: one function per call, and the tool registrations.
-  `respond` in `apps/respond.ts` turns a call's result or error into the tool's response.
+  `respond` and `invalidInput` from the common package turn a call's result or error, or refused input, into the
+  tool's response.
 - **An entry in `JIRA_APPS`** in `apps/index.ts`: the id used in the `JIRA_APPS` setting, the catalog, a `probe`
   (one cheap request that fails with 404 when the app isn't installed) and `register`.
 

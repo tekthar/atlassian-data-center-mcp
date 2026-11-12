@@ -1,8 +1,7 @@
 import { z } from 'zod';
-import type { PolicyRegistrar } from '@atlassian-dc-mcp/common';
+import { invalidInput, type PolicyRegistrar, respond } from '@atlassian-dc-mcp/common';
 import type { JiraToolContext } from '../../tools/context.js';
 import * as xray from './operations.js';
-import { invalid, respond } from '../respond.js';
 import { xrayToolSchemas as schemas } from './schemas.js';
 
 function registerAddTestsTools(tools: PolicyRegistrar, context: JiraToolContext): void {
@@ -48,7 +47,7 @@ function registerUpdateTestRunTool(tools: PolicyRegistrar, context: JiraToolCont
     inputSchema: z.object(schemas.updateTestRun),
   }, async ({ id, ...update }) => {
     const changes = Object.fromEntries(Object.entries(update).filter(([, value]) => value !== undefined));
-    if (Object.keys(changes).length === 0) return invalid('Give at least one of status, comment, assignee, defects or steps.');
+    if (Object.keys(changes).length === 0) return invalidInput('Give at least one of status, comment, assignee, defects or steps.');
     return respond(() => xray.updateTestRun(id, changes), 'Error updating Xray test run');
   });
 }

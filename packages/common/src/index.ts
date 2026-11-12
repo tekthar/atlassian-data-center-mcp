@@ -3,6 +3,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
 import type { ToolAnnotations } from '@modelcontextprotocol/server';
 import { AuditLog, auditServer } from './audit.js';
 export * from './api-error-handler.js'
+export * from './apps.js';
 export * from './audit.js';
 export * from './attachment-download.js'
 export * from './attachment-gateway.js'

@@ -1,7 +1,6 @@
 import { z } from 'zod';
-import type { PolicyRegistrar } from '@atlassian-dc-mcp/common';
+import { type PolicyRegistrar, respond } from '@atlassian-dc-mcp/common';
 import type { JiraToolContext } from '../../tools/context.js';
-import { respond } from '../respond.js';
 import * as scriptRunner from './operations.js';
 import { scriptRunnerToolSchemas as schemas } from './schemas.js';
 

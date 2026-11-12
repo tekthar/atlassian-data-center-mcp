@@ -1,4 +1,5 @@
 import { mergeToolCatalogs, type ToolCatalog } from '@atlassian-dc-mcp/common';
+import { CONFLUENCE_APPS_CATALOG } from './apps/index.js';
 import { CONFLUENCE_MODULES_CATALOG } from './tools/index.js';
 
 /**
@@ -24,5 +25,5 @@ export const CONFLUENCE_CORE_CATALOG: ToolCatalog = {
   },
 };
 
-/** Core tools plus every module under tools/. New modules default to off. */
-export const CONFLUENCE_TOOL_CATALOG = mergeToolCatalogs(CONFLUENCE_CORE_CATALOG, CONFLUENCE_MODULES_CATALOG);
+/** Core tools, every module under tools/, and every app under apps/. New modules and apps default to off. */
+export const CONFLUENCE_TOOL_CATALOG = mergeToolCatalogs(CONFLUENCE_CORE_CATALOG, CONFLUENCE_MODULES_CATALOG, CONFLUENCE_APPS_CATALOG);

@@ -1,3 +1,4 @@
+import { handleApiOperation } from './api-error-handler.js';
 import { redactSecrets } from './redact.js';
 
 /**
@@ -21,3 +22,10 @@ export const formatToolResponse = (result: unknown) => ({
   }],
   ...(isFailedResult(result) ? { isError: true as const } : {}),
 });
+
+/** Runs an API call and formats its result, or its error, as a tool response. */
+export const respond = async <T>(operation: () => Promise<T>, errorPrefix: string) =>
+  formatToolResponse(await handleApiOperation(operation, errorPrefix));
+
+/** A tool response for input the tool refuses before calling anything. */
+export const invalidInput = (error: string) => formatToolResponse({ success: false, error });

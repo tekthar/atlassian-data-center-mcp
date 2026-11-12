@@ -73,15 +73,16 @@ Cloud. These servers are for Data Center and Server.
 
 Install only the ones you use. They share one configuration format, so a single settings file can serve all three.
 
-## Supported Jira apps
+## Supported apps
 
-The Jira server also has tools for these Marketplace apps:
+The servers also have tools for these Marketplace apps:
 
-| App | Versions | Status |
-|---|---|---|
-| Xray, test management | 8 | Beta |
-| ScriptRunner, scripting and automation | 9 | Beta |
-| Jira Service Management | not recorded | Beta |
+| App | Server | Versions | Status |
+|---|---|---|---|
+| Xray, test management | Jira | 8 | Beta |
+| ScriptRunner, scripting and automation | Jira | 9 | Beta |
+| Jira Service Management | Jira | not recorded | Beta |
+| draw.io, diagrams | Confluence | 16 | Beta, read-only so far |
 
 Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](docs/supported-apps.md) lists the
 exact versions each app's tools were built from and how they were checked.
@@ -317,7 +318,7 @@ tests run on every pull request, on Ubuntu and on Windows:
 | [Jira server](packages/jira/README.md) | Settings, the 18 toolsets, the permission filter, attachments, deleting versions |
 | [Confluence server](packages/confluence/README.md) | Settings, the 11 toolsets, attachments |
 | [Bitbucket server](packages/bitbucket/README.md) | Settings, the tools, allowing merges for named repositories |
-| [Supported apps](docs/supported-apps.md) | The Jira apps with tools, the exact versions they were built from, and how they were checked |
+| [Supported apps](docs/supported-apps.md) | The apps with tools, the exact versions they were built from, and how they were checked |
 | [Configuration reference](docs/configuration.md) | Every `setup` flag, where credentials are stored, the order settings are read in, full client configurations |
 | [Contributing](CONTRIBUTING.md) | Building and testing, how tool selection, the search and the sandbox work, releasing |
 | [Changelog](CHANGELOG.md) | What each release changed |
