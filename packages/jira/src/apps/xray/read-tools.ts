@@ -1,7 +1,6 @@
 import { z } from 'zod';
-import type { PolicyRegistrar } from '@atlassian-dc-mcp/common';
+import { invalidInput, type PolicyRegistrar, respond } from '@atlassian-dc-mcp/common';
 import type { JiraToolContext } from '../../tools/context.js';
-import { invalid, respond } from '../respond.js';
 import * as xray from './operations.js';
 import { xrayToolSchemas as schemas } from './schemas.js';
 
@@ -10,7 +9,7 @@ function registerTestTools(tools: PolicyRegistrar, context: JiraToolContext): vo
     description: `Get Xray tests from the ${context.instanceType} by issue key or JQL, with each test's type, steps or definition, and preconditions. Give keys or jql.`,
     inputSchema: z.object(schemas.getTests),
   }, async ({ keys, jql }) => {
-    if (!keys?.length && !jql) return invalid('Give keys or jql to choose the tests.');
+    if (!keys?.length && !jql) return invalidInput('Give keys or jql to choose the tests.');
     return respond(() => xray.getTests(keys, jql), 'Error fetching Xray tests');
   });
 
@@ -62,7 +61,7 @@ function registerTestRunReadTools(tools: PolicyRegistrar, context: JiraToolConte
     inputSchema: z.object(schemas.getTestRun),
   }, async (input) => {
     if (input.id === undefined && !(input.testExecKey && input.testKey)) {
-      return invalid('Give the test run id, or both testExecKey and testKey.');
+      return invalidInput('Give the test run id, or both testExecKey and testKey.');
     }
     return respond(() => xray.getTestRun(input), 'Error fetching Xray test run');
   });
@@ -72,7 +71,7 @@ function registerTestRunReadTools(tools: PolicyRegistrar, context: JiraToolConte
     inputSchema: z.object(schemas.searchTestRuns),
   }, async (search) => {
     if (!search.testExecKey && !search.testKey && !search.testPlanKey && search.savedFilterId === undefined) {
-      return invalid('Give testExecKey, testKey, testPlanKey or savedFilterId to choose the test runs.');
+      return invalidInput('Give testExecKey, testKey, testPlanKey or savedFilterId to choose the test runs.');
     }
     return respond(() => xray.searchTestRuns(search, context.getPageSize()), 'Error searching Xray test runs');
   });

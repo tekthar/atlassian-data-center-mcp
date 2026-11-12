@@ -121,8 +121,26 @@ and written in Confluence storage format (XHTML).
 
 ## Supported apps
 
-No Confluence apps (Marketplace plugins) are supported yet. The Jira server, `mcp-jira-dc`, has tools for Xray, ScriptRunner and Jira
-Service Management; [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists them with the versions they were built from.
+The server also works with Confluence apps from the Atlassian Marketplace. An app's tools are offered only when the app
+is installed. At startup the server makes one request per app to check, and leaves out the apps that aren't there.
+Their toolsets are off by default, so their tools are reached through `confluence_searchTools` and cost nothing until
+used.
+
+| App | Versions | Status |
+|---|---|---|
+| draw.io, diagrams | 16 | Beta, read-only so far |
+
+**draw.io** tools, in the `drawio_diagrams` toolset:
+
+| Tool | What it's for |
+|---|---|
+| `drawio_searchDiagrams` | Finds diagrams by name, space or who changed them last, with the page each is on. |
+| `drawio_listPageDiagrams` | Lists the diagrams a page shows, including ones embedded from other pages. |
+| `drawio_getDiagram` | Reads a diagram. By default it returns each of its pages as the shapes it holds and the connections between them, by label; `format: "xml"` returns draw.io's XML instead. |
+
+The Jira server, `mcp-jira-dc`, has tools for Xray, ScriptRunner and Jira Service Management.
+[Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists every
+app with the versions its tools were built from.
 
 ## Settings
 
@@ -151,6 +169,7 @@ keychain.
 | `ENABLED_TOOLS` | An exact list of tool names. Replaces `TOOLSETS`, and turns the tool search and `confluence_runCode` off. |
 | `TOOL_GATEWAY` | `off` turns the tool search off: tools outside the selected toolsets are left out. |
 | `CODE_EXECUTION` | `off` removes `confluence_runCode`. |
+| `CONFLUENCE_APPS` | Which [apps](#supported-apps) to offer. Unset or `auto` checks which are installed; a list such as `drawio` offers those without checking; `off` offers none. |
 
 **Attachments on disk**
 

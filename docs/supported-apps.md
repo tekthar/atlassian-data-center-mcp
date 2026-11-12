@@ -1,13 +1,14 @@
-# Supported Jira apps
+# Supported apps
 
-Jira apps (Marketplace plugins) add their own REST APIs. The Jira server, `mcp-jira-dc`, has tools for the apps below.
-The Confluence and Bitbucket servers don't support any apps yet.
+Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and the Confluence server,
+`mcp-confluence-dc`, have tools for the apps below. The Bitbucket server doesn't support any apps yet.
 
-| App | Versions | Status |
-|---|---|---|
-| [Xray](#xray), test management | 8 | Beta |
-| [ScriptRunner](#scriptrunner), scripting and automation | 9 | Beta |
-| [Jira Service Management](#jira-service-management) | not recorded | Beta |
+| App | Server | Versions | Status |
+|---|---|---|---|
+| [Xray](#xray), test management | Jira | 8 | Beta |
+| [ScriptRunner](#scriptrunner), scripting and automation | Jira | 9 | Beta |
+| [Jira Service Management](#jira-service-management) | Jira | not recorded | Beta |
+| [draw.io](#drawio-for-confluence), diagrams | Confluence | 16 | Beta, read-only so far |
 
 - **Tested** means the tools were run against a live instance of that app version.
 - **Beta** means the tools were built and checked as described below, but not yet run against a live instance. Please
@@ -157,6 +158,53 @@ The behaviour tools also refuse three things before calling ScriptRunner:
 
 The XML behaviours configuration (`/config`) isn't used: the JSON admin routes cover the same behaviours.
 
+## draw.io for Confluence
+
+Diagrams by Seibert (draw.io), Marketplace key `com.mxgraph.confluence.plugins.diagramly`. Added after 0.47.1, in the
+next release.
+
+| | |
+|---|---|
+| Built from | draw.io for Confluence **16.1.12** for Data Center (Marketplace build 16001001200) |
+| REST API used | `/rest/drawio/1.0`, and Confluence's own `/rest/api/content/{id}` for a page's storage format |
+| Tools | 3, all read-only, in the toolset `drawio_diagrams` |
+| Detection | `GET /rest/drawio/1.0/config` at startup, which the diagram editor reads for every user, unless `CONFLUENCE_APPS` names the apps to offer |
+| Status | Beta: not yet run against a live draw.io instance |
+
+**How the tools were built.**
+
+- **Routes.** The Marketplace download is an OBR bundle. The plugin jar inside declares one REST module, `drawio`
+  version 1.0, served with Atlassian's REST v2, so its resources are found by their annotations. `javap` on the
+  Jakarta REST classes gave every route.
+- **Responses.** `javap -c` gave the response shapes:
+  - a diagram read (`GET /diagram/crud/{diagramName}/{owningPageId}`) returns the diagram's page, space, revisions,
+    last change and its file as `xml`;
+  - the search (`GET /diagramSearch`) returns the same objects without the file.
+- **Macros.** The macro definitions in `atlassian-plugin.xml` gave the parameters of the `drawio`, `drawio-sketch`,
+  `inc-drawio` and legacy `diagramly` macros. `drawio_listPageDiagrams` reads `diagramName`, `revision`, and, for an
+  embedded diagram, `pageId`.
+
+**Reading a diagram.** A draw.io file holds one model per page, either as XML or compressed: URI-encoded, deflated and
+base64-encoded. `drawio_getDiagram` inflates compressed pages. By default it then summarizes each page as its shapes,
+with their labels as plain text, their shape and their container, and its connections by the labels they join.
+Labels attached to a connection are read too. A page lists at most 300 shapes and 300 connections and counts the rest.
+`format: "xml"` returns each page's model instead.
+
+**How they were checked.**
+
+- Unit tests check each tool's request, the page-macro scan with an embedded diagram, and the summary of a diagram
+  with a container, a wrapped shape, a connection label and a loose connection. They also check a compressed page,
+  made the way draw.io compresses it.
+- Detection is tested for an installed app, a 404, another error, and the `CONFLUENCE_APPS` settings.
+- The catalog test checks that the tools are reached through the tool search unless `TOOLSETS` names
+  `drawio_diagrams`.
+- The bundled Confluence server was driven against a test HTTP server answering draw.io's routes. Detection found
+  draw.io, and no draw.io tool was listed directly. The tool search found all three. A `confluence_runCode` script
+  listed a page's diagrams and read a compressed one: "API" connected to "Database" by "SQL".
+
+**Not covered yet:** creating and editing diagrams, which is next on the [roadmap](#roadmap). Revision history is
+left out too: its route needs the diagram attachment's id and version, which the other routes don't return together.
+
 ## Jira Service Management
 
 Atlassian's service desk app. Its tools are the `jira_service_desk` toolset, which is off until `TOOLSETS` names it.
@@ -184,8 +232,11 @@ Apps are added in this order, each step in its own release-ready change.
      `jira_runCode`
    - [x] More to read: scripted fields, scheduled jobs, REST endpoints, fragments, workflow functions
    - [x] Changing behaviours: create or replace one, switch it on or off, and add or remove its mappings (opt-in)
-2. **draw.io for Confluence** (`com.mxgraph.confluence.plugins.diagramly`). The Confluence server needs app support
-   first, like the Jira server's.
+2. **draw.io for Confluence** (`com.mxgraph.confluence.plugins.diagramly`)
+   - [x] App support in the Confluence server: detection, `CONFLUENCE_APPS`, and app toolsets reached through the tool
+     search
+   - [x] Read: find diagrams, list a page's diagrams, and read one as shapes and connections or as XML
+   - [ ] Write: create a diagram on a page and update one
 3. **draw.io for Jira** (`com.mxgraph.jira.plugins.drawio`)
 4. **Zephyr** by SmartBear, formerly Zephyr Scale (`com.kanoah.test-manager`)
 5. **BigPicture** by Appfire (`eu.softwareplant.bigpicture`)

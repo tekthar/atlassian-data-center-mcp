@@ -4,6 +4,7 @@ import { ConfluenceService, ConfluenceContent, applyStorageEdits, confluenceTool
 import { shapeConfluenceMutationAck } from './confluence-response-mapper.js';
 import { CONFLUENCE_PRODUCT, getConfluenceRuntimeConfig, getDefaultPageSize } from './config.js';
 import { CONFLUENCE_TOOL_CATALOG } from './tool-catalog.js';
+import { detectConfluenceApps, registerConfluenceAppTools } from './apps/index.js';
 import { registerConfluenceModuleTools } from './tools/index.js';
 import { createRequire } from 'node:module';
 
@@ -37,7 +38,9 @@ const server = createMcpServer({
   version
 });
 
-const tools = createPolicyRegistrar(server, CONFLUENCE_TOOL_CATALOG, resolveToolPolicy(CONFLUENCE_TOOL_CATALOG));
+const toolPolicy = resolveToolPolicy(CONFLUENCE_TOOL_CATALOG);
+const confluenceApps = await detectConfluenceApps(toolPolicy);
+const tools = createPolicyRegistrar(server, CONFLUENCE_TOOL_CATALOG, toolPolicy);
 
 // Add Confluence content tools
 tools.registerTool(
@@ -273,7 +276,9 @@ tools.registerTool(
     return formatToolResponse(result);
   });
 
-registerConfluenceModuleTools(tools, { instanceType: confluenceInstanceType, getPageSize: getDefaultPageSize });
+const toolContext = { instanceType: confluenceInstanceType, getPageSize: getDefaultPageSize };
+registerConfluenceModuleTools(tools, toolContext);
+registerConfluenceAppTools(tools, toolContext, confluenceApps);
 tools.registerGatewayTools({ prefix: 'confluence', product: 'Confluence' });
 
 await connectServer(server);

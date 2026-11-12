@@ -1,13 +1,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { isToolAllowed, resolveToolPolicy } from '@atlassian-dc-mcp/common';
+import { isGatewayTool, isToolAllowed, resolveToolPolicy } from '@atlassian-dc-mcp/common';
+import { DRAWIO_CATALOG } from '../apps/drawio/catalog.js';
 import { CONFLUENCE_CORE_CATALOG, CONFLUENCE_TOOL_CATALOG } from '../tool-catalog.js';
 
 const SOURCE_DIR = path.join(__dirname, '..');
-const TOOLS_DIR = path.join(SOURCE_DIR, 'tools');
+const sourceFilesIn = (dir: string): string[] =>
+  fs.readdirSync(dir, { withFileTypes: true, recursive: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.ts'))
+    .map((entry) => path.join(entry.parentPath, entry.name));
 
 const registeredInSource = (): string[] => {
-  const files = [path.join(SOURCE_DIR, 'index.ts'), ...fs.readdirSync(TOOLS_DIR).map((file) => path.join(TOOLS_DIR, file))];
+  const files = [path.join(SOURCE_DIR, 'index.ts'), ...sourceFilesIn(path.join(SOURCE_DIR, 'tools')), ...sourceFilesIn(path.join(SOURCE_DIR, 'apps'))];
   return files.flatMap((file) =>
     [...fs.readFileSync(file, 'utf8').matchAll(/registerTool\(\s*['"]([A-Za-z_]+)['"]/g)].map((match) => match[1]),
   );
@@ -20,7 +24,22 @@ const allowedBy = (env: Record<string, string>) => {
     .map(([name]) => name);
 };
 
+const gatewayBy = (env: Record<string, string>) => {
+  const policy = resolveToolPolicy(CONFLUENCE_TOOL_CATALOG, env, () => undefined);
+  return Object.entries(CONFLUENCE_TOOL_CATALOG.tools)
+    .filter(([name, entry]) => isGatewayTool(name, entry, policy))
+    .map(([name]) => name);
+};
+
 describe('CONFLUENCE_TOOL_CATALOG', () => {
+  it('offers draw.io tools through the tool search by default, and lists them once TOOLSETS names their toolset', () => {
+    const drawioTools = Object.keys(DRAWIO_CATALOG.tools);
+
+    expect(allowedBy({}).filter((name) => drawioTools.includes(name))).toEqual([]);
+    expect(gatewayBy({}).filter((name) => drawioTools.includes(name))).toEqual(drawioTools);
+    expect(allowedBy({ TOOLSETS: 'default,drawio_diagrams' })).toEqual(expect.arrayContaining(drawioTools));
+  });
+
   it('has an entry for every tool the server registers, and nothing else', () => {
     expect(registeredInSource().sort()).toEqual(Object.keys(CONFLUENCE_TOOL_CATALOG.tools).sort());
   });

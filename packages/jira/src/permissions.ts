@@ -6,8 +6,9 @@ import {
   type PermissionCheck,
   type ToolCatalog,
   type ToolPolicy,
+  withTimeout,
 } from '@atlassian-dc-mcp/common';
-import { MypermissionsService, type CancelablePromise } from './jira-client/index.js';
+import { MypermissionsService } from './jira-client/index.js';
 import { asRecord } from './tools/context.js';
 
 /*
@@ -53,17 +54,6 @@ const describeError = (error: unknown): string => {
   return error instanceof Error ? error.message : String(error);
 };
 
-/** Cancels the request and rejects when it takes longer than `ms`. */
-export function withTimeout<T>(request: CancelablePromise<T>, ms: number): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => {
-      request.cancel();
-      reject(new Error(`no answer within ${ms} ms`));
-    }, ms);
-  });
-  return Promise.race([request, timeout]).finally(() => clearTimeout(timer));
-}
 
 function addGranted(granted: Set<string>, response: unknown): void {
   for (const [key, permission] of Object.entries(asRecord(asRecord(response).permissions))) {

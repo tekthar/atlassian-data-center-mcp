@@ -1,7 +1,6 @@
 import { z } from 'zod';
-import { isTruthy, type PolicyRegistrar } from '@atlassian-dc-mcp/common';
+import { invalidInput, isTruthy, type PolicyRegistrar, respond } from '@atlassian-dc-mcp/common';
 import type { JiraToolContext } from '../../tools/context.js';
-import { invalid, respond } from '../respond.js';
 import { registerBehaviourEditTools } from './behaviour-tools.js';
 import * as scriptRunner from './opt-in-operations.js';
 import { scriptRunnerToolSchemas as schemas } from './schemas.js';
@@ -24,7 +23,7 @@ function registerConsoleTool(tools: PolicyRegistrar, context: JiraToolContext): 
     description: `Run Groovy in ScriptRunner's script console on the ${context.instanceType}, with full access to Jira's Java API and the server it runs on. A script can change or delete anything, and nothing undoes it: read the script before running it. Give inline script, or scriptPath to run a file from a script root. Returns the script's last value as output, and its log; a failure returns the exception, the top of its stack trace and the log.`,
     inputSchema: z.object(schemas.runConsoleScript),
   }, async ({ script, scriptPath }) => {
-    if ((script === undefined) === (scriptPath === undefined)) return invalid('Give either script or scriptPath, not both.');
+    if ((script === undefined) === (scriptPath === undefined)) return invalidInput('Give either script or scriptPath, not both.');
     return respond(() => scriptRunner.runConsoleScript(script === undefined ? { scriptPath } : { script }), 'Error running ScriptRunner console script');
   });
 }

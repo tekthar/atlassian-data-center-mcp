@@ -1,7 +1,6 @@
 import { z } from 'zod';
-import type { PolicyRegistrar } from '@atlassian-dc-mcp/common';
+import { invalidInput, type PolicyRegistrar, respond } from '@atlassian-dc-mcp/common';
 import type { JiraToolContext } from '../../tools/context.js';
-import { invalid, respond } from '../respond.js';
 import * as behaviours from './behaviour-operations.js';
 import { behaviourToolSchemas as schemas } from './behaviour-schemas.js';
 
@@ -29,7 +28,7 @@ function registerSaveTool(tools: PolicyRegistrar, context: JiraToolContext): voi
     inputSchema: z.object(schemas.saveBehaviour),
   }, async ({ behaviour }) => {
     if (behaviour.id !== undefined && behaviour.fields === undefined) {
-      return invalid('To replace a behaviour, send its fields too, as scriptrunner_getBehaviours returns them; a behaviour saved without them loses its field rules.');
+      return invalidInput('To replace a behaviour, send its fields too, as scriptrunner_getBehaviours returns them; a behaviour saved without them loses its field rules.');
     }
     return respond(() => behaviours.saveBehaviour(behaviour), 'Error saving ScriptRunner behaviour');
   });
@@ -49,7 +48,7 @@ function registerMappingTools(tools: PolicyRegistrar, context: JiraToolContext):
   }, async ({ behaviourId, type, ...rest }) => {
     const mapping = { type: type ?? 'PROJECT' as const, ...rest };
     const problem = mappingProblem(mapping);
-    return problem ? invalid(problem) : respond(() => behaviours.mapBehaviour(behaviourId, mapping), 'Error mapping ScriptRunner behaviour');
+    return problem ? invalidInput(problem) : respond(() => behaviours.mapBehaviour(behaviourId, mapping), 'Error mapping ScriptRunner behaviour');
   });
 
   tools.registerTool('scriptrunner_unmapBehaviour', {
@@ -58,7 +57,7 @@ function registerMappingTools(tools: PolicyRegistrar, context: JiraToolContext):
   }, async ({ behaviourId, type, ...rest }) => {
     const input = { type: type ?? 'PROJECT' as const, ...rest };
     const problem = unmapProblem(input);
-    return problem ? invalid(problem) : respond(() => behaviours.unmapBehaviour(behaviourId, input), 'Error unmapping ScriptRunner behaviour');
+    return problem ? invalidInput(problem) : respond(() => behaviours.unmapBehaviour(behaviourId, input), 'Error unmapping ScriptRunner behaviour');
   });
 }
 
