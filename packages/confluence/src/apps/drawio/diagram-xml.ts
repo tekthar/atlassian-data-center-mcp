@@ -35,10 +35,21 @@ const decodeEntities = (text: string): string => text
   .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, '\'').replace(/&nbsp;/g, ' ')
   .replace(/&amp;/g, '&');
 
-/** A label as plain text: draw.io labels are often HTML, escaped once more inside the attribute. */
+/** Tags that end a line, so their text doesn't run into the next. */
+const LINE_BREAKING_TAG = /^<\/?(br|div|p|li|tr|h[1-6])\b/i;
+
+/**
+ * A label as plain text. draw.io labels are often HTML, escaped once more inside the attribute: unescape
+ * the attribute, split the HTML into tags and text, and keep only the text, unescaped. The result is
+ * text for the agent, never HTML, so a `<` it contains is a character the label shows.
+ */
 export function plainLabel(value: string | undefined): string {
   const html = decodeEntities(value ?? '');
-  return decodeEntities(html.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim();
+  return html.split(/(<[^>]*>)/)
+    .map((token) => (token.startsWith('<') && token.endsWith('>') ? (LINE_BREAKING_TAG.test(token) ? ' ' : '') : decodeEntities(token)))
+    .join('')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function inflatePage(body: string): string {

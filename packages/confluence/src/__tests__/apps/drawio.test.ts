@@ -2,7 +2,7 @@ import { deflateRawSync } from 'node:zlib';
 import { createRecordingRegistrar } from '@atlassian-dc-mcp/common';
 import { request } from '../../confluence-client/core/request.js';
 import { DRAWIO_CATALOG } from '../../apps/drawio/catalog.js';
-import { readPages, summarizePage } from '../../apps/drawio/diagram-xml.js';
+import { plainLabel, readPages, summarizePage } from '../../apps/drawio/diagram-xml.js';
 import { findPageDiagrams } from '../../apps/drawio/page-macros.js';
 import { registerDrawioReadTools } from '../../apps/drawio/read-tools.js';
 
@@ -75,6 +75,13 @@ describe('draw.io diagram files', () => {
         { from: 'Pay', to: '(unconnected)', label: 'retry' },
       ],
     });
+  });
+
+  it('reads a label as the text it shows: tags dropped, line breaks as spaces, escaped characters as written', () => {
+    expect(plainLabel('&lt;div&gt;Order&lt;br&gt;service&lt;/div&gt;&lt;div&gt;v2&lt;/div&gt;')).toBe('Order service v2');
+    expect(plainLabel('&lt;b&gt;Ca&lt;/b&gt;rt')).toBe('Cart');
+    expect(plainLabel('a &amp;lt;script&amp;gt; tag')).toBe('a <script> tag');
+    expect(plainLabel(undefined)).toBe('');
   });
 
   it('finds the diagrams a page shows, including one embedded from another page', () => {
