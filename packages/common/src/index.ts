@@ -12,6 +12,7 @@ export * from './code-sandbox.js';
 export * from './code-tool.js';
 export * from './config/index.js';
 export * from './drawio-file.js';
+export * from './xml-tags.js';
 export * from './gateway-tools.js';
 export * from './path-encoding.js';
 export * from './redact.js';

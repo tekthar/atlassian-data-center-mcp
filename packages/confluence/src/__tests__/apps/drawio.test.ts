@@ -59,6 +59,23 @@ describe('draw.io page macros', () => {
       { macro: 'inc-drawio', diagramName: 'Arch', pageId: '555' },
     ]);
   });
+
+  it('reads parameters inside CDATA, and diagrams inside other macros', () => {
+    const storage = '<ac:structured-macro ac:name="expand"><ac:rich-text-body>'
+      + '<ac:structured-macro ac:name="drawio"><ac:parameter ac:name="diagramName"><![CDATA[Nested <one>]]></ac:parameter></ac:structured-macro>'
+      + '</ac:rich-text-body></ac:structured-macro>';
+
+    expect(findPageDiagrams(storage, '100')).toEqual([{ macro: 'drawio', diagramName: 'Nested <one>', pageId: '100' }]);
+  });
+
+  it('reads a crafted page body in linear time', () => {
+    const crafted = '<ac:structured-macro ac:name="drawio">'.repeat(20_000) + '<ac:parameter ac:name="diagramName">'.repeat(20_000);
+    const started = Date.now();
+
+    findPageDiagrams(crafted, '100');
+
+    expect(Date.now() - started).toBeLessThan(2000);
+  });
 });
 
 describe('draw.io tools', () => {

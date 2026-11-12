@@ -1,4 +1,5 @@
 import { inflateRawSync } from 'node:zlib';
+import { xmlTags } from './xml-tags.js';
 
 /*
  * draw.io files, shared by the draw.io apps for Confluence and Jira. A draw.io file is an <mxfile> with one <diagram> per page. Each page holds an <mxGraphModel>, either
@@ -26,9 +27,6 @@ interface Cell {
   target?: string;
 }
 
-const attributes = (text: string): Record<string, string> =>
-  Object.fromEntries([...text.matchAll(/([\w:-]+)="([^"]*)"/g)].map((match) => [match[1], match[2]]));
-
 const decodeEntities = (text: string): string => text
   .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) => String.fromCodePoint(parseInt(hex, 16)))
   .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
@@ -38,18 +36,27 @@ const decodeEntities = (text: string): string => text
 /** Tags that end a line, so their text doesn't run into the next. */
 const LINE_BREAKING_TAG = /^<\/?(br|div|p|li|tr|h[1-6])\b/i;
 
+/** The text of HTML, read in one pass: tags dropped, line-breaking tags as spaces, entities decoded. */
+function htmlText(html: string): string {
+  let text = '';
+  let position = 0;
+  while (position < html.length) {
+    const open = html.indexOf('<', position);
+    const close = open === -1 ? -1 : html.indexOf('>', open);
+    if (close === -1) return text + decodeEntities(html.slice(position));
+    text += decodeEntities(html.slice(position, open)) + (LINE_BREAKING_TAG.test(html.slice(open, close + 1)) ? ' ' : '');
+    position = close + 1;
+  }
+  return text;
+}
+
 /**
  * A label as plain text. draw.io labels are often HTML, escaped once more inside the attribute: unescape
- * the attribute, split the HTML into tags and text, and keep only the text, unescaped. The result is
- * text for the agent, never HTML, so a `<` it contains is a character the label shows.
+ * the attribute, then keep only the HTML's text, unescaped. The result is text for the agent, never HTML,
+ * so a `<` it contains is a character the label shows.
  */
 export function drawioPlainLabel(value: string | undefined): string {
-  const html = decodeEntities(value ?? '');
-  return html.split(/(<[^>]*>)/)
-    .map((token) => (token.startsWith('<') && token.endsWith('>') ? (LINE_BREAKING_TAG.test(token) ? ' ' : '') : decodeEntities(token)))
-    .join('')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return htmlText(decodeEntities(value ?? '')).replace(/\s+/g, ' ').trim();
 }
 
 function inflatePage(body: string): string {
@@ -62,12 +69,19 @@ function inflatePage(body: string): string {
 
 /** The pages of a draw.io file, with each page's model as XML; a bare model is one page. */
 export function readDrawioPages(fileXml: string): DrawioPage[] {
-  const pages = [...fileXml.matchAll(/<diagram\b([^>]*)>([\s\S]*?)<\/diagram>/g)];
-  if (pages.length === 0) return [{ name: 'Page-1', xml: fileXml.trim() }];
-  return pages.map((match, index) => {
-    const body = match[2].trim();
-    return { name: decodeEntities(attributes(match[1]).name ?? `Page-${index + 1}`), xml: body.startsWith('<') ? body : inflatePage(body) };
-  });
+  const pages: DrawioPage[] = [];
+  let open: { name?: string; contentStart: number } | undefined;
+  for (const tag of xmlTags(fileXml)) {
+    if (tag.name !== 'diagram' || tag.selfClosing) continue;
+    if (!tag.closing) {
+      open = { name: tag.attributes.name, contentStart: tag.end };
+    } else if (open) {
+      const body = fileXml.slice(open.contentStart, tag.start).trim();
+      pages.push({ name: decodeEntities(open.name ?? `Page-${pages.length + 1}`), xml: body.startsWith('<') ? body : inflatePage(body) });
+      open = undefined;
+    }
+  }
+  return pages.length > 0 ? pages : [{ name: 'Page-1', xml: fileXml.trim() }];
 }
 
 function toCell(cellAttributes: Record<string, string>, wrapper?: Record<string, string>): Cell {
@@ -83,11 +97,21 @@ function toCell(cellAttributes: Record<string, string>, wrapper?: Record<string,
   };
 }
 
+const WRAPPERS = new Set(['UserObject', 'object']);
+
+/** Every cell of a model in one pass; a cell inside <UserObject> or <object> takes the wrapper's id and label. */
 function readCells(modelXml: string): Cell[] {
-  const wrapped = /<(UserObject|object)\b([^>]*)>\s*<mxCell\b([^>]*?)\/?>/g;
-  const cells = [...modelXml.matchAll(wrapped)].map((match) => toCell(attributes(match[3]), attributes(match[2])));
-  const rest = modelXml.replace(wrapped, '');
-  return cells.concat([...rest.matchAll(/<mxCell\b([^>]*?)\/?>/g)].map((match) => toCell(attributes(match[1]))));
+  const cells: Cell[] = [];
+  let wrapper: Record<string, string> | undefined;
+  for (const tag of xmlTags(modelXml)) {
+    if (WRAPPERS.has(tag.name)) {
+      wrapper = tag.closing || tag.selfClosing ? undefined : tag.attributes;
+    } else if (tag.name === 'mxCell' && !tag.closing) {
+      cells.push(toCell(tag.attributes, wrapper));
+      wrapper = undefined;
+    }
+  }
+  return cells;
 }
 
 /** The shape a style names: its first bare token, such as `ellipse`, or its `shape=` value. */

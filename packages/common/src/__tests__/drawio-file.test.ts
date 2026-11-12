@@ -31,9 +31,9 @@ describe('draw.io diagram files', () => {
     expect(summarizeDrawioPage({ name: 'Flow', xml: MODEL })).toEqual({
       name: 'Flow',
       shapes: [
-        { id: 'b', label: 'Pay', shape: 'ellipse', in: 'Checkout' },
         { id: 'lane', label: 'Checkout', shape: 'swimlane' },
         { id: 'a', label: 'Cart page', in: 'Checkout' },
+        { id: 'b', label: 'Pay', shape: 'ellipse', in: 'Checkout' },
       ],
       connections: [
         { from: 'Cart page', to: 'Pay', label: 'submit' },
@@ -49,5 +49,27 @@ describe('draw.io diagram files', () => {
     expect(drawioPlainLabel(undefined)).toBe('');
   });
 
-});
 
+  it('reads crafted files in linear time: unclosed pages, long names and stray brackets', () => {
+    const crafted = [
+      '<diagram '.repeat(20_000),
+      `<mxCell ${'a'.repeat(200_000)}`,
+      '<'.repeat(200_000),
+      `<object label="${'x'.repeat(100_000)}">`.repeat(5),
+    ];
+    const started = Date.now();
+    for (const text of crafted) {
+      readDrawioPages(text);
+      summarizeDrawioPage({ name: 'p', xml: text });
+      drawioPlainLabel(text);
+    }
+    expect(Date.now() - started).toBeLessThan(2000);
+  });
+
+  it('keeps an attribute named __proto__ as data, not as a prototype', () => {
+    const summary = summarizeDrawioPage({ name: 'p', xml: '<mxCell id="x" __proto__="polluted" value="Shape" vertex="1"/>' });
+
+    expect(summary.shapes).toEqual([{ id: 'x', label: 'Shape' }]);
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+  });
+});

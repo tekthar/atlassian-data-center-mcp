@@ -191,6 +191,12 @@ with their labels as plain text, their shape and their container, and its connec
 Labels attached to a connection are read too. A page lists at most 300 shapes and 300 connections and counts the rest.
 `format: "xml"` returns each page's model instead.
 
+Diagram files and page bodies are written by other people. So they are read with a one-pass tag scanner
+(`xml-tags.ts` in the common package) rather than regular expressions, which take quadratic time on crafted input:
+200,000 `<` characters took 35 seconds through the first version's label regex. A test feeds crafted files and pages to
+both readers and checks they finish quickly. Attributes go into objects without a prototype, so an attribute named
+`__proto__` stays data.
+
 **How they were checked.**
 
 - Unit tests check each tool's request, the page-macro scan with an embedded diagram, and the summary of a diagram
