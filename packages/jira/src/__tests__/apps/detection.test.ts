@@ -24,6 +24,7 @@ const apiError = (status: number, statusText: string) => Object.assign(new Error
 const XRAY_PROBE = '/raven/1.0/api/settings/teststatuses';
 const SCRIPTRUNNER_PROBE = '/scriptrunner-jira/latest/jqlfunctions/docs';
 const DRAWIO_PROBE = '/drawio/1.0/library/list';
+const ZEPHYR_PROBE = '/atm/1.0/healthcheck';
 const NOT_FOUND = () => { throw apiError(404, 'Not Found'); };
 
 /** Answer each app's check by its URL. */
@@ -45,15 +46,15 @@ describe('detectJiraApps', () => {
   beforeEach(() => jest.resetAllMocks());
 
   it('asks each app for something cheap when JIRA_APPS is unset, and offers the apps that answer', async () => {
-    answerProbes({ [XRAY_PROBE]: () => [{ name: 'PASS' }], [SCRIPTRUNNER_PROBE]: () => ({}), [DRAWIO_PROBE]: () => [] });
+    answerProbes({ [XRAY_PROBE]: () => [{ name: 'PASS' }], [SCRIPTRUNNER_PROBE]: () => ({}), [DRAWIO_PROBE]: () => [], [ZEPHYR_PROBE]: () => undefined });
 
-    expect(await detect({})).toEqual({ ids: ['xray', 'scriptrunner', 'drawio'], warnings: [] });
-    expect(probedUrls()).toEqual([XRAY_PROBE, SCRIPTRUNNER_PROBE, DRAWIO_PROBE].sort());
+    expect(await detect({})).toEqual({ ids: ['xray', 'scriptrunner', 'drawio', 'zephyr'], warnings: [] });
+    expect(probedUrls()).toEqual([XRAY_PROBE, SCRIPTRUNNER_PROBE, DRAWIO_PROBE, ZEPHYR_PROBE].sort());
     expect(mockedRequest.mock.calls.every((call) => call[1].method === 'GET')).toBe(true);
   });
 
   it('offers only the apps that are installed', async () => {
-    answerProbes({ [XRAY_PROBE]: NOT_FOUND, [SCRIPTRUNNER_PROBE]: () => ({}), [DRAWIO_PROBE]: NOT_FOUND });
+    answerProbes({ [XRAY_PROBE]: NOT_FOUND, [SCRIPTRUNNER_PROBE]: () => ({}), [DRAWIO_PROBE]: NOT_FOUND, [ZEPHYR_PROBE]: NOT_FOUND });
 
     expect(await detect({})).toEqual({ ids: ['scriptrunner'], warnings: [] });
   });
@@ -65,7 +66,7 @@ describe('detectJiraApps', () => {
   });
 
   it('leaves an app out with a warning when its check fails another way', async () => {
-    answerProbes({ [XRAY_PROBE]: () => { throw apiError(500, 'Server Error'); }, [SCRIPTRUNNER_PROBE]: NOT_FOUND, [DRAWIO_PROBE]: NOT_FOUND });
+    answerProbes({ [XRAY_PROBE]: () => { throw apiError(500, 'Server Error'); }, [SCRIPTRUNNER_PROBE]: NOT_FOUND, [DRAWIO_PROBE]: NOT_FOUND, [ZEPHYR_PROBE]: NOT_FOUND });
 
     const { ids, warnings } = await detect({});
 
@@ -84,9 +85,9 @@ describe('detectJiraApps', () => {
   });
 
   it('offers named apps without checking, and warns about unknown names', async () => {
-    expect(await detect({ JIRA_APPS: 'xray, ScriptRunner, zephyr' })).toEqual({
+    expect(await detect({ JIRA_APPS: 'xray, ScriptRunner, not-an-app' })).toEqual({
       ids: ['xray', 'scriptrunner'],
-      warnings: [expect.stringContaining('Ignoring unknown app "zephyr"')],
+      warnings: [expect.stringContaining('Ignoring unknown app "not-an-app"')],
     });
     expect(mockedRequest).not.toHaveBeenCalled();
   });

@@ -7,6 +7,12 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Features
 
+* **jira:** Zephyr support (SmartBear, formerly Zephyr Scale), starting with reading. Ten tools, reached through `jira_searchTools` when Zephyr is installed:
+  * test cases, found with TQL, with their latest result, and the test cases covering a Jira issue;
+  * test cycles and their execution results, and a project's environments;
+  * test plans.
+
+  Built from Zephyr 12.12.1. See [Supported apps](docs/supported-apps.md#zephyr).
 * **jira:** draw.io for Jira, with two read tools reached through `jira_searchTools`:
   * `drawio_listIssueDiagrams` lists an issue's diagrams;
   * `drawio_getDiagram` reads one as its shapes and connections, by label, or as XML.

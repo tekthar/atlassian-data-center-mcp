@@ -6,6 +6,7 @@ import { JIRA_CORE_CATALOG, JIRA_TOOL_CATALOG } from '../tool-catalog.js';
 import { DRAWIO_CATALOG } from '../apps/drawio/catalog.js';
 import { SCRIPTRUNNER_CATALOG } from '../apps/scriptrunner/catalog.js';
 import { XRAY_CATALOG } from '../apps/xray/catalog.js';
+import { ZEPHYR_CATALOG } from '../apps/zephyr/catalog.js';
 
 /**
  * Tools that change Jira but need nothing beyond browsing the issue or using the customer portal,
@@ -139,6 +140,7 @@ describe('JIRA_TOOL_CATALOG', () => {
     ['Xray', XRAY_CATALOG, 'xray_test_runs', 'xray_updateTestRun'],
     ['ScriptRunner', SCRIPTRUNNER_CATALOG, 'scriptrunner_script_editor', 'scriptrunner_getScriptFile'],
     ['draw.io', DRAWIO_CATALOG, 'drawio_diagrams', 'drawio_getDiagram'],
+    ['Zephyr', ZEPHYR_CATALOG, 'zephyr_test_cycles', 'zephyr_getTestCycleResults'],
   ])('offers %s tools through the gateway by default, and lists them once TOOLSETS names their toolset', (_app, catalog, toolset, tool) => {
     const appTools = Object.entries(catalog.tools).filter(([, entry]) => entry.access !== 'destructive').map(([name]) => name);
 
