@@ -141,7 +141,7 @@ Service Management's tools are the `jira_service_desk` toolset in [Toolsets](#to
 | Xray, test management | 8 | Beta |
 | ScriptRunner, scripting and automation | 9 | Beta |
 | draw.io, diagrams | 11 | Beta, read-only |
-| Zephyr, test management | 12 | Beta, read-only so far |
+| Zephyr, test management | 12 | Beta |
 | Jira Service Management | not recorded | Beta |
 
 Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists the
@@ -189,13 +189,15 @@ appears only when `TOOLSETS` names its toolset, and is shown only to Jira admini
 
 Creating and editing diagrams isn't offered yet: draw.io saves need a preview image that this server can't render.
 
-**Zephyr** tools, all read-only for now:
+**Zephyr** tools:
 
 | Toolset | Tools |
 |---|---|
-| `zephyr_test_cases`: test cases, their latest result, and the ones covering an issue | `zephyr_getTestCase`, `zephyr_searchTestCases`, `zephyr_getLatestTestResult`, `zephyr_getIssueTestCases` |
-| `zephyr_test_cycles`: test cycles, their results, and a project's environments | `zephyr_getTestCycle`, `zephyr_searchTestCycles`, `zephyr_getTestCycleResults`, `zephyr_getEnvironments` |
-| `zephyr_test_plans`: test plans | `zephyr_getTestPlan`, `zephyr_searchTestPlans` |
+| `zephyr_test_cases`: test cases, their latest result, and the ones covering an issue | `zephyr_getTestCase`, `zephyr_searchTestCases`, `zephyr_getLatestTestResult`, `zephyr_getIssueTestCases`, `zephyr_createTestCase` |
+| `zephyr_test_cycles`: test cycles, their results, and a project's environments | `zephyr_getTestCycle`, `zephyr_searchTestCycles`, `zephyr_getTestCycleResults`, `zephyr_getEnvironments`, `zephyr_createTestCycle`, `zephyr_recordTestResult` |
+| `zephyr_test_plans`: test plans | `zephyr_getTestPlan`, `zephyr_searchTestPlans`, `zephyr_createTestPlan` |
+
+Zephyr's own project permissions decide who may record results and create tests.
 
 Searches take TQL, Zephyr's query language, such as `projectKey = "QA" AND folder = "/Regression"`. Zephyr's API calls a
 test cycle a test run, so cycle keys look like `QA-R4`.

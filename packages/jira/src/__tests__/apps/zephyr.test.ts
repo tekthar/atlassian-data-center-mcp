@@ -2,6 +2,7 @@ import { createRecordingRegistrar } from '@atlassian-dc-mcp/common';
 import { request } from '../../jira-client/core/request.js';
 import { ZEPHYR_CATALOG } from '../../apps/zephyr/catalog.js';
 import { registerZephyrReadTools } from '../../apps/zephyr/read-tools.js';
+import { registerZephyrWriteTools } from '../../apps/zephyr/write-tools.js';
 
 jest.mock('../../jira-client/core/request.js', () => ({
   request: jest.fn(),
@@ -14,6 +15,7 @@ interface RequestOptions {
   url: string;
   path?: Record<string, unknown>;
   query?: Record<string, unknown>;
+  body?: Record<string, unknown>;
 }
 
 function routeRequests(routes: Record<string, unknown>) {
@@ -29,16 +31,18 @@ const sent = (index = 0) => mockedRequest.mock.calls[index][1] as RequestOptions
 
 function setup(pageSize = 25) {
   const recorder = createRecordingRegistrar();
-  registerZephyrReadTools(recorder.registrar, { instanceType: 'JIRA Data Center edition instance', getPageSize: () => pageSize });
+  const context = { instanceType: 'JIRA Data Center edition instance', getPageSize: () => pageSize };
+  registerZephyrReadTools(recorder.registrar, context);
+  registerZephyrWriteTools(recorder.registrar, context);
   return recorder;
 }
 
 describe('Zephyr tools', () => {
   beforeEach(() => jest.resetAllMocks());
 
-  it('registers every catalogued tool, all read-only, in toolsets that are off by default', () => {
+  it('registers every catalogued tool, none destructive, in toolsets that are off by default', () => {
     expect(setup().registrar.registeredTools().sort()).toEqual(Object.keys(ZEPHYR_CATALOG.tools).sort());
-    expect(Object.values(ZEPHYR_CATALOG.tools).every((entry) => entry.access === 'read')).toBe(true);
+    expect(Object.values(ZEPHYR_CATALOG.tools).every((entry) => entry.access !== 'destructive')).toBe(true);
     expect(Object.values(ZEPHYR_CATALOG.toolsets).every((toolset) => !toolset.default)).toBe(true);
   });
 
@@ -107,6 +111,73 @@ describe('Zephyr tools', () => {
 
   it('rejects keys that are not Zephyr keys before calling Zephyr', async () => {
     await expect(setup().call('zephyr_getTestCase', { testCaseKey: 'not a key' })).rejects.toThrow('Expected a Zephyr key');
+    expect(mockedRequest).not.toHaveBeenCalled();
+  });
+
+  it('records a test result as a new execution, mapping step results to Zephyr\'s script results', async () => {
+    routeRequests({ '/atm/1.0/testrun/{testRunKey}/testcase/{testCaseKey}/testresult': { id: 77 } });
+
+    const result = await setup().callJson('zephyr_recordTestResult', {
+      testCycleKey: 'QA-R4', testCaseKey: 'QA-T12', status: 'Fail', comment: 'Login button missing',
+      stepResults: [{ index: 0, status: 'Pass' }, { index: 1, status: 'Fail' }], issueLinks: ['QA-31'],
+    });
+
+    expect(sent()).toMatchObject({ method: 'POST', path: { testRunKey: 'QA-R4', testCaseKey: 'QA-T12' } });
+    expect(sent().body).toEqual({
+      status: 'Fail', comment: 'Login button missing', issueLinks: ['QA-31'],
+      scriptResults: [{ index: 0, status: 'Pass' }, { index: 1, status: 'Fail' }],
+    });
+    expect(result).toEqual({ success: true, data: { id: 77 } });
+  });
+
+  it('updates the latest result instead when asked', async () => {
+    routeRequests({ '/atm/1.0/testrun/{testRunKey}/testcase/{testCaseKey}/testresult': {} });
+
+    await setup().callJson('zephyr_recordTestResult', { testCycleKey: 'QA-R4', testCaseKey: 'QA-T12', status: 'Pass', replaceLatest: true });
+
+    expect(sent()).toMatchObject({ method: 'PUT', body: { status: 'Pass' } });
+  });
+
+  it('creates a test case with a step-by-step or a plain-text script, but not both', async () => {
+    routeRequests({ '/atm/1.0/testcase': { key: 'QA-T40' } });
+    const tools = setup();
+
+    await tools.callJson('zephyr_createTestCase', {
+      projectKey: 'QA', name: 'Log in', issueLinks: ['QA-12'], steps: [{ description: 'Open the page', expectedResult: 'Form shown' }],
+    });
+    await tools.callJson('zephyr_createTestCase', { projectKey: 'QA', name: 'Smoke', plainText: 'Check the home page loads' });
+    const both = await tools.callJson('zephyr_createTestCase', { projectKey: 'QA', name: 'x', steps: [{ description: 'a' }], plainText: 'b' });
+
+    expect(sent(0).body).toEqual({
+      projectKey: 'QA', name: 'Log in', issueLinks: ['QA-12'],
+      testScript: { type: 'STEP_BY_STEP', steps: [{ description: 'Open the page', expectedResult: 'Form shown' }] },
+    });
+    expect(sent(1).body).toEqual({ projectKey: 'QA', name: 'Smoke', testScript: { type: 'PLAIN_TEXT', text: 'Check the home page loads' } });
+    expect(both).toEqual({ success: false, error: 'Give steps or plainText, not both.' });
+    expect(mockedRequest).toHaveBeenCalledTimes(2);
+  });
+
+  it('creates a test cycle with its test cases as the API\'s items, and a test plan with its cycles', async () => {
+    routeRequests({ '/atm/1.0/testrun': { key: 'QA-R9' }, '/atm/1.0/testplan': { key: 'QA-P3' } });
+    const tools = setup();
+
+    await tools.callJson('zephyr_createTestCycle', {
+      projectKey: 'QA', name: 'Sprint 12', testCaseKeys: ['QA-T12', 'QA-T13'], plannedStartDate: '2026-11-20T09:00:00Z',
+    });
+    await tools.callJson('zephyr_createTestPlan', { projectKey: 'QA', name: 'Release 3', testCycleKeys: ['QA-R9'] });
+
+    expect(sent(0).body).toEqual({
+      projectKey: 'QA', name: 'Sprint 12', plannedStartDate: '2026-11-20T09:00:00Z',
+      items: [{ testCaseKey: 'QA-T12' }, { testCaseKey: 'QA-T13' }],
+    });
+    expect(sent(1).body).toEqual({ projectKey: 'QA', name: 'Release 3', testRunKeys: ['QA-R9'] });
+  });
+
+  it('rejects a planned date that is not ISO 8601, and test case keys that are not test cases', async () => {
+    const tools = setup();
+
+    await expect(tools.call('zephyr_createTestCycle', { projectKey: 'QA', name: 'x', plannedStartDate: 'next week' })).rejects.toThrow();
+    await expect(tools.call('zephyr_createTestCycle', { projectKey: 'QA', name: 'x', testCaseKeys: ['QA-R4'] })).rejects.toThrow('Expected test case keys');
     expect(mockedRequest).not.toHaveBeenCalled();
   });
 });
