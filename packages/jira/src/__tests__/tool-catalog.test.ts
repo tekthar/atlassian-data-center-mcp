@@ -9,10 +9,14 @@ import { XRAY_CATALOG } from '../apps/xray/catalog.js';
 import { ZEPHYR_CATALOG } from '../apps/zephyr/catalog.js';
 
 /**
- * Tools that change Jira but need nothing beyond browsing the issue or using the customer portal,
- * and Xray test runs, whose executors Xray's own settings decide.
+ * Tools that change Jira but need nothing beyond browsing the issue or using the customer portal;
+ * Xray test runs, whose executors Xray's own settings decide; and Zephyr's writes, which Zephyr's own
+ * project permissions decide and Jira's permission list doesn't report.
  */
-const UNGATED_WRITE_TOOLS = ['jira_watchIssue', 'jira_unwatchIssue', 'jira_createCustomerRequest', 'xray_updateTestRun'];
+const UNGATED_WRITE_TOOLS = [
+  'jira_watchIssue', 'jira_unwatchIssue', 'jira_createCustomerRequest', 'xray_updateTestRun',
+  'zephyr_recordTestResult', 'zephyr_createTestCase', 'zephyr_createTestCycle', 'zephyr_createTestPlan',
+];
 
 const SOURCE_DIR = path.join(__dirname, '..');
 

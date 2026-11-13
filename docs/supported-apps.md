@@ -10,7 +10,7 @@ Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and th
 | [Jira Service Management](#jira-service-management) | Jira | not recorded | Beta |
 | [draw.io](#drawio-for-confluence), diagrams | Confluence | 16 | Beta, read-only |
 | [draw.io](#drawio-for-jira), diagrams | Jira | 11 | Beta, read-only |
-| [Zephyr](#zephyr), test management | Jira | 12 | Beta, read-only so far |
+| [Zephyr](#zephyr), test management | Jira | 12 | Beta |
 
 - **Tested** means the tools were run against a live instance of that app version.
 - **Beta** means the tools were built and checked as described below, but not yet run against a live instance. Please
@@ -269,7 +269,7 @@ Test management by SmartBear, formerly Zephyr Scale and Test Management for Jira
 | Built from | Zephyr **12.12.1-jira11** for Data Center (Marketplace build 800702964, released 2026-11-03) |
 | Jira | 11.0 to 11.3, as this build's Marketplace listing gives. SmartBear publishes a separate build for each Jira line; the public API below is the same in all of them |
 | REST API used | `/rest/atm/1.0`, Zephyr's public API |
-| Tools | 10, all read-only, in the toolsets `zephyr_test_cases`, `zephyr_test_cycles` and `zephyr_test_plans` |
+| Tools | 14 in the toolsets `zephyr_test_cases`, `zephyr_test_cycles` and `zephyr_test_plans`: 10 that read, and 4 that record a result or create a test case, cycle or plan |
 | Detection | `GET /rest/atm/1.0/healthcheck` at startup, unless `JIRA_APPS` names the apps to offer |
 | Status | Beta: not yet run against a live Zephyr instance |
 
@@ -283,8 +283,28 @@ show, so `zephyr_getTestCycle` calls `GET /rest/atm/1.0/testrun/{testRunKey}`. T
 and test plans keys such as `QA-P2`. Searches take TQL, Zephyr's query language, for example
 `projectKey = "QA" AND folder = "/Regression"`.
 
+**Writing.** `javap -p` on the request classes gave the bodies, which match SmartBear's reference:
+
+- a result (`TestResultDTO`) carries `status`, `comment`, `environment`, `executionTime`, `executedBy`, `issueLinks`
+  and per-step `scriptResults`;
+- a test case (`TestCaseDTO`) carries `testScript`, whose `type` is `STEP_BY_STEP`, `PLAIN_TEXT` or `BDD`;
+- a test cycle (`TestRunDTO`) lists its test cases as `items`;
+- a test plan (`TestPlanDTO`) lists its cycles as `testRunKeys`.
+
+The tools take friendlier names and map them:
+
+| Tool | Request |
+|---|---|
+| `zephyr_recordTestResult` | `POST /testrun/{testRunKey}/testcase/{testCaseKey}/testresult` adds an execution. With `replaceLatest`, `PUT` on the same route updates the latest one. `stepResults` become `scriptResults` |
+| `zephyr_createTestCase` | `POST /testcase`. `steps` become a `STEP_BY_STEP` script and `plainText` a `PLAIN_TEXT` one; the tool refuses both together |
+| `zephyr_createTestCycle` | `POST /testrun`. `testCaseKeys` become `items` |
+| `zephyr_createTestPlan` | `POST /testplan`. `testCycleKeys` become `testRunKeys` |
+
+Fields left out aren't sent, so Zephyr's project defaults apply. Zephyr decides who may write, with its own project
+permissions. Jira's permission list doesn't report those, so the writes are ungated, as Xray's test run update is.
+
 **How they were checked.** Unit tests check each tool's URL, path and query, the paging defaults, the 404 message
-and the key checks. Detection is tested with all four Jira apps installed, with only some of them, and with
+and the key checks. They also check each write's method, path and body, and the date and key checks. Detection is tested with all four Jira apps installed, with only some of them, and with
 `JIRA_APPS`. The catalog test checks that the tools are reached through the tool search unless `TOOLSETS` names
 their toolset.
 
@@ -293,8 +313,12 @@ health check's empty answer, and no Zephyr tool was listed directly. The tool se
 "test cycle results", "test cases covering issue" and "test plan". One `jira_runCode` script found the test cases
 covering `QA-12` and the latest result of each: three calls, one answer.
 
-**Not covered yet:** recording results and creating test cases, cycles and plans, which are next on the
-[roadmap](#roadmap). Attachments, folders, custom fields, automation result imports and deleting are left out for now.
+With the writes added, the tool search listed `zephyr_recordTestResult` as a write. `jira_runReadTool` refused it and
+pointed to `jira_runWriteTool`, which created a test cycle and recorded a result with exactly the bodies above. A
+`jira_runCode` script couldn't call it.
+
+**Not covered yet:** updating test cases and plans, attachments, folders, custom fields, BDD scripts, importing
+automation results, and deleting. Deleting is left out on purpose.
 
 ## Jira Service Management
 
@@ -337,7 +361,7 @@ Apps are added in this order, each step in its own release-ready change.
 4. **Zephyr** by SmartBear, formerly Zephyr Scale (`com.kanoah.test-manager`)
    - [x] Read: test cases, test cycles and their results, test plans, environments, and the test cases covering an
      issue
-   - [ ] Write: record a test result, and create test cases, test cycles and test plans
+   - [x] Write: record a test result, and create test cases, test cycles and test plans
 5. **BigPicture** by Appfire (`eu.softwareplant.bigpicture`)
 6. Then a review of the apps above for bugs and gaps, followed by the most popular Data Center apps for Jira,
    Confluence and Bitbucket.

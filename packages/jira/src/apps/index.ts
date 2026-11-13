@@ -23,6 +23,7 @@ import { registerXrayWriteTools } from './xray/write-tools.js';
 import { ZEPHYR_CATALOG } from './zephyr/catalog.js';
 import { startZephyrRequest } from './zephyr/client.js';
 import { registerZephyrReadTools } from './zephyr/read-tools.js';
+import { registerZephyrWriteTools } from './zephyr/write-tools.js';
 
 /** Jira apps (Marketplace plugins) whose REST APIs this server can use; see detectApps in common. */
 
@@ -65,7 +66,10 @@ export const JIRA_APPS: JiraApp[] = [
     name: 'Zephyr',
     catalog: ZEPHYR_CATALOG,
     probe: (timeoutMs) => withTimeout(startZephyrRequest({ method: 'GET', url: '/healthcheck' }), timeoutMs),
-    register: registerZephyrReadTools,
+    register: (tools, context) => {
+      registerZephyrReadTools(tools, context);
+      registerZephyrWriteTools(tools, context);
+    },
   },
 ];
 

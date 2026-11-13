@@ -84,7 +84,7 @@ The servers also have tools for these Marketplace apps:
 | Jira Service Management | Jira | not recorded | Beta |
 | draw.io, diagrams | Confluence | 16 | Beta, read-only |
 | draw.io, diagrams | Jira | 11 | Beta, read-only |
-| Zephyr, test management | Jira | 12 | Beta, read-only so far |
+| Zephyr, test management | Jira | 12 | Beta |
 
 Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](docs/supported-apps.md) lists the
 exact versions each app's tools were built from and how they were checked.
