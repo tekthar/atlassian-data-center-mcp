@@ -10,6 +10,7 @@ Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and th
 | [Jira Service Management](#jira-service-management) | Jira | not recorded | Beta |
 | [draw.io](#drawio-for-confluence), diagrams | Confluence | 16 | Beta, read-only |
 | [draw.io](#drawio-for-jira), diagrams | Jira | 11 | Beta, read-only |
+| [Zephyr](#zephyr), test management | Jira | 12 | Beta, read-only so far |
 
 - **Tested** means the tools were run against a live instance of that app version.
 - **Beta** means the tools were built and checked as described below, but not yet run against a live instance. Please
@@ -258,6 +259,43 @@ and read a compressed one: "Client" connected to "Gateway" by "HTTPS".
 image writer with no preview"); see the [roadmap](#roadmap). Revision history needs the attachment's id and version
 too.
 
+## Zephyr
+
+Test management by SmartBear, formerly Zephyr Scale and Test Management for Jira, Marketplace key
+`com.kanoah.test-manager`. Added after 0.47.1, in the next release.
+
+| | |
+|---|---|
+| Built from | Zephyr **12.12.1-jira11** for Data Center (Marketplace build 800702964, released 2026-11-03) |
+| Jira | 11.0 to 11.3, as this build's Marketplace listing gives. SmartBear publishes a separate build for each Jira line; the public API below is the same in all of them |
+| REST API used | `/rest/atm/1.0`, Zephyr's public API |
+| Tools | 10, all read-only, in the toolsets `zephyr_test_cases`, `zephyr_test_cycles` and `zephyr_test_plans` |
+| Detection | `GET /rest/atm/1.0/healthcheck` at startup, unless `JIRA_APPS` names the apps to offer |
+| Status | Beta: not yet run against a live Zephyr instance |
+
+**How the tools were built.** The app declares four REST modules. Only `atm` is public, the API SmartBear documents as
+Zephyr Scale Server API v1; `tests` and `kanoahtests` serve Zephyr's own pages, and `tm4j/admin` serves its
+administration. `javap` on the public API's Jakarta REST resources gave its 59 routes, which match SmartBear's
+published v1 reference. Search routes default to 200 results, so the tools page with the server's page size instead.
+
+**Names.** This API calls a test cycle a "test run", with keys such as `QA-R4`. The tools use the names Zephyr's pages
+show, so `zephyr_getTestCycle` calls `GET /rest/atm/1.0/testrun/{testRunKey}`. Test cases have keys such as `QA-T12`,
+and test plans keys such as `QA-P2`. Searches take TQL, Zephyr's query language, for example
+`projectKey = "QA" AND folder = "/Regression"`.
+
+**How they were checked.** Unit tests check each tool's URL, path and query, the paging defaults, the 404 message
+and the key checks. Detection is tested with all four Jira apps installed, with only some of them, and with
+`JIRA_APPS`. The catalog test checks that the tools are reached through the tool search unless `TOOLSETS` names
+their toolset.
+
+The bundled Jira server was driven against a test HTTP server answering Zephyr's routes. Detection accepted the
+health check's empty answer, and no Zephyr tool was listed directly. The tool search ranked the right tool first for
+"test cycle results", "test cases covering issue" and "test plan". One `jira_runCode` script found the test cases
+covering `QA-12` and the latest result of each: three calls, one answer.
+
+**Not covered yet:** recording results and creating test cases, cycles and plans, which are next on the
+[roadmap](#roadmap). Attachments, folders, custom fields, automation result imports and deleting are left out for now.
+
 ## Jira Service Management
 
 Atlassian's service desk app. Its tools are the `jira_service_desk` toolset, which is off until `TOOLSETS` names it.
@@ -297,6 +335,9 @@ Apps are added in this order, each step in its own release-ready change.
    - [x] Read: list an issue's diagrams, and read one as shapes and connections or as XML
    - [ ] Write: blocked in the same way
 4. **Zephyr** by SmartBear, formerly Zephyr Scale (`com.kanoah.test-manager`)
+   - [x] Read: test cases, test cycles and their results, test plans, environments, and the test cases covering an
+     issue
+   - [ ] Write: record a test result, and create test cases, test cycles and test plans
 5. **BigPicture** by Appfire (`eu.softwareplant.bigpicture`)
 6. Then a review of the apps above for bugs and gaps, followed by the most popular Data Center apps for Jira,
    Confluence and Bitbucket.
