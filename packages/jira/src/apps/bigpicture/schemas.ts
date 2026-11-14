@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
-const boxId = z.string().regex(/^[\w-]+$/, 'Expected a box id from bigpicture_getBoxHierarchy').describe('A box id, from bigpicture_getBoxHierarchy');
+export const boxId = z.string().regex(/^[\w-]+$/, 'Expected a box id from bigpicture_getBoxHierarchy').describe('A box id, from bigpicture_getBoxHierarchy');
 
-const issueKey = z.string().regex(/^([A-Za-z][A-Za-z0-9_]*-\d+|\d+)$/, 'Expected a Jira issue key such as PROJ-12, or a BigPicture task id')
+export const issueKey = z.string().regex(/^([A-Za-z][A-Za-z0-9_]*-\d+|\d+)$/, 'Expected a Jira issue key such as PROJ-12, or a BigPicture task id')
   .describe('The Jira issue key, e.g. \'PROJ-12\'; a BigPicture task id works too');
 
 export const bigPictureToolSchemas = {
