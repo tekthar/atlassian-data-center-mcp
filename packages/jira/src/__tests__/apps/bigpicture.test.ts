@@ -44,9 +44,10 @@ const HIERARCHY = [{
 describe('BigPicture tools', () => {
   beforeEach(() => jest.resetAllMocks());
 
-  it('registers every catalogued tool, all read-only, in toolsets that are off by default', () => {
-    expect(setup().registrar.registeredTools().sort()).toEqual(Object.keys(BIGPICTURE_CATALOG.tools).sort());
-    expect(Object.values(BIGPICTURE_CATALOG.tools).every((entry) => entry.access === 'read')).toBe(true);
+  it('registers every catalogued read tool, in toolsets that are off by default', () => {
+    const reads = Object.entries(BIGPICTURE_CATALOG.tools).filter(([, entry]) => entry.access === 'read').map(([name]) => name);
+
+    expect(setup().registrar.registeredTools().sort()).toEqual(reads.sort());
     expect(Object.values(BIGPICTURE_CATALOG.toolsets).every((toolset) => !toolset.default)).toBe(true);
   });
 

@@ -11,7 +11,7 @@ Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and th
 | [draw.io](#drawio-for-confluence), diagrams | Confluence | 16 | Beta, read-only |
 | [draw.io](#drawio-for-jira), diagrams | Jira | 11 | Beta, read-only |
 | [Zephyr](#zephyr), test management | Jira | 12 | Beta |
-| [BigPicture](#bigpicture), portfolio and project management | Jira | 8 | Beta, read-only so far |
+| [BigPicture](#bigpicture), portfolio and project management | Jira | 8 | Beta |
 
 - **Tested** means the tools were run against a live instance of that app version.
 - **Beta** means the tools were built and checked as described below, but not yet run against a live instance. Please
@@ -331,7 +331,7 @@ Added after 0.47.1, in the next release.
 | Built from | BigPicture **8.70.11.6** for Data Center (Marketplace build 40002006696, released 2026-10-28) |
 | Jira | 11.0 to 11.3, as this build's Marketplace listing gives |
 | REST API used | `/rest/softwareplant-bigpicture/1.0/public`, BigPicture's public API |
-| Tools | 9, all read-only, in the toolsets `bigpicture_boxes`, `bigpicture_issues` and `bigpicture_teams` |
+| Tools | 14: 9 read, 4 write and 1 destructive, in the toolsets `bigpicture_boxes`, `bigpicture_issues` and `bigpicture_teams` |
 | Detection | `GET /rest/softwareplant-bigpicture/1.0/public/ppm/box/box-types` at startup, unless `JIRA_APPS` names the apps to offer |
 | Status | Beta: not yet run against a live BigPicture instance |
 
@@ -348,13 +348,37 @@ are Jira issues, which the API takes by key, so the tools say "issue": `bigpictu
 leaves out archived boxes, and everything under them, unless `includeArchived` is set, so a long-lived instance's tree
 stays readable.
 
-**How they were checked.** Unit tests check each tool's URL, path and query, the archived-box pruning, the combined
-types and statuses read, and the 404 message. Detection is tested with all five Jira apps installed, with only some
+**Writes.** `javap -p -c` on the request classes and the code that reads them showed what each write needs:
+
+- `bigpicture_updateIssueField` sends `fieldName`, `dataTypeId` and `fieldValue`, which BigPicture parses with Gson as
+  the JSON of the type's value object. The tool wraps a plain value for the five simple types: `{"value": ...}` for
+  `STRING`, `DATE` and `BOOLEAN`, `{"number": ...}` for `NUMBER` and `PERCENTAGE`. Gson skips keys a type doesn't have,
+  so a value of the wrong kind would arrive empty; the tool refuses it instead. Other types take the value object in
+  the shape `bigpicture_getIssueFields` returns. Field names are BigPicture's display names, such as `Story Points`.
+- `bigpicture_addBox` needs both dates, as `YYYY-MM-DD`, and an icon: BigPicture reads `boxIconId` without a null
+  check and has no default for it in the public API. The tool sends BigPicture's own default box icon,
+  `font-awesome-box-open@lightPurple`, unless one is given. New boxes start as not started.
+- A team membership is a series of periods, each with a start date and an availability that lasts until the next.
+  Adding a member takes a start date and an availability (BigPicture assumes 100% when it's left out) and ignores an
+  end date, so the tool doesn't offer one. Changing one names the period by its start date. People are named by
+  BigPicture's `individualId`, `EXT_USER@<platform>@<user key>`; the tools ask for it as `bigpicture_getTeamMembers`
+  lists it rather than building it.
+- `bigpicture_removeTeamMember` removes the person with every period of their membership, so it is destructive: the
+  tool search never offers it, and it is listed only when `TOOLSETS` names `bigpicture_teams`.
+
+Setting an issue's fields is offered only to people with Jira's Edit Issues permission. BigPicture checks box and team
+permissions itself, so those writes aren't gated on a Jira permission.
+
+**How they were checked.** Unit tests check each tool's URL, path, query and body, the archived-box pruning, the
+combined types and statuses read, and the 404 message. For the writes they also check how each field type's value is
+sent, that values of the wrong kind and badly formatted dates, icons and availabilities are refused before any
+request, the default icon, and that fields left out stay out of the body. Detection is tested with all five Jira apps installed, with only some
 of them, and with `JIRA_APPS`. The catalog test checks that the tools are reached through the tool search unless
 `TOOLSETS` names their toolset.
 
-**Not covered yet:** writing, which is next on the [roadmap](#roadmap). Resource planning (skills, absences, holiday
-and workload plans), box fields and box scope definitions aren't read yet.
+**Not covered yet:** resource planning (skills, absences, holiday and workload plans), which is next on the
+[roadmap](#roadmap); box fields and box scope definitions; duplicating and deleting boxes; creating and changing global
+teams; and updating many issues' fields at once. Deleting boxes is left out on purpose.
 
 ## Jira Service Management
 
@@ -401,7 +425,7 @@ Apps are added in this order, each step in its own release-ready change.
 5. **BigPicture** by Appfire (`eu.softwareplant.bigpicture`)
    - [x] Read: the box hierarchy, boxes, box types and statuses, a Jira issue's boxes and BigPicture fields, teams and
      their members
-   - [ ] Write: update an issue's BigPicture fields, add boxes, and manage team members
+   - [x] Write: set an issue's BigPicture fields, add boxes, and add, change and remove team members
    - [ ] Read resource planning: skills, absences, holiday and workload plans
 6. Then a review of the apps above for bugs and gaps, followed by the most popular Data Center apps for Jira,
    Confluence and Bitbucket.

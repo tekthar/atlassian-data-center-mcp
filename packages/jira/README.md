@@ -142,7 +142,7 @@ Service Management's tools are the `jira_service_desk` toolset in [Toolsets](#to
 | ScriptRunner, scripting and automation | 9 | Beta |
 | draw.io, diagrams | 11 | Beta, read-only |
 | Zephyr, test management | 12 | Beta |
-| BigPicture, portfolio and project management | 8 | Beta, read-only so far |
+| BigPicture, portfolio and project management | 8 | Beta |
 | Jira Service Management | not recorded | Beta |
 
 Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists the
@@ -200,16 +200,19 @@ Creating and editing diagrams isn't offered yet: draw.io saves need a preview im
 
 Zephyr's own project permissions decide who may record results and create tests.
 
-**BigPicture** tools, all read-only for now:
+Searches take TQL, Zephyr's query language, such as `projectKey = "QA" AND folder = "/Regression"`. Zephyr's API calls a
+test cycle a test run, so cycle keys look like `QA-R4`.
+
+**BigPicture** tools:
 
 | Toolset | Tools |
 |---|---|
-| `bigpicture_boxes`: portfolios, programs, projects and iterations | `bigpicture_getBoxHierarchy`, `bigpicture_getBox`, `bigpicture_getBoxTypesAndStatuses` |
-| `bigpicture_issues`: a Jira issue's boxes and BigPicture fields | `bigpicture_getIssueBoxes`, `bigpicture_getIssueFields`, `bigpicture_getAvailableFields` |
-| `bigpicture_teams`: teams and their members | `bigpicture_getBoxTeams`, `bigpicture_getGlobalTeams`, `bigpicture_getTeamMembers` |
+| `bigpicture_boxes`: portfolios, programs, projects and iterations | `bigpicture_getBoxHierarchy`, `bigpicture_getBox`, `bigpicture_getBoxTypesAndStatuses`, `bigpicture_addBox` |
+| `bigpicture_issues`: a Jira issue's boxes and BigPicture fields | `bigpicture_getIssueBoxes`, `bigpicture_getIssueFields`, `bigpicture_getAvailableFields`, `bigpicture_updateIssueField` |
+| `bigpicture_teams`: teams and their members | `bigpicture_getBoxTeams`, `bigpicture_getGlobalTeams`, `bigpicture_getTeamMembers`, `bigpicture_addTeamMember`, `bigpicture_updateTeamMember`, `bigpicture_removeTeamMember` (destructive) |
 
-Searches take TQL, Zephyr's query language, such as `projectKey = "QA" AND folder = "/Regression"`. Zephyr's API calls a
-test cycle a test run, so cycle keys look like `QA-R4`.
+BigPicture's own permissions decide who may add boxes and change teams. Setting an issue's BigPicture fields is offered
+only to people who can edit issues.
 
 ## Settings
 
