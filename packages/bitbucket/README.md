@@ -93,7 +93,7 @@ default is `compact`.
 ## Supported apps
 
 No Bitbucket apps (Marketplace plugins) are supported yet. The Jira server, `mcp-jira-dc`, has tools for Xray, Zephyr, ScriptRunner,
-Jira Service Management and draw.io, and the Confluence server, `mcp-confluence-dc`, for draw.io; [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists them with the versions they were built from.
+BigPicture, Jira Service Management and draw.io, and the Confluence server, `mcp-confluence-dc`, for draw.io; [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists them with the versions they were built from.
 
 ## Settings
 

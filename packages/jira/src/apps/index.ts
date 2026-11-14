@@ -9,6 +9,9 @@ import {
   type ToolPolicy,
 } from '@atlassian-dc-mcp/common';
 import type { JiraToolContext } from '../tools/context.js';
+import { BIGPICTURE_CATALOG } from './bigpicture/catalog.js';
+import { startBigPictureRequest } from './bigpicture/client.js';
+import { registerBigPictureReadTools } from './bigpicture/read-tools.js';
 import { DRAWIO_CATALOG } from './drawio/catalog.js';
 import { startDrawioRequest } from './drawio/client.js';
 import { registerDrawioReadTools } from './drawio/read-tools.js';
@@ -70,6 +73,13 @@ export const JIRA_APPS: JiraApp[] = [
       registerZephyrReadTools(tools, context);
       registerZephyrWriteTools(tools, context);
     },
+  },
+  {
+    id: 'bigpicture',
+    name: 'BigPicture',
+    catalog: BIGPICTURE_CATALOG,
+    probe: (timeoutMs) => withTimeout(startBigPictureRequest({ method: 'GET', url: '/ppm/box/box-types' }), timeoutMs),
+    register: registerBigPictureReadTools,
   },
 ];
 

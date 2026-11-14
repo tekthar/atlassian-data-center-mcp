@@ -139,7 +139,7 @@ used.
 | `drawio_getDiagram` | Reads a diagram. By default it returns each of its pages as the shapes it holds and the connections between them, by label; `format: "xml"` returns draw.io's XML instead. |
 
 Creating and editing diagrams isn't offered yet: draw.io saves need a preview image that this server can't render.
-The Jira server, `mcp-jira-dc`, has tools for Xray, Zephyr, ScriptRunner, Jira Service Management and draw.io.
+The Jira server, `mcp-jira-dc`, has tools for Xray, Zephyr, ScriptRunner, BigPicture, Jira Service Management and draw.io.
 [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists every
 app with the versions its tools were built from.
 
