@@ -4,8 +4,8 @@
 
 The server runs on your machine. Your MCP client starts it and talks to it over stdio; it calls Jira's REST API with
 your personal access token, lists the everyday issue tools, and keeps 43 more one search away, plus the tools of
-supported Jira apps such as Xray, Zephyr, ScriptRunner and draw.io when they're installed. Jira's own permissions
-decide what you can do: the server can hide tools, never unlock them.
+supported Jira apps such as Xray, Zephyr, ScriptRunner, BigPicture and draw.io when they're installed. Jira's own
+permissions decide what you can do: the server can hide tools, never unlock them.
 
 ```bash
 npx -y mcp-jira-dc setup                    # saves your Jira address and token
@@ -142,6 +142,7 @@ Service Management's tools are the `jira_service_desk` toolset in [Toolsets](#to
 | ScriptRunner, scripting and automation | 9 | Beta |
 | draw.io, diagrams | 11 | Beta, read-only |
 | Zephyr, test management | 12 | Beta |
+| BigPicture, portfolio and project management | 8 | Beta, read-only so far |
 | Jira Service Management | not recorded | Beta |
 
 Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists the
@@ -199,6 +200,14 @@ Creating and editing diagrams isn't offered yet: draw.io saves need a preview im
 
 Zephyr's own project permissions decide who may record results and create tests.
 
+**BigPicture** tools, all read-only for now:
+
+| Toolset | Tools |
+|---|---|
+| `bigpicture_boxes`: portfolios, programs, projects and iterations | `bigpicture_getBoxHierarchy`, `bigpicture_getBox`, `bigpicture_getBoxTypesAndStatuses` |
+| `bigpicture_issues`: a Jira issue's boxes and BigPicture fields | `bigpicture_getIssueBoxes`, `bigpicture_getIssueFields`, `bigpicture_getAvailableFields` |
+| `bigpicture_teams`: teams and their members | `bigpicture_getBoxTeams`, `bigpicture_getGlobalTeams`, `bigpicture_getTeamMembers` |
+
 Searches take TQL, Zephyr's query language, such as `projectKey = "QA" AND folder = "/Regression"`. Zephyr's API calls a
 test cycle a test run, so cycle keys look like `QA-R4`.
 
@@ -231,7 +240,7 @@ keychain.
 | `CODE_EXECUTION` | `off` removes `jira_runCode`. |
 | `PERMISSION_FILTER` | `off` lists tools without asking Jira for your permissions first. |
 | `JIRA_PERMISSION_PROJECTS` | Project keys, e.g. `ACS,BPO`. Without it, a permission you hold in any project counts; with it, only these projects count. |
-| `JIRA_APPS` | Which [Jira apps](#jira-apps) to offer. Unset or `auto` checks which are installed; a list such as `xray,zephyr,scriptrunner,drawio` offers those without checking; `off` offers none. |
+| `JIRA_APPS` | Which [Jira apps](#jira-apps) to offer. Unset or `auto` checks which are installed; a list such as `xray,zephyr,scriptrunner,drawio,bigpicture` offers those without checking; `off` offers none. |
 
 **Turning on risky tools**
 

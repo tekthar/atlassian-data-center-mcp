@@ -11,6 +11,7 @@ Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and th
 | [draw.io](#drawio-for-confluence), diagrams | Confluence | 16 | Beta, read-only |
 | [draw.io](#drawio-for-jira), diagrams | Jira | 11 | Beta, read-only |
 | [Zephyr](#zephyr), test management | Jira | 12 | Beta |
+| [BigPicture](#bigpicture), portfolio and project management | Jira | 8 | Beta, read-only so far |
 
 - **Tested** means the tools were run against a live instance of that app version.
 - **Beta** means the tools were built and checked as described below, but not yet run against a live instance. Please
@@ -320,6 +321,41 @@ pointed to `jira_runWriteTool`, which created a test cycle and recorded a result
 **Not covered yet:** updating test cases and plans, attachments, folders, custom fields, BDD scripts, importing
 automation results, and deleting. Deleting is left out on purpose.
 
+## BigPicture
+
+Portfolio and project management by Appfire (formerly SoftwarePlant), Marketplace key `eu.softwareplant.bigpicture`.
+Added after 0.47.1, in the next release.
+
+| | |
+|---|---|
+| Built from | BigPicture **8.70.11.6** for Data Center (Marketplace build 40002006696, released 2026-10-28) |
+| Jira | 11.0 to 11.3, as this build's Marketplace listing gives |
+| REST API used | `/rest/softwareplant-bigpicture/1.0/public`, BigPicture's public API |
+| Tools | 9, all read-only, in the toolsets `bigpicture_boxes`, `bigpicture_issues` and `bigpicture_teams` |
+| Detection | `GET /rest/softwareplant-bigpicture/1.0/public/ppm/box/box-types` at startup, unless `JIRA_APPS` names the apps to offer |
+| Status | Beta: not yet run against a live BigPicture instance |
+
+**How the tools were built.** The app declares two REST modules served with Atlassian's REST v2:
+`softwareplant-bigpicture` and its alias `bigpicture`, both version 1.0. 372 classes carry REST resources, most of them
+BigPicture's own pages. Only the classes in packages named `publicapi` serve the public API that Appfire documents, and
+`javap` on those gave its 68 routes, all under `/public`. BigPicture marks them `UnrestrictedAccess`, which leaves the
+permission checks to BigPicture itself, box by box. `javap -p` on the response classes gave the box fields: `boxId`,
+`boxName`, `boxTypeId`, `boxStatus`, the dates, `boxLeader`, `boxArchived`, and in the hierarchy, `boxChildren`.
+
+**Boxes and issues.** BigPicture's boxes are its portfolios, programs, projects and iterations. What it calls tasks
+are Jira issues, which the API takes by key, so the tools say "issue": `bigpicture_getIssueBoxes` and
+`bigpicture_getIssueFields`. That also lets the tool search match the word people use. `bigpicture_getBoxHierarchy`
+leaves out archived boxes, and everything under them, unless `includeArchived` is set, so a long-lived instance's tree
+stays readable.
+
+**How they were checked.** Unit tests check each tool's URL, path and query, the archived-box pruning, the combined
+types and statuses read, and the 404 message. Detection is tested with all five Jira apps installed, with only some
+of them, and with `JIRA_APPS`. The catalog test checks that the tools are reached through the tool search unless
+`TOOLSETS` names their toolset.
+
+**Not covered yet:** writing, which is next on the [roadmap](#roadmap). Resource planning (skills, absences, holiday
+and workload plans), box fields and box scope definitions aren't read yet.
+
 ## Jira Service Management
 
 Atlassian's service desk app. Its tools are the `jira_service_desk` toolset, which is off until `TOOLSETS` names it.
@@ -363,5 +399,9 @@ Apps are added in this order, each step in its own release-ready change.
      issue
    - [x] Write: record a test result, and create test cases, test cycles and test plans
 5. **BigPicture** by Appfire (`eu.softwareplant.bigpicture`)
+   - [x] Read: the box hierarchy, boxes, box types and statuses, a Jira issue's boxes and BigPicture fields, teams and
+     their members
+   - [ ] Write: update an issue's BigPicture fields, add boxes, and manage team members
+   - [ ] Read resource planning: skills, absences, holiday and workload plans
 6. Then a review of the apps above for bugs and gaps, followed by the most popular Data Center apps for Jira,
    Confluence and Bitbucket.
