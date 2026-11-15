@@ -11,6 +11,7 @@ export const BIGPICTURE_CATALOG: ToolCatalog = {
     bigpicture_boxes: { description: 'BigPicture boxes (portfolios, programs, projects, iterations): the hierarchy, one box, box types and statuses, and adding boxes', default: false },
     bigpicture_issues: { description: 'BigPicture and Jira issues: which boxes an issue is in, and reading and setting its BigPicture fields such as planned dates and progress', default: false },
     bigpicture_teams: { description: 'BigPicture teams: the teams of boxes, global teams, and adding, changing and removing team members', default: false },
+    bigpicture_resources: { description: 'BigPicture resource planning: skills, people\'s skills and absences, holiday and workload plans and who they apply to, and people\'s capacity', default: false },
   },
   tools: {
     bigpicture_getBoxHierarchy: { toolset: 'bigpicture_boxes', access: 'read' },
@@ -27,5 +28,13 @@ export const BIGPICTURE_CATALOG: ToolCatalog = {
     bigpicture_addTeamMember: { toolset: 'bigpicture_teams', access: 'write' },
     bigpicture_updateTeamMember: { toolset: 'bigpicture_teams', access: 'write' },
     bigpicture_removeTeamMember: { toolset: 'bigpicture_teams', access: 'destructive' },
+    bigpicture_getSkills: { toolset: 'bigpicture_resources', access: 'read' },
+    bigpicture_getPersonSkills: { toolset: 'bigpicture_resources', access: 'read' },
+    bigpicture_getPersonAbsences: { toolset: 'bigpicture_resources', access: 'read' },
+    bigpicture_getHolidayPlans: { toolset: 'bigpicture_resources', access: 'read' },
+    bigpicture_getHolidayPlanPeople: { toolset: 'bigpicture_resources', access: 'read' },
+    bigpicture_getWorkloadPlans: { toolset: 'bigpicture_resources', access: 'read' },
+    bigpicture_getWorkloadPlanPeople: { toolset: 'bigpicture_resources', access: 'read' },
+    bigpicture_getCapacity: { toolset: 'bigpicture_resources', access: 'read' },
   },
 };

@@ -210,6 +210,7 @@ test cycle a test run, so cycle keys look like `QA-R4`.
 | `bigpicture_boxes`: portfolios, programs, projects and iterations | `bigpicture_getBoxHierarchy`, `bigpicture_getBox`, `bigpicture_getBoxTypesAndStatuses`, `bigpicture_addBox` |
 | `bigpicture_issues`: a Jira issue's boxes and BigPicture fields | `bigpicture_getIssueBoxes`, `bigpicture_getIssueFields`, `bigpicture_getAvailableFields`, `bigpicture_updateIssueField` |
 | `bigpicture_teams`: teams and their members | `bigpicture_getBoxTeams`, `bigpicture_getGlobalTeams`, `bigpicture_getTeamMembers`, `bigpicture_addTeamMember`, `bigpicture_updateTeamMember`, `bigpicture_removeTeamMember` (destructive) |
+| `bigpicture_resources`: resource planning | `bigpicture_getSkills`, `bigpicture_getPersonSkills`, `bigpicture_getPersonAbsences`, `bigpicture_getHolidayPlans`, `bigpicture_getHolidayPlanPeople`, `bigpicture_getWorkloadPlans`, `bigpicture_getWorkloadPlanPeople`, `bigpicture_getCapacity` |
 
 BigPicture's own permissions decide who may add boxes and change teams. Setting an issue's BigPicture fields is offered
 only to people who can edit issues.

@@ -1,13 +1,7 @@
 import { z } from 'zod';
-import { boxId, issueKey } from './schemas.js';
-
-const date = (what: string) =>
-  z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected a date such as 2026-11-16').describe(`${what}, e.g. '2026-11-16'`);
+import { boxId, individualId, isoDate as date, issueKey } from './schemas.js';
 
 const teamId = z.number().int().positive().describe('The team id, from bigpicture_getBoxTeams or bigpicture_getGlobalTeams');
-
-const individualId = z.string().min(1)
-  .describe('The person\'s individualId exactly as bigpicture_getTeamMembers lists it for this or another team');
 
 const teamBoxId = boxId.optional().describe('The box the team works in; leave out for a global team');
 
