@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { respond, type PolicyRegistrar } from '@atlassian-dc-mcp/common';
 import type { JiraToolContext } from '../../tools/context.js';
 import * as bigPicture from './operations.js';
+import { registerBigPictureResourceTools } from './resource-tools.js';
 import { bigPictureToolSchemas as schemas } from './schemas.js';
 
 function registerBoxTools(tools: PolicyRegistrar, context: JiraToolContext): void {
@@ -59,4 +60,5 @@ export function registerBigPictureReadTools(tools: PolicyRegistrar, context: Jir
   registerBoxTools(tools, context);
   registerIssueTools(tools, context);
   registerTeamTools(tools, context);
+  registerBigPictureResourceTools(tools, context);
 }

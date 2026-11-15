@@ -331,7 +331,7 @@ Added after 0.47.1, in the next release.
 | Built from | BigPicture **8.70.11.6** for Data Center (Marketplace build 40002006696, released 2026-10-28) |
 | Jira | 11.0 to 11.3, as this build's Marketplace listing gives |
 | REST API used | `/rest/softwareplant-bigpicture/1.0/public`, BigPicture's public API |
-| Tools | 14: 9 read, 4 write and 1 destructive, in the toolsets `bigpicture_boxes`, `bigpicture_issues` and `bigpicture_teams` |
+| Tools | 22: 17 read, 4 write and 1 destructive, in the toolsets `bigpicture_boxes`, `bigpicture_issues`, `bigpicture_teams` and `bigpicture_resources` |
 | Detection | `GET /rest/softwareplant-bigpicture/1.0/public/ppm/box/box-types` at startup, unless `JIRA_APPS` names the apps to offer |
 | Status | Beta: not yet run against a live BigPicture instance |
 
@@ -362,23 +362,40 @@ stays readable.
   Adding a member takes a start date and an availability (BigPicture assumes 100% when it's left out) and ignores an
   end date, so the tool doesn't offer one. Changing one names the period by its start date. People are named by
   BigPicture's `individualId`, `EXT_USER@<platform>@<user key>`; the tools ask for it as `bigpicture_getTeamMembers`
-  lists it rather than building it.
+  lists it, or as the `resourceKey` the holiday and workload plan tools list, rather than building it.
 - `bigpicture_removeTeamMember` removes the person with every period of their membership, so it is destructive: the
   tool search never offers it, and it is listed only when `TOOLSETS` names `bigpicture_teams`.
 
 Setting an issue's fields is offered only to people with Jira's Edit Issues permission. BigPicture checks box and team
 permissions itself, so those writes aren't gated on a Jira permission.
 
+**Resource planning.** BigPicture plans with resources: the people on its teams, named by the same `individualId`.
+`javap -p` on the `resource/publicapi` classes gave what the read tools return:
+
+- `bigpicture_getSkills` lists the skills, and `bigpicture_getPersonSkills` a person's skills with the dates each
+  applies. `bigpicture_getPersonAbsences` gives a person's absences: dates, type, comment and
+  `percentageUnavailability`.
+- `bigpicture_getHolidayPlans` and `bigpicture_getWorkloadPlans` list the plans that set people's working days and
+  hours, or get one by id. `bigpicture_getHolidayPlanPeople` and `bigpicture_getWorkloadPlanPeople` list who each plan
+  applies to and from when, each person with their `resourceKey`, which is the `individualId` the other tools take.
+- `bigpicture_getCapacity` asks BigPicture how much working time people have between two dates. It is a `POST`, but it
+  only reads: it takes Jira user keys and returns each person's total in seconds, optionally day by day, and the keys
+  BigPicture doesn't know. The tool adds each total in hours.
+
+These read tools are in the `bigpicture_resources` toolset. BigPicture checks a person's resource access itself.
+
 **How they were checked.** Unit tests check each tool's URL, path, query and body, the archived-box pruning, the
 combined types and statuses read, and the 404 message. For the writes they also check how each field type's value is
 sent, that values of the wrong kind and badly formatted dates, icons and availabilities are refused before any
-request, the default icon, and that fields left out stay out of the body. Detection is tested with all five Jira apps installed, with only some
-of them, and with `JIRA_APPS`. The catalog test checks that the tools are reached through the tool search unless
+request, the default icon, and that fields left out stay out of the body. For resource planning they check each path,
+plan by id and all plans, the capacity body and the hours added, and that a capacity request with no people or a
+badly written date is refused. Detection is tested with all five Jira apps installed, with only some of them, and
+with `JIRA_APPS`. The catalog test checks that the tools are reached through the tool search unless
 `TOOLSETS` names their toolset.
 
-**Not covered yet:** resource planning (skills, absences, holiday and workload plans), which is next on the
-[roadmap](#roadmap); box fields and box scope definitions; duplicating and deleting boxes; creating and changing global
-teams; and updating many issues' fields at once. Deleting boxes is left out on purpose.
+**Not covered yet:** changing resource planning (skills, absences, holiday and workload plans); box fields and box
+scope definitions; duplicating and deleting boxes; creating and changing global teams; and updating many issues' fields
+at once. Deleting boxes is left out on purpose.
 
 ## Jira Service Management
 
@@ -426,6 +443,7 @@ Apps are added in this order, each step in its own release-ready change.
    - [x] Read: the box hierarchy, boxes, box types and statuses, a Jira issue's boxes and BigPicture fields, teams and
      their members
    - [x] Write: set an issue's BigPicture fields, add boxes, and add, change and remove team members
-   - [ ] Read resource planning: skills, absences, holiday and workload plans
+   - [x] Read resource planning: skills, people's skills and absences, holiday and workload plans and who they apply
+     to, and capacity
 6. Then a review of the apps above for bugs and gaps, followed by the most popular Data Center apps for Jira,
    Confluence and Bitbucket.
