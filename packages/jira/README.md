@@ -139,7 +139,7 @@ Service Management's tools are the `jira_service_desk` toolset in [Toolsets](#to
 | App | Versions | Status |
 |---|---|---|
 | Xray, test management | 8 | Beta |
-| ScriptRunner, scripting and automation | 9 | Beta |
+| ScriptRunner, scripting and automation | 9 and 10 | Beta |
 | draw.io, diagrams | 11 | Beta, read-only |
 | Zephyr, test management | 12 | Beta |
 | BigPicture, portfolio and project management | 8 | Beta |

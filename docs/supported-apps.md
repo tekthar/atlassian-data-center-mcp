@@ -6,7 +6,7 @@ Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and th
 | App | Server | Versions | Status |
 |---|---|---|---|
 | [Xray](#xray), test management | Jira | 8 | Beta |
-| [ScriptRunner](#scriptrunner), scripting and automation | Jira | 9 | Beta |
+| [ScriptRunner](#scriptrunner), scripting and automation | Jira | 9 and 10 | Beta |
 | [Jira Service Management](#jira-service-management) | Jira | not recorded | Beta |
 | [draw.io](#drawio-for-confluence), diagrams | Confluence | 16 | Beta, read-only |
 | [draw.io](#drawio-for-jira), diagrams | Jira | 11 | Beta, read-only |
@@ -29,6 +29,7 @@ Test management by Xpand IT, Marketplace key `com.xpandit.plugins.xray`. Added i
 | | |
 |---|---|
 | Built from | Xray **8.6.0-j11** for Data Center (Marketplace build 2008006002) |
+| Checked against | Xray **8.6.1-j11** (Marketplace build 2008006013, released 2026-11-09), on 2026-11-15: the routes the tools call are unchanged. See [Checking newer builds](#checking-newer-builds) |
 | Jira | Xray's Marketplace page lists the Jira versions each Xray release supports. This build's REST resources use Jakarta REST (`jakarta.ws.rs`) |
 | REST APIs used | `/rest/raven/1.0` for tests, test executions, test plans and test sets; `/rest/raven/2.0` for test runs and test steps |
 | Tools | 15, in the toolsets `xray_tests`, `xray_test_executions`, `xray_test_plans`, `xray_test_sets` and `xray_test_runs` |
@@ -65,7 +66,8 @@ in the next release.
 | | |
 |---|---|
 | Built from | ScriptRunner for Jira **9.46.0** for Data Center (Marketplace build 1011110, released 2026-10-20) |
-| Jira | 10.0 to 10.7, as this build's Marketplace listing gives. Its REST resources use `javax.ws.rs` |
+| Checked against | ScriptRunner for Jira **10.20.0** (Marketplace build 1011210, released 2026-11-11), on 2026-11-15: the same routes, parameters and permission filters. See [Checking newer builds](#checking-newer-builds) |
+| Jira | 10.0 to 10.7 with ScriptRunner 9.46, whose REST resources use `javax.ws.rs`, and 11.0 to 11.3 with ScriptRunner 10.20, which moved them to `jakarta.ws.rs`; as the two builds' Marketplace listings give |
 | REST APIs used | `/rest/scriptrunner/latest` for the script editor, built-in scripts, the script console, scheduled jobs, REST endpoints and fragments; `/rest/scriptrunner-jira/latest` for listeners, scripted fields, workflow functions and JQL functions; `/rest/scriptrunner/behaviours/latest` for behaviours |
 | Tools | 12 that read, in the toolsets `scriptrunner_script_editor`, `scriptrunner_builtin_scripts`, `scriptrunner_features` and `scriptrunner_behaviours`; 7 opt-in tools that run or save code or change behaviours, in `scriptrunner_console`, `scriptrunner_builtin_scripts`, `scriptrunner_script_editor` and `scriptrunner_behaviours` |
 | Detection | `GET /rest/scriptrunner-jira/latest/jqlfunctions/docs` at startup, which any signed-in user may read, unless `JIRA_APPS` names the apps to offer |
@@ -169,6 +171,7 @@ next release.
 | | |
 |---|---|
 | Built from | draw.io for Confluence **16.1.12** for Data Center (Marketplace build 16001001200) |
+| Checked against | draw.io for Confluence **16.1.13** (Marketplace build 16001001300, released 2026-11-12), on 2026-11-15: the same 66 routes. See [Checking newer builds](#checking-newer-builds) |
 | REST API used | `/rest/drawio/1.0`, and Confluence's own `/rest/api/content/{id}` for a page's storage format |
 | Tools | 3, all read-only, in the toolset `drawio_diagrams` |
 | Detection | `GET /rest/drawio/1.0/config` at startup, which the diagram editor reads for every user, unless `CONFLUENCE_APPS` names the apps to offer |
@@ -412,6 +415,25 @@ Atlassian's service desk app. Its tools are the `jira_service_desk` toolset, whi
 Raising a customer request uses an endpoint Jira Service Management marks experimental, so the tool sends the
 `X-ExperimentalApi: opt-in` header that endpoint requires.
 
+## Checking newer builds
+
+Apps release often, so each app's tools are checked against newer Data Center builds, the same way they were built:
+the newest build is downloaded from the Marketplace, its REST routes are listed with `javap` from its JAX-RS
+annotations, and the list is compared with the build the tools came from. The app's code is never run.
+
+| App | Built from | Newest build checked | What changed |
+|---|---|---|---|
+| Xray | 8.6.0-j11 | 8.6.1-j11 (2026-11-09) | Nine routes added to `/rest/raven/1.0`: a JQL search for issue keys, adding tests by JQL to requirements, test plans, test sets and test executions, and moving tests between repository folders. They are outside Xray's public `/api`, and the tools don't use them. Nothing removed or changed |
+| ScriptRunner | 9.46.0 | 10.20.0 (2026-11-11) | ScriptRunner 10 is the line for Jira 11 and moves its REST resources from `javax.ws.rs` to `jakarta.ws.rs`. The 138 routes of the three REST modules the tools use are the same, with the same parameters and permission filters, and `javap -p` on the 12 resource and request classes they reach shows the same methods apart from the package rename |
+| draw.io for Confluence | 16.1.12 | 16.1.13 (2026-11-12) | The same 66 routes |
+| draw.io for Jira | 11.2.1 | 11.2.1 | No newer build |
+| Zephyr | 12.12.1-jira11 | 12.12.1-jira11 | No newer build |
+| BigPicture | 8.70.11.6 | 8.70.11.6 | No newer build |
+
+A route list says nothing about what a resource returns, so a change inside a response body would still need a live
+instance to find. Please [open an issue](https://github.com/tekthar/atlassian-data-center-mcp/issues) if a tool stops
+working after an app update.
+
 ## Roadmap
 
 Apps are added in this order, each step in its own release-ready change.
@@ -445,5 +467,10 @@ Apps are added in this order, each step in its own release-ready change.
    - [x] Write: set an issue's BigPicture fields, add boxes, and add, change and remove team members
    - [x] Read resource planning: skills, people's skills and absences, holiday and workload plans and who they apply
      to, and capacity
-6. Then a review of the apps above for bugs and gaps, followed by the most popular Data Center apps for Jira,
-   Confluence and Bitbucket.
+6. **Review** of the apps above for bugs and gaps
+   - [x] Check each app against its newest Data Center build (2026-11-15). Xray, ScriptRunner and draw.io for
+     Confluence had newer builds; none changed a route the tools call. See
+     [Checking newer builds](#checking-newer-builds)
+   - [ ] Review each app's tools for bugs and gaps, one app per step
+7. Then the most popular Data Center apps for Jira, Confluence and Bitbucket, one at a time, each with the reason it
+   was chosen.

@@ -80,7 +80,7 @@ The servers also have tools for these Marketplace apps:
 | App | Server | Versions | Status |
 |---|---|---|---|
 | Xray, test management | Jira | 8 | Beta |
-| ScriptRunner, scripting and automation | Jira | 9 | Beta |
+| ScriptRunner, scripting and automation | Jira | 9 and 10 | Beta |
 | Jira Service Management | Jira | not recorded | Beta |
 | draw.io, diagrams | Confluence | 16 | Beta, read-only |
 | draw.io, diagrams | Jira | 11 | Beta, read-only |

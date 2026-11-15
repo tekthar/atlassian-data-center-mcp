@@ -46,11 +46,14 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 * **jira:** opt-in ScriptRunner tools that run or save code. Each is off until its own setting is `true`:
   * `scriptrunner_runConsoleScript` runs Groovy in the script console (`JIRA_SCRIPTRUNNER_CONSOLE_ENABLED`);
   * `scriptrunner_runBuiltInScript` runs a built-in script (`JIRA_SCRIPTRUNNER_BUILTIN_RUN_ENABLED`);
-  * `scriptrunner_saveScriptFile` creates a script file, or replaces one when asked (`JIRA_SCRIPTRUNNER_FILE_SAVE_ENABLED`).
-
+  * `scriptrunner_saveScriptFile` creates a script file, or replaces one when asked (`JIRA_SCRIPTRUNNER_FILE_SAVE_ENABLED`);
   * `scriptrunner_saveBehaviour`, `scriptrunner_setBehaviourEnabled`, `scriptrunner_mapBehaviour` and `scriptrunner_unmapBehaviour` create or replace a behaviour, switch it on or off, and add or remove where it applies (`JIRA_SCRIPTRUNNER_BEHAVIOURS_EDIT_ENABLED`). Replacing a behaviour requires its fields, so it can't lose its rules by accident, and removing a mapping names exactly one.
 
   They are destructive and shown only to Jira administrators. Each is listed only when `TOOLSETS` names its toolset, and the tool search and `jira_runCode` never offer them.
+
+### Documentation
+
+* [Supported apps](docs/supported-apps.md#checking-newer-builds) records the newest Data Center build each app's tools were checked against, route by route. ScriptRunner's tools match ScriptRunner 10.20, the line for Jira 11, as well as 9.46 for Jira 10. Xray 8.6.1 and draw.io for Confluence 16.1.13 changed none of the routes the tools call.
 
 ## [0.47.1](https://github.com/tekthar/atlassian-data-center-mcp/releases/tag/v0.47.1) (2026-11-06)
 
