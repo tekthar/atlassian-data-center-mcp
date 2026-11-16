@@ -7,10 +7,15 @@ import { scriptRunnerToolSchemas as schemas } from './schemas.js';
 
 type Env = Record<string, string | undefined>;
 
-/** The setting that turns on each tool that runs or saves code; one setting covers every behaviour change. All are off unless set to true. */
+/**
+ * The setting that turns on each tool that runs or saves code. One setting covers every behaviour change, and
+ * one covers running a built-in script along with validating and previewing it. All are off unless set to true.
+ */
 export const SCRIPTRUNNER_OPT_IN_SETTINGS = {
   scriptrunner_runConsoleScript: 'JIRA_SCRIPTRUNNER_CONSOLE_ENABLED',
   scriptrunner_runBuiltInScript: 'JIRA_SCRIPTRUNNER_BUILTIN_RUN_ENABLED',
+  scriptrunner_validateBuiltInScript: 'JIRA_SCRIPTRUNNER_BUILTIN_RUN_ENABLED',
+  scriptrunner_previewBuiltInScript: 'JIRA_SCRIPTRUNNER_BUILTIN_RUN_ENABLED',
   scriptrunner_saveScriptFile: 'JIRA_SCRIPTRUNNER_FILE_SAVE_ENABLED',
   scriptrunner_saveBehaviour: 'JIRA_SCRIPTRUNNER_BEHAVIOURS_EDIT_ENABLED',
   scriptrunner_setBehaviourEnabled: 'JIRA_SCRIPTRUNNER_BEHAVIOURS_EDIT_ENABLED',
@@ -30,10 +35,24 @@ function registerConsoleTool(tools: PolicyRegistrar, context: JiraToolContext): 
 
 function registerBuiltInRunTool(tools: PolicyRegistrar, context: JiraToolContext): void {
   tools.registerTool('scriptrunner_runBuiltInScript', {
-    description: `Run a ScriptRunner built-in script on the ${context.instanceType}, such as a bulk fix or copying a project, with the given parameter values. Many change Jira data in bulk, and nothing undoes them. Get the parameters with scriptrunner_getBuiltInScriptParams first.`,
+    description: `Run a ScriptRunner built-in script on the ${context.instanceType}, such as a bulk fix or copying a project, with the given parameter values. Many change Jira data in bulk, and nothing undoes them. Get the parameters with scriptrunner_getBuiltInScriptParams first, and check them with scriptrunner_validateBuiltInScript and scriptrunner_previewBuiltInScript.`,
     inputSchema: z.object(schemas.runBuiltInScript),
   }, async ({ className, values }) =>
     respond(() => scriptRunner.runBuiltInScript(className, values), 'Error running ScriptRunner built-in script'));
+}
+
+function registerBuiltInCheckTools(tools: PolicyRegistrar, context: JiraToolContext): void {
+  tools.registerTool('scriptrunner_validateBuiltInScript', {
+    description: `Ask ScriptRunner on the ${context.instanceType} whether parameter values suit a built-in script, without running it. Returns its errors by field, if any. It runs the script's own checks, which may read Jira data.`,
+    inputSchema: z.object(schemas.runBuiltInScript),
+  }, async ({ className, values }) =>
+    respond(() => scriptRunner.checkBuiltInScript(className, values, 'validate'), 'Error validating ScriptRunner built-in script'));
+
+  tools.registerTool('scriptrunner_previewBuiltInScript', {
+    description: `Preview what a ScriptRunner built-in script would do on the ${context.instanceType} with these values, as its Preview button shows, without making its changes: for a bulk fix, the issues it would change. Not every built-in script offers a preview. Use it before scriptrunner_runBuiltInScript.`,
+    inputSchema: z.object(schemas.runBuiltInScript),
+  }, async ({ className, values }) =>
+    respond(() => scriptRunner.checkBuiltInScript(className, values, 'preview'), 'Error previewing ScriptRunner built-in script'));
 }
 
 function registerFileSaveTool(tools: PolicyRegistrar, context: JiraToolContext): void {
@@ -47,7 +66,10 @@ function registerFileSaveTool(tools: PolicyRegistrar, context: JiraToolContext):
 /** Registers the tools that run or save code, each only when its own setting is true. */
 export function registerScriptRunnerOptInTools(tools: PolicyRegistrar, context: JiraToolContext, env: Env = process.env): void {
   if (isTruthy(env[SCRIPTRUNNER_OPT_IN_SETTINGS.scriptrunner_runConsoleScript])) registerConsoleTool(tools, context);
-  if (isTruthy(env[SCRIPTRUNNER_OPT_IN_SETTINGS.scriptrunner_runBuiltInScript])) registerBuiltInRunTool(tools, context);
+  if (isTruthy(env[SCRIPTRUNNER_OPT_IN_SETTINGS.scriptrunner_runBuiltInScript])) {
+    registerBuiltInRunTool(tools, context);
+    registerBuiltInCheckTools(tools, context);
+  }
   if (isTruthy(env[SCRIPTRUNNER_OPT_IN_SETTINGS.scriptrunner_saveScriptFile])) registerFileSaveTool(tools, context);
   if (isTruthy(env[SCRIPTRUNNER_OPT_IN_SETTINGS.scriptrunner_saveBehaviour])) registerBehaviourEditTools(tools, context);
 }

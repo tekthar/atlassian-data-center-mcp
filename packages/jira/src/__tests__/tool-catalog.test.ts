@@ -160,7 +160,8 @@ describe('JIRA_TOOL_CATALOG', () => {
   it('keeps the ScriptRunner tools that run or save code out of the tool search, listing them only once TOOLSETS names their toolset', () => {
     const runOrSave = Object.entries(SCRIPTRUNNER_CATALOG.tools).filter(([, entry]) => entry.access === 'destructive').map(([name]) => name);
 
-    expect(runOrSave).toHaveLength(7);
+    expect(runOrSave).toHaveLength(9);
+    expect(runOrSave).toEqual(expect.arrayContaining(['scriptrunner_validateBuiltInScript', 'scriptrunner_previewBuiltInScript']));
 
     expect(gatewayBy({ TOOLSETS: 'all' }).filter((name) => runOrSave.includes(name))).toEqual([]);
     expect(gatewayBy({}).filter((name) => runOrSave.includes(name))).toEqual([]);

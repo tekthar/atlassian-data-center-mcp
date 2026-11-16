@@ -47,6 +47,20 @@ export async function runBuiltInScript(className: string, values: Record<string,
   }, `Built-in script ${className}`));
 }
 
+/*
+ * ScriptRunner's own steps before a built-in script runs: `validate` checks the parameter values, and
+ * `preview` describes what the script would do, as its Preview button shows. Neither makes the script's
+ * changes, but both run the script's own code, so they sit behind the same setting as running it.
+ */
+export async function checkBuiltInScript(className: string, values: Record<string, unknown>, step: 'validate' | 'preview') {
+  return stripNoise(await callScriptRunner('scriptrunner', {
+    method: 'POST',
+    url: `/canned/{scriptName}/${step}`,
+    path: { scriptName: className },
+    body: values,
+  }, `Built-in script ${className}`));
+}
+
 /**
  * Writes a script editor file. ScriptRunner takes the content base64-encoded; POST refuses to replace an
  * existing file and PUT replaces it.

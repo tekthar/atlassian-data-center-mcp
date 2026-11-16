@@ -80,7 +80,7 @@ in the next release.
 | Checked against | ScriptRunner for Jira **10.20.0** (Marketplace build 1011210, released 2026-11-11), on 2026-11-15: the same routes, parameters and permission filters. See [Checking newer builds](#checking-newer-builds) |
 | Jira | 10.0 to 10.7 with ScriptRunner 9.46, whose REST resources use `javax.ws.rs`, and 11.0 to 11.3 with ScriptRunner 10.20, which moved them to `jakarta.ws.rs`; as the two builds' Marketplace listings give |
 | REST APIs used | `/rest/scriptrunner/latest` for the script editor, built-in scripts, the script console, scheduled jobs, REST endpoints and fragments; `/rest/scriptrunner-jira/latest` for listeners, scripted fields, workflow functions and JQL functions; `/rest/scriptrunner/behaviours/latest` for behaviours |
-| Tools | 12 that read, in the toolsets `scriptrunner_script_editor`, `scriptrunner_builtin_scripts`, `scriptrunner_features` and `scriptrunner_behaviours`; 7 opt-in tools that run or save code or change behaviours, in `scriptrunner_console`, `scriptrunner_builtin_scripts`, `scriptrunner_script_editor` and `scriptrunner_behaviours` |
+| Tools | 12 that read, in the toolsets `scriptrunner_script_editor`, `scriptrunner_builtin_scripts`, `scriptrunner_features` and `scriptrunner_behaviours`; 9 opt-in tools that run, validate, preview or save code or change behaviours, in `scriptrunner_console`, `scriptrunner_builtin_scripts`, `scriptrunner_script_editor` and `scriptrunner_behaviours` |
 | Detection | `GET /rest/scriptrunner-jira/latest/jqlfunctions/docs` at startup, which any signed-in user may read, unless `JIRA_APPS` names the apps to offer |
 | Status | Beta: not yet run against a live ScriptRunner instance |
 
@@ -117,15 +117,16 @@ permission settings allow. Only the JQL function docs are open to every signed-i
 `PERMISSION_FILTER`, so a user ScriptRunner doesn't allow gets a 403, and the tool says who ScriptRunner lets in.
 
 **Running and saving code, and changing behaviours.** `scriptrunner_runConsoleScript`,
-`scriptrunner_runBuiltInScript`, `scriptrunner_saveScriptFile` and the four behaviour tools
+`scriptrunner_runBuiltInScript` with `scriptrunner_validateBuiltInScript` and `scriptrunner_previewBuiltInScript`,
+`scriptrunner_saveScriptFile` and the four behaviour tools
 (`scriptrunner_saveBehaviour`, `scriptrunner_setBehaviourEnabled`, `scriptrunner_mapBehaviour` and
 `scriptrunner_unmapBehaviour`) can change anything on the instance, or the screens of everyone who uses it. So each is
 guarded in four ways:
 
 - It is destructive.
 - It is registered only when its own setting is `true`: `JIRA_SCRIPTRUNNER_CONSOLE_ENABLED`,
-  `JIRA_SCRIPTRUNNER_BUILTIN_RUN_ENABLED`, `JIRA_SCRIPTRUNNER_FILE_SAVE_ENABLED`, or, for all four behaviour tools,
-  `JIRA_SCRIPTRUNNER_BEHAVIOURS_EDIT_ENABLED`.
+  `JIRA_SCRIPTRUNNER_BUILTIN_RUN_ENABLED` for running, validating and previewing a built-in script,
+  `JIRA_SCRIPTRUNNER_FILE_SAVE_ENABLED`, or, for all four behaviour tools, `JIRA_SCRIPTRUNNER_BEHAVIOURS_EDIT_ENABLED`.
 - It is listed only when `TOOLSETS` names its toolset.
 - It is hidden from anyone `PERMISSION_FILTER` doesn't find to be a Jira administrator.
 
@@ -159,16 +160,26 @@ The behaviour tools also refuse three things before calling ScriptRunner:
 - The bundled server was driven against a test HTTP server answering ScriptRunner's routes. Detection found
   ScriptRunner and quietly left out Xray, which answered 404. The tool search found all seven tools, and
   `jira_runReadTool` ran one of them. A `jira_runCode` script listed the script files and read one.
+- Validating and previewing a built-in script are tested on their own routes, registered only with the run setting,
+  and a failed validation's errors come back in the tool's details.
 - With the feature tools added, the tool search ranked the right tool first for "scheduled jobs", "scripted field",
   "rest endpoint", "workflow post function" and "web panel fragment". A `jira_runCode` script read the scheduled jobs.
 
-**Other 9.x versions** are expected to work, but only 9.46.0 was read, so an earlier version may lack a route.
+**Review (2026-11-16).** Every route the tools call was checked against 10.20.0: the paths, query parameters and
+permission filters match, the console's JSON body is ScriptRunner's `ScriptConfiguration` (`script`, `scriptPath`),
+and running a built-in script answers when it's done, with no background task to poll. No bug turned up. One gap was
+filled: `scriptrunner_validateBuiltInScript` and `scriptrunner_previewBuiltInScript` call the `validate` and
+`preview` routes that ScriptRunner's own page uses before a run, so an agent can check the values and see what a bulk
+fix would change first. They run the built-in script's own code, and nothing in the build shows that code never
+changes anything, so they come with running a built-in script: the same setting, destructive, and never offered by the
+tool search or `jira_runCode`.
+
+**Other 9.x and 10.x versions** are expected to work. 9.46.0 and 10.20.0 were read, so an earlier version may lack a
+route.
 
 **Left out on purpose:**
 
 - **Deleting a behaviour.** Switching one off keeps it and its mappings, and can be undone.
-- **Previewing or validating a built-in script before running it.** Those routes exist, but this build doesn't show
-  that they never change anything.
 - **ScriptRunner's resources.** These are database and other connections, and their settings can hold passwords.
 - **Script search.** It lists the same files as the script editor.
 
@@ -484,6 +495,8 @@ Apps are added in this order, each step in its own release-ready change.
      [Checking newer builds](#checking-newer-builds)
    - [x] Xray: the add tools now report the keys Xray left out, and `xray_getTests` takes a saved filter. See
      [Xray](#xray)
-   - [ ] Review the other apps' tools for bugs and gaps, one app per step: ScriptRunner, draw.io, Zephyr, BigPicture
+   - [x] ScriptRunner: no bug found against 10.20.0; built-in scripts can be validated and previewed before a run,
+     behind the run setting. See [ScriptRunner](#scriptrunner)
+   - [ ] Review the other apps' tools for bugs and gaps, one app per step: draw.io, Zephyr, BigPicture
 7. Then the most popular Data Center apps for Jira, Confluence and Bitbucket, one at a time, each with the reason it
    was chosen.

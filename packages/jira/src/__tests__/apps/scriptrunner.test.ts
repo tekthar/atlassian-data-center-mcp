@@ -240,6 +240,31 @@ describe('ScriptRunner tools that run or save code', () => {
     expect(sent()).toMatchObject({ method: 'POST', path: { scriptName: className }, body: { FIELD_SOURCE_PROJECT: 'QA' } });
   });
 
+  it('validates and previews a built-in script on their own routes, with the run setting', async () => {
+    routeRequests({ '/scriptrunner/latest/canned/{scriptName}/validate': {}, '/scriptrunner/latest/canned/{scriptName}/preview': { output: '23 issues' } });
+    const className = 'com.onresolve.scriptrunner.canned.jira.admin.BulkFixResolutions';
+    const tools = setupOptIns({ JIRA_SCRIPTRUNNER_BUILTIN_RUN_ENABLED: 'true' });
+
+    await tools.callJson('scriptrunner_validateBuiltInScript', { className, values: { FIELD_FILTER_ID: '10200' } });
+    const preview = await tools.callJson('scriptrunner_previewBuiltInScript', { className, values: { FIELD_FILTER_ID: '10200' } });
+
+    expect(tools.registrar.registeredTools().sort()).toEqual(['scriptrunner_previewBuiltInScript', 'scriptrunner_runBuiltInScript', 'scriptrunner_validateBuiltInScript']);
+    expect(sent(0)).toMatchObject({ method: 'POST', url: '/scriptrunner/latest/canned/{scriptName}/validate', path: { scriptName: className }, body: { FIELD_FILTER_ID: '10200' } });
+    expect(sent(1)).toMatchObject({ url: '/scriptrunner/latest/canned/{scriptName}/preview', path: { scriptName: className } });
+    expect(preview.data).toEqual({ output: '23 issues' });
+  });
+
+  it('passes on the errors a failed validation reports', async () => {
+    routeRequests({ '/scriptrunner/latest/canned/{scriptName}/validate': Object.assign(new Error('Bad Request'), {
+      status: 400, statusText: 'Bad Request', body: { errors: { FIELD_FILTER_ID: 'Filter not found' } },
+    }) });
+
+    const result = await setupOptIns().callJson('scriptrunner_validateBuiltInScript', { className: 'com.onresolve.scriptrunner.canned.jira.admin.BulkFixResolutions', values: {} });
+
+    expect(result).toMatchObject({ success: false, error: 'Error validating ScriptRunner built-in script: 400 Bad Request' });
+    expect(JSON.stringify(result.details)).toContain('Filter not found');
+  });
+
   it('creates a script file from base64 content, refusing to replace one unless told to overwrite', async () => {
     routeRequests({ '/scriptrunner/latest/idea/file': undefined });
     const tools = setupOptIns();
