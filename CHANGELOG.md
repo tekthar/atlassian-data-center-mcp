@@ -5,7 +5,13 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ## Unreleased
 
+### Bug fixes
+
+* **jira:** the Xray tools that add tests or test executions (`xray_addTestsToTestExecution`, `xray_addTestsToTestPlan`, `xray_addTestsToTestSet` and `xray_addTestExecutionsToTestPlan`) reported every key as added. Xray answers success even when it leaves keys out, such as ones that aren't tests, and lists a message for each. The tools now return `requested`, `allAdded`, and `notAdded` with those messages, in place of `added` and `response`.
+
 ### Features
+
+* **jira:** `xray_getTests` takes a saved Jira filter as `filterId`, as well as keys and JQL.
 
 * **jira:** BigPicture support (Appfire). Twenty-two tools, reached through `jira_searchTools` when BigPicture is installed:
   * the box hierarchy of portfolios, programs, projects and iterations, without archived boxes unless asked;

@@ -52,8 +52,19 @@ such as `{ "add": [...], "remove": [...] }` for adding tests and the test run up
 **Other 8.x versions** are expected to work: these tools use Xray's public v1 and v2 REST APIs, not its internal
 ones. Only 8.6.0 was read, though, so earlier versions may lack an endpoint, and responses may differ in detail.
 
+**Review (2026-11-16).** Each tool's request was checked again against the 8.6.1 routes, and the code behind the
+add routes was read with `javap -c`:
+
+- **Fixed:** the tools that add tests or test executions reported every key as added. Xray answers 200 even when it
+  leaves keys out, such as ones that aren't tests or that it can't find, with a message about each in a list. The tools
+  now return `requested`, `allAdded`, and `notAdded` with Xray's messages.
+- **Added:** `xray_getTests` takes `filterId`, a saved Jira filter, which Xray's `/api/test` reads as `filter`.
+- **Documented:** `/api/test` returns every matching test at once, with no paging and no cap, so the tool's
+  description asks for a narrow selection. Adding a test set's key to a test execution adds the set's tests.
+
 **Not covered yet.** Removing tests from executions, plans and sets (removing a test from an execution deletes its
-results), test repository folders, preconditions, datasets, and importing automated test results.
+results), test repository folders, preconditions, datasets, and importing automated test results. Two query options
+aren't offered: `testDefinition` on a test set's tests, and `includeTestFields` on the test run search.
 
 **To mark it Tested**, we need the tools run against a live Xray 8 instance, including detection with an ordinary
 user's token, since it hasn't been confirmed that every user can read the test statuses detection asks for.
@@ -471,6 +482,8 @@ Apps are added in this order, each step in its own release-ready change.
    - [x] Check each app against its newest Data Center build (2026-11-15). Xray, ScriptRunner and draw.io for
      Confluence had newer builds; none changed a route the tools call. See
      [Checking newer builds](#checking-newer-builds)
-   - [ ] Review each app's tools for bugs and gaps, one app per step
+   - [x] Xray: the add tools now report the keys Xray left out, and `xray_getTests` takes a saved filter. See
+     [Xray](#xray)
+   - [ ] Review the other apps' tools for bugs and gaps, one app per step: ScriptRunner, draw.io, Zephyr, BigPicture
 7. Then the most popular Data Center apps for Jira, Confluence and Bitbucket, one at a time, each with the reason it
    was chosen.

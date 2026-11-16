@@ -14,8 +14,14 @@ const pageQuery = ({ page, limit }: PageInput, pageSize: number): Query => ({ pa
 const get = async (version: '1.0' | '2.0', url: string, subject: string, path?: Record<string, unknown>, query?: Query) =>
   stripNoise(await callXray(version, { method: 'GET', url, path, query }, subject));
 
-export function getTests(keys: string[] | undefined, jql: string | undefined) {
-  return get('1.0', '/api/test', 'The Xray tests', undefined, { keys: keys?.join(';'), jql });
+export interface TestSelection {
+  keys?: string[];
+  jql?: string;
+  filterId?: number;
+}
+
+export function getTests({ keys, jql, filterId }: TestSelection) {
+  return get('1.0', '/api/test', 'The Xray tests', undefined, { keys: keys?.join(';'), filter: filterId, jql });
 }
 
 export function getTestSteps(testKey: string, testVersion: number | undefined) {
@@ -76,10 +82,17 @@ export function searchTestRuns(search: TestRunSearch, pageSize: number) {
     { testExecKey, testKey, testPlanKey, savedFilterId, ...pageQuery(search, pageSize) });
 }
 
-/** Adds issues to a test execution, plan or set; the add and remove lists are what Xray's CollectionBean reads. */
-export async function addToIssue(url: string, key: string, subject: string, body: Record<string, unknown>) {
-  const response = await callXray('1.0', { method: 'POST', url, path: { key }, body }, subject);
-  return { key, added: body.add, response: stripNoise(response) ?? null };
+/*
+ * Adds issues to a test execution, plan or set; the add and remove lists are what Xray's CollectionBean
+ * reads. Xray answers 200 even when it leaves keys out, such as ones that aren't tests or that it can't
+ * find, with a message about each in a list; an empty list means it added them all.
+ */
+export async function addToIssue(url: string, key: string, subject: string, body: { add: string[] } & Record<string, unknown>) {
+  const response = stripNoise(await callXray('1.0', { method: 'POST', url, path: { key }, body }, subject));
+  const skipped = Array.isArray(response) ? response.filter((message): message is string => typeof message === 'string') : [];
+  const result = { key, requested: body.add, allAdded: skipped.length === 0 };
+  if (skipped.length) return { ...result, notAdded: skipped };
+  return Array.isArray(response) || response == null ? result : { ...result, response };
 }
 
 export interface TestRunUpdate {

@@ -6,7 +6,7 @@ import { xrayToolSchemas as schemas } from './schemas.js';
 
 function registerAddTestsTools(tools: PolicyRegistrar, context: JiraToolContext): void {
   tools.registerTool('xray_addTestsToTestExecution', {
-    description: `Add Xray tests to a test execution in the ${context.instanceType}. Each added test gets a test run in the execution.`,
+    description: `Add Xray tests to a test execution in the ${context.instanceType}. Each added test gets a test run in the execution; a test set's key adds its tests. Returns allAdded, and Xray's message about each key it left out, such as one that isn't a test.`,
     inputSchema: z.object(schemas.addTestsToTestExecution),
   }, async ({ testExecKey, testKeys }) => respond(
     () => xray.addToIssue('/api/testexec/{key}/test', testExecKey, `Test execution ${testExecKey}`, { add: testKeys }),
@@ -14,7 +14,7 @@ function registerAddTestsTools(tools: PolicyRegistrar, context: JiraToolContext)
   ));
 
   tools.registerTool('xray_addTestsToTestPlan', {
-    description: `Add Xray tests to a test plan in the ${context.instanceType}.`,
+    description: `Add Xray tests to a test plan in the ${context.instanceType}. Returns allAdded, and Xray's message about each key it left out, such as one that isn't a test.`,
     inputSchema: z.object(schemas.addTestsToTestPlan),
   }, async ({ testPlanKey, testKeys }) => respond(
     () => xray.addToIssue('/api/testplan/{key}/test', testPlanKey, `Test plan ${testPlanKey}`, { add: testKeys }),
@@ -22,7 +22,7 @@ function registerAddTestsTools(tools: PolicyRegistrar, context: JiraToolContext)
   ));
 
   tools.registerTool('xray_addTestsToTestSet', {
-    description: `Add Xray tests to a test set in the ${context.instanceType}.`,
+    description: `Add Xray tests to a test set in the ${context.instanceType}. Returns allAdded, and Xray's message about each key it left out, such as one that isn't a test.`,
     inputSchema: z.object(schemas.addTestsToTestSet),
   }, async ({ testSetKey, testKeys }) => respond(
     () => xray.addToIssue('/api/testset/{key}/test', testSetKey, `Test set ${testSetKey}`, { add: testKeys }),
@@ -32,7 +32,7 @@ function registerAddTestsTools(tools: PolicyRegistrar, context: JiraToolContext)
 
 function registerAddExecutionsTool(tools: PolicyRegistrar, context: JiraToolContext): void {
   tools.registerTool('xray_addTestExecutionsToTestPlan', {
-    description: `Add Xray test executions to a test plan in the ${context.instanceType}, optionally adding their tests to the plan too.`,
+    description: `Add Xray test executions to a test plan in the ${context.instanceType}, optionally adding their tests to the plan too. Returns allAdded, and Xray's message about each key it left out.`,
     inputSchema: z.object(schemas.addTestExecutionsToTestPlan),
   }, async ({ testPlanKey, testExecKeys, addTestsToPlan }) => respond(
     () => xray.addToIssue('/api/testplan/{key}/testexecution', testPlanKey, `Test plan ${testPlanKey}`,

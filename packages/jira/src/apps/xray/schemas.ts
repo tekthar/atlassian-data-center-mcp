@@ -33,6 +33,7 @@ export const xrayToolSchemas = {
   getTests: {
     keys: issueKeys('tests').optional(),
     jql: z.string().min(1).optional().describe("JQL selecting tests, e.g. 'project = QA AND issuetype = Test AND labels = smoke'"),
+    filterId: z.number().int().positive().optional().describe('Id of a saved Jira filter selecting tests'),
   },
   getTestSteps: {
     testKey: issueKey('test'),

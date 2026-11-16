@@ -58,10 +58,18 @@ describe('Xray tools', () => {
     expect(result).toEqual({ success: true, data: [{ key: 'QA-1', type: 'Manual' }] });
   });
 
-  it('refuses to get tests without keys or JQL', async () => {
+  it('gets tests by saved filter, sent as Xray\'s filter parameter', async () => {
+    routeRequests({ '/raven/1.0/api/test': [] });
+
+    await setup().callJson('xray_getTests', { filterId: 10200 });
+
+    expect(sent().query).toEqual({ filter: 10200 });
+  });
+
+  it('refuses to get tests without keys, JQL or a filter', async () => {
     const result = await setup().callJson('xray_getTests', {});
 
-    expect(result).toEqual({ success: false, error: 'Give keys or jql to choose the tests.' });
+    expect(result).toEqual({ success: false, error: 'Give keys, jql or filterId to choose the tests.' });
     expect(mockedRequest).not.toHaveBeenCalled();
   });
 
@@ -117,7 +125,26 @@ describe('Xray tools', () => {
     const result = await setup().callJson('xray_addTestsToTestExecution', { testExecKey: 'QA-20', testKeys: ['QA-1', 'QA-2'] });
 
     expect(sent()).toMatchObject({ method: 'POST', path: { key: 'QA-20' }, body: { add: ['QA-1', 'QA-2'] } });
-    expect(result.data).toEqual({ key: 'QA-20', added: ['QA-1', 'QA-2'], response: null });
+    expect(result.data).toEqual({ key: 'QA-20', requested: ['QA-1', 'QA-2'], allAdded: true });
+  });
+
+  it('reports the keys Xray left out, which it answers with 200 and a message each', async () => {
+    routeRequests({ '/raven/1.0/api/testset/{key}/test': ['Test with key QA-9 was not found.'] });
+
+    const result = await setup().callJson('xray_addTestsToTestSet', { testSetKey: 'QA-30', testKeys: ['QA-1', 'QA-9'] });
+
+    expect(result).toEqual({
+      success: true,
+      data: { key: 'QA-30', requested: ['QA-1', 'QA-9'], allAdded: false, notAdded: ['Test with key QA-9 was not found.'] },
+    });
+  });
+
+  it('counts an empty list from Xray as everything added', async () => {
+    routeRequests({ '/raven/1.0/api/testplan/{key}/test': [] });
+
+    const result = await setup().callJson('xray_addTestsToTestPlan', { testPlanKey: 'QA-40', testKeys: ['QA-1'] });
+
+    expect(result.data).toEqual({ key: 'QA-40', requested: ['QA-1'], allAdded: true });
   });
 
   it('adds test executions to a test plan, without their tests unless asked', async () => {

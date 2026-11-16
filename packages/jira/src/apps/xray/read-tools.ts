@@ -6,11 +6,13 @@ import { xrayToolSchemas as schemas } from './schemas.js';
 
 function registerTestTools(tools: PolicyRegistrar, context: JiraToolContext): void {
   tools.registerTool('xray_getTests', {
-    description: `Get Xray tests from the ${context.instanceType} by issue key or JQL, with each test's type, steps or definition, and preconditions. Give keys or jql.`,
+    description: `Get Xray tests from the ${context.instanceType} by issue key, JQL or saved filter, with each test's type, steps or definition, and preconditions. Give keys, jql or filterId. Xray returns every matching test at once, without paging, so keep the selection narrow.`,
     inputSchema: z.object(schemas.getTests),
-  }, async ({ keys, jql }) => {
-    if (!keys?.length && !jql) return invalidInput('Give keys or jql to choose the tests.');
-    return respond(() => xray.getTests(keys, jql), 'Error fetching Xray tests');
+  }, async (selection) => {
+    if (!selection.keys?.length && !selection.jql && selection.filterId === undefined) {
+      return invalidInput('Give keys, jql or filterId to choose the tests.');
+    }
+    return respond(() => xray.getTests(selection), 'Error fetching Xray tests');
   });
 
   tools.registerTool('xray_getTestSteps', {
