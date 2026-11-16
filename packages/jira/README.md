@@ -168,7 +168,7 @@ from an execution deletes its results.
 | Toolset | Tools |
 |---|---|
 | `scriptrunner_script_editor`: the script roots and their files | `scriptrunner_listScriptFiles`, `scriptrunner_getScriptFile`, `scriptrunner_saveScriptFile` (destructive, opt-in) |
-| `scriptrunner_builtin_scripts`: built-in scripts and the parameters they ask for | `scriptrunner_listBuiltInScripts`, `scriptrunner_getBuiltInScriptParams`, `scriptrunner_runBuiltInScript` (destructive, opt-in) |
+| `scriptrunner_builtin_scripts`: built-in scripts and the parameters they ask for | `scriptrunner_listBuiltInScripts`, `scriptrunner_getBuiltInScriptParams`, `scriptrunner_validateBuiltInScript`, `scriptrunner_previewBuiltInScript` and `scriptrunner_runBuiltInScript` (all three destructive, opt-in) |
 | `scriptrunner_features`: listeners, scripted fields, scheduled jobs, REST endpoints, fragments, workflow functions, and the JQL functions ScriptRunner adds | `scriptrunner_getListeners`, `scriptrunner_getScriptedFields`, `scriptrunner_getScheduledJobs`, `scriptrunner_getRestEndpoints`, `scriptrunner_getFragments`, `scriptrunner_getWorkflowFunctions`, `scriptrunner_getJqlFunctions` |
 | `scriptrunner_behaviours`: behaviours and where they apply | `scriptrunner_getBehaviours`, `scriptrunner_saveBehaviour`, `scriptrunner_setBehaviourEnabled`, `scriptrunner_mapBehaviour`, `scriptrunner_unmapBehaviour` (all four destructive, opt-in) |
 | `scriptrunner_console`: run Groovy on the Jira server | `scriptrunner_runConsoleScript` (destructive, opt-in) |
@@ -252,7 +252,7 @@ keychain.
 |---|---|
 | `JIRA_VERSION_DELETE_ENABLED` | `true` lists `jira_deleteVersion`. |
 | `JIRA_SCRIPTRUNNER_CONSOLE_ENABLED` | `true` turns on `scriptrunner_runConsoleScript`, which runs Groovy on the Jira server. Also name `scriptrunner_console` in `TOOLSETS`. |
-| `JIRA_SCRIPTRUNNER_BUILTIN_RUN_ENABLED` | `true` turns on `scriptrunner_runBuiltInScript`. Also name `scriptrunner_builtin_scripts` in `TOOLSETS`. |
+| `JIRA_SCRIPTRUNNER_BUILTIN_RUN_ENABLED` | `true` turns on `scriptrunner_runBuiltInScript`, with `scriptrunner_validateBuiltInScript` and `scriptrunner_previewBuiltInScript` to check a run first. Also name `scriptrunner_builtin_scripts` in `TOOLSETS`. |
 | `JIRA_SCRIPTRUNNER_FILE_SAVE_ENABLED` | `true` turns on `scriptrunner_saveScriptFile`, which creates or replaces script files. Also name `scriptrunner_script_editor` in `TOOLSETS`. |
 | `JIRA_SCRIPTRUNNER_BEHAVIOURS_EDIT_ENABLED` | `true` turns on the four tools that create, replace, switch on or off, and map behaviours. Also name `scriptrunner_behaviours` in `TOOLSETS`. |
 | `JIRA_ATTACHMENTS_UPLOAD_ENABLED`, `JIRA_ATTACHMENTS_DOWNLOAD_ENABLED` | `true` lets attachments be uploaded from, or saved to, your disk. Default off: downloads come back inline and never touch the disk. |

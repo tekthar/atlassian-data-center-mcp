@@ -34,6 +34,8 @@ export const SCRIPTRUNNER_CATALOG: ToolCatalog = {
     scriptrunner_getBehaviours: { toolset: 'scriptrunner_behaviours', access: 'read' },
     scriptrunner_runConsoleScript: { toolset: 'scriptrunner_console', access: 'destructive', anyOfPermissions: ADMINISTRATORS },
     scriptrunner_runBuiltInScript: { toolset: 'scriptrunner_builtin_scripts', access: 'destructive', anyOfPermissions: ADMINISTRATORS },
+    scriptrunner_validateBuiltInScript: { toolset: 'scriptrunner_builtin_scripts', access: 'destructive', anyOfPermissions: ADMINISTRATORS },
+    scriptrunner_previewBuiltInScript: { toolset: 'scriptrunner_builtin_scripts', access: 'destructive', anyOfPermissions: ADMINISTRATORS },
     scriptrunner_saveScriptFile: { toolset: 'scriptrunner_script_editor', access: 'destructive', anyOfPermissions: ADMINISTRATORS },
     scriptrunner_saveBehaviour: { toolset: 'scriptrunner_behaviours', access: 'destructive', anyOfPermissions: ADMINISTRATORS },
     scriptrunner_setBehaviourEnabled: { toolset: 'scriptrunner_behaviours', access: 'destructive', anyOfPermissions: ADMINISTRATORS },

@@ -51,7 +51,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
   ScriptRunner decides who may use them, mostly Jira administrators. Built from ScriptRunner 9.46.0. See [Supported apps](docs/supported-apps.md#scriptrunner).
 * **jira:** opt-in ScriptRunner tools that run or save code. Each is off until its own setting is `true`:
   * `scriptrunner_runConsoleScript` runs Groovy in the script console (`JIRA_SCRIPTRUNNER_CONSOLE_ENABLED`);
-  * `scriptrunner_runBuiltInScript` runs a built-in script (`JIRA_SCRIPTRUNNER_BUILTIN_RUN_ENABLED`);
+  * `scriptrunner_runBuiltInScript` runs a built-in script, and `scriptrunner_validateBuiltInScript` and `scriptrunner_previewBuiltInScript` check the values and show what it would do first, as ScriptRunner's own page does (`JIRA_SCRIPTRUNNER_BUILTIN_RUN_ENABLED`);
   * `scriptrunner_saveScriptFile` creates a script file, or replaces one when asked (`JIRA_SCRIPTRUNNER_FILE_SAVE_ENABLED`);
   * `scriptrunner_saveBehaviour`, `scriptrunner_setBehaviourEnabled`, `scriptrunner_mapBehaviour` and `scriptrunner_unmapBehaviour` create or replace a behaviour, switch it on or off, and add or remove where it applies (`JIRA_SCRIPTRUNNER_BEHAVIOURS_EDIT_ENABLED`). Replacing a behaviour requires its fields, so it can't lose its rules by accident, and removing a mapping names exactly one.
 
