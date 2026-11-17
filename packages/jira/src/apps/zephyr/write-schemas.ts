@@ -14,22 +14,34 @@ const folder = z.string().startsWith('/').optional().describe('Folder path, e.g.
 
 const status = (what: string, example: string) => z.string().min(1).optional().describe(`${what} status as the project names it, e.g. "${example}"`);
 
+/** What one test result holds; Zephyr's TestResultDTO, with its scriptResults called stepResults. */
+const resultFields = {
+  status: z.string().min(1).describe('Result status as the project names it, e.g. "Pass", "Fail" or "Blocked"'),
+  comment: z.string().optional().describe('Comment on the result (HTML allowed)'),
+  environment: z.string().optional().describe('Environment name, from zephyr_getEnvironments'),
+  executionTime: z.number().int().min(0).optional().describe('How long it took, in milliseconds'),
+  executedBy: z.string().optional().describe('Jira user key of who ran it; leave out for you'),
+  stepResults: z.array(z.object({
+    index: z.number().int().min(0).describe('0-based step index'),
+    status: z.string().min(1).describe('Step status, e.g. "Pass"'),
+    comment: z.string().optional(),
+  })).optional().describe('Each step\'s result'),
+  issueLinks: issueKeys.describe('Defects or other Jira issues to link to the result, e.g. ["QA-31"]'),
+};
+
+const testCycleKey = zephyrKey('test cycle', 'QA-R4');
+
 export const zephyrWriteSchemas = {
   recordTestResult: {
-    testCycleKey: zephyrKey('test cycle', 'QA-R4'),
+    testCycleKey,
     testCaseKey: zephyrKey('test case in that cycle', 'QA-T12'),
-    status: z.string().min(1).describe('Result status as the project names it, e.g. "Pass", "Fail" or "Blocked"'),
-    comment: z.string().optional().describe('Comment on the result (HTML allowed)'),
-    environment: z.string().optional().describe('Environment name, from zephyr_getEnvironments'),
-    executionTime: z.number().int().min(0).optional().describe('How long it took, in milliseconds'),
-    executedBy: z.string().optional().describe('Jira user key of who ran it; leave out for you'),
-    stepResults: z.array(z.object({
-      index: z.number().int().min(0).describe('0-based step index'),
-      status: z.string().min(1).describe('Step status, e.g. "Pass"'),
-      comment: z.string().optional(),
-    })).optional().describe('Each step\'s result'),
-    issueLinks: issueKeys.describe('Defects or other Jira issues to link to the result, e.g. ["QA-31"]'),
+    ...resultFields,
     replaceLatest: z.boolean().optional().describe('Update the test case\'s latest result in the cycle instead of adding a new one (default false)'),
+  },
+  recordTestResults: {
+    testCycleKey,
+    results: z.array(z.object({ testCaseKey: zephyrKey('test case in that cycle', 'QA-T12'), ...resultFields }))
+      .min(1).max(200).describe('One result per test case run, up to 200'),
   },
   createTestCase: {
     projectKey,

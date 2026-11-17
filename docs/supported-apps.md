@@ -313,7 +313,7 @@ Test management by SmartBear, formerly Zephyr Scale and Test Management for Jira
 | Built from | Zephyr **12.12.1-jira11** for Data Center (Marketplace build 800702964, released 2026-11-03) |
 | Jira | 11.0 to 11.3, as this build's Marketplace listing gives. SmartBear publishes a separate build for each Jira line; the public API below is the same in all of them |
 | REST API used | `/rest/atm/1.0`, Zephyr's public API |
-| Tools | 14 in the toolsets `zephyr_test_cases`, `zephyr_test_cycles` and `zephyr_test_plans`: 10 that read, and 4 that record a result or create a test case, cycle or plan |
+| Tools | 15 in the toolsets `zephyr_test_cases`, `zephyr_test_cycles` and `zephyr_test_plans`: 10 that read, and 5 that record results or create a test case, cycle or plan |
 | Detection | `GET /rest/atm/1.0/healthcheck` at startup, unless `JIRA_APPS` names the apps to offer |
 | Status | Beta: not yet run against a live Zephyr instance |
 
@@ -340,6 +340,7 @@ The tools take friendlier names and map them:
 | Tool | Request |
 |---|---|
 | `zephyr_recordTestResult` | `POST /testrun/{testRunKey}/testcase/{testCaseKey}/testresult` adds an execution. With `replaceLatest`, `PUT` on the same route updates the latest one. `stepResults` become `scriptResults` |
+| `zephyr_recordTestResults` | `POST /testrun/{testRunKey}/testresults` with a list of results, each naming its `testCaseKey`, adds an execution for each, up to 200 in one call |
 | `zephyr_createTestCase` | `POST /testcase`. `steps` become a `STEP_BY_STEP` script and `plainText` a `PLAIN_TEXT` one; the tool refuses both together |
 | `zephyr_createTestCycle` | `POST /testrun`. `testCaseKeys` become `items` |
 | `zephyr_createTestPlan` | `POST /testplan`. `testCycleKeys` become `testRunKeys` |
@@ -361,8 +362,17 @@ With the writes added, the tool search listed `zephyr_recordTestResult` as a wri
 pointed to `jira_runWriteTool`, which created a test cycle and recorded a result with exactly the bodies above. A
 `jira_runCode` script couldn't call it.
 
+**Review (2026-11-17).** Every request was checked again against 12.12.1-jira11, still the newest build: the query
+parameters of each read, and the fields of each body against `TestResultDTO`, `TestScriptResultDTO`, `TestScriptDTO`,
+`StepDTO`, `TestCaseDTO`, `TestRunDTO` and `TestPlanDTO`. They all match, and no bug turned up. The result routes
+also take `environment` and `userKey` as query parameters, but the body carries the same fields, so the tools send them
+there. One gap was filled: `zephyr_recordTestResults` uses Zephyr's bulk route, so an automated run's results go in
+one call instead of one per test case. Its unit tests check the body list and that an empty list, or a result without
+its test case, is refused.
+
 **Not covered yet:** updating test cases and plans, attachments, folders, custom fields, BDD scripts, importing
-automation results, and deleting. Deleting is left out on purpose.
+automation results, and deleting. Deleting is left out on purpose. A result's `executionDate`, actual start and end
+dates, `assignedTo`, `version` and `iteration` aren't offered either.
 
 ## BigPicture
 
@@ -517,6 +527,7 @@ Apps are added in this order, each step in its own release-ready change.
      behind the run setting. See [ScriptRunner](#scriptrunner)
    - [x] draw.io: reading a Confluence diagram's earlier revision could save a backup attachment; it never does now.
      draw.io for Jira had no bug. See [draw.io for Confluence](#drawio-for-confluence)
-   - [ ] Review the other apps' tools for bugs and gaps, one app per step: Zephyr, BigPicture
+   - [x] Zephyr: no bug found; many results can be recorded in one call. See [Zephyr](#zephyr)
+   - [ ] Review the other apps' tools for bugs and gaps, one app per step: BigPicture
 7. Then the most popular Data Center apps for Jira, Confluence and Bitbucket, one at a time, each with the reason it
    was chosen.

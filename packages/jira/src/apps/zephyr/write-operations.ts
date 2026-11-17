@@ -19,11 +19,24 @@ export interface TestResultInput {
   issueLinks?: string[];
 }
 
+/** A result as Zephyr reads it, which calls step results script results. */
+const resultBody = ({ stepResults, ...rest }: TestResultInput): Body => defined({ ...rest, scriptResults: stepResults });
+
 /** Adds a result for a test case in a test cycle, or with `replaceLatest` updates its latest one. */
 export function recordTestResult(testCycleKey: string, testCaseKey: string, result: TestResultInput, replaceLatest: boolean) {
-  const { stepResults, ...rest } = result;
   return send(replaceLatest ? 'PUT' : 'POST', '/testrun/{testRunKey}/testcase/{testCaseKey}/testresult',
-    `Test case ${testCaseKey} in test cycle ${testCycleKey}`, { ...rest, scriptResults: stepResults }, { testRunKey: testCycleKey, testCaseKey });
+    `Test case ${testCaseKey} in test cycle ${testCycleKey}`, resultBody(result), { testRunKey: testCycleKey, testCaseKey });
+}
+
+/** Adds results for many test cases of a test cycle in one call, each naming its test case. */
+export async function recordTestResults(testCycleKey: string, results: Array<TestResultInput & { testCaseKey: string }>) {
+  const created = await callZephyr({
+    method: 'POST',
+    url: '/testrun/{testRunKey}/testresults',
+    path: { testRunKey: testCycleKey },
+    body: results.map(resultBody),
+  }, `Test cycle ${testCycleKey}`);
+  return { testCycleKey, recorded: results.length, created: stripNoise(created) ?? null };
 }
 
 export interface TestCaseInput extends Body {

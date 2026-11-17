@@ -10,6 +10,12 @@ function registerResultTool(tools: PolicyRegistrar, context: JiraToolContext): v
     inputSchema: z.object(schemas.recordTestResult),
   }, async ({ testCycleKey, testCaseKey, replaceLatest, ...result }) =>
     respond(() => zephyr.recordTestResult(testCycleKey, testCaseKey, result, replaceLatest ?? false), 'Error recording Zephyr test result'));
+
+  tools.registerTool('zephyr_recordTestResults', {
+    description: `Record many Zephyr test results in one test cycle of the ${context.instanceType} at once, such as a whole automated run: each with its test case, status, and optionally a comment, environment, time, step results and linked defects. Each adds an execution.`,
+    inputSchema: z.object(schemas.recordTestResults),
+  }, async ({ testCycleKey, results }) =>
+    respond(() => zephyr.recordTestResults(testCycleKey, results), 'Error recording Zephyr test results'));
 }
 
 function registerCreateTools(tools: PolicyRegistrar, context: JiraToolContext): void {
