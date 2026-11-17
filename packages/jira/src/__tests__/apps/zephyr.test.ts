@@ -138,6 +138,33 @@ describe('Zephyr tools', () => {
     expect(sent()).toMatchObject({ method: 'PUT', body: { status: 'Pass' } });
   });
 
+  it('records many results in one call, each naming its test case, with step results as script results', async () => {
+    routeRequests({ '/atm/1.0/testrun/{testRunKey}/testresults': [{ id: 81 }, { id: 82 }] });
+
+    const result = await setup().callJson('zephyr_recordTestResults', {
+      testCycleKey: 'QA-R4',
+      results: [
+        { testCaseKey: 'QA-T12', status: 'Pass', executionTime: 1800, environment: 'Chrome' },
+        { testCaseKey: 'QA-T13', status: 'Fail', stepResults: [{ index: 0, status: 'Fail', comment: 'Timeout' }], issueLinks: ['QA-31'] },
+      ],
+    });
+
+    expect(sent()).toMatchObject({ method: 'POST', path: { testRunKey: 'QA-R4' } });
+    expect(sent().body).toEqual([
+      { testCaseKey: 'QA-T12', status: 'Pass', executionTime: 1800, environment: 'Chrome' },
+      { testCaseKey: 'QA-T13', status: 'Fail', issueLinks: ['QA-31'], scriptResults: [{ index: 0, status: 'Fail', comment: 'Timeout' }] },
+    ]);
+    expect(result).toEqual({ success: true, data: { testCycleKey: 'QA-R4', recorded: 2, created: [{ id: 81 }, { id: 82 }] } });
+  });
+
+  it('refuses a bulk record with no results or a result without its test case', async () => {
+    const tools = setup();
+
+    await expect(tools.call('zephyr_recordTestResults', { testCycleKey: 'QA-R4', results: [] })).rejects.toThrow();
+    await expect(tools.call('zephyr_recordTestResults', { testCycleKey: 'QA-R4', results: [{ status: 'Pass' }] })).rejects.toThrow();
+    expect(mockedRequest).not.toHaveBeenCalled();
+  });
+
   it('creates a test case with a step-by-step or a plain-text script, but not both', async () => {
     routeRequests({ '/atm/1.0/testcase': { key: 'QA-T40' } });
     const tools = setup();

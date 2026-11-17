@@ -23,6 +23,7 @@ export const ZEPHYR_CATALOG: ToolCatalog = {
     zephyr_getTestPlan: { toolset: 'zephyr_test_plans', access: 'read' },
     zephyr_searchTestPlans: { toolset: 'zephyr_test_plans', access: 'read' },
     zephyr_recordTestResult: { toolset: 'zephyr_test_cycles', access: 'write' },
+    zephyr_recordTestResults: { toolset: 'zephyr_test_cycles', access: 'write' },
     zephyr_createTestCase: { toolset: 'zephyr_test_cases', access: 'write' },
     zephyr_createTestCycle: { toolset: 'zephyr_test_cycles', access: 'write' },
     zephyr_createTestPlan: { toolset: 'zephyr_test_plans', access: 'write' },

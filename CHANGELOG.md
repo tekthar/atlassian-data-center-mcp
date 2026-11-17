@@ -23,11 +23,11 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
     people's capacity between two dates.
 
   Built from BigPicture 8.70.11.6. See [Supported apps](docs/supported-apps.md#bigpicture).
-* **jira:** Zephyr support (SmartBear, formerly Zephyr Scale). Fourteen tools, reached through `jira_searchTools` when Zephyr is installed:
+* **jira:** Zephyr support (SmartBear, formerly Zephyr Scale). Fifteen tools, reached through `jira_searchTools` when Zephyr is installed:
   * test cases, found with TQL, with their latest result, and the test cases covering a Jira issue;
   * test cycles and their execution results, and a project's environments;
   * test plans;
-  * recording a test result (with step results and linked defects), and creating test cases, test cycles and test plans.
+  * recording a test result (with step results and linked defects), or many at once, such as an automated run, and creating test cases, test cycles and test plans.
 
   Built from Zephyr 12.12.1. See [Supported apps](docs/supported-apps.md#zephyr).
 * **jira:** draw.io for Jira, with two read tools reached through `jira_searchTools`:

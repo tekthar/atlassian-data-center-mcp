@@ -17,7 +17,7 @@ import { ZEPHYR_CATALOG } from '../apps/zephyr/catalog.js';
  */
 const UNGATED_WRITE_TOOLS = [
   'jira_watchIssue', 'jira_unwatchIssue', 'jira_createCustomerRequest', 'xray_updateTestRun',
-  'zephyr_recordTestResult', 'zephyr_createTestCase', 'zephyr_createTestCycle', 'zephyr_createTestPlan',
+  'zephyr_recordTestResult', 'zephyr_recordTestResults', 'zephyr_createTestCase', 'zephyr_createTestCycle', 'zephyr_createTestPlan',
   'bigpicture_addBox', 'bigpicture_addTeamMember', 'bigpicture_updateTeamMember', 'bigpicture_removeTeamMember',
 ];
 

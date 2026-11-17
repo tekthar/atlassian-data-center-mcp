@@ -195,7 +195,7 @@ Creating and editing diagrams isn't offered yet: draw.io saves need a preview im
 | Toolset | Tools |
 |---|---|
 | `zephyr_test_cases`: test cases, their latest result, and the ones covering an issue | `zephyr_getTestCase`, `zephyr_searchTestCases`, `zephyr_getLatestTestResult`, `zephyr_getIssueTestCases`, `zephyr_createTestCase` |
-| `zephyr_test_cycles`: test cycles, their results, and a project's environments | `zephyr_getTestCycle`, `zephyr_searchTestCycles`, `zephyr_getTestCycleResults`, `zephyr_getEnvironments`, `zephyr_createTestCycle`, `zephyr_recordTestResult` |
+| `zephyr_test_cycles`: test cycles, their results, and a project's environments | `zephyr_getTestCycle`, `zephyr_searchTestCycles`, `zephyr_getTestCycleResults`, `zephyr_getEnvironments`, `zephyr_createTestCycle`, `zephyr_recordTestResult`, `zephyr_recordTestResults` |
 | `zephyr_test_plans`: test plans | `zephyr_getTestPlan`, `zephyr_searchTestPlans`, `zephyr_createTestPlan` |
 
 Zephyr's own project permissions decide who may record results and create tests.
