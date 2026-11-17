@@ -244,6 +244,20 @@ render a diagram to an image, so the [roadmap](#roadmap) lists the options.
 Revision history is left out too: its route needs the diagram attachment's id and version, which the other routes don't
 return together.
 
+**Review (2026-11-17).** The requests were checked again against 16.1.13, and `javap -c` was run on the code behind
+the diagram read:
+
+- **Fixed: reading could write.** draw.io's editor reads diagrams through the same route. When it opens an earlier
+  revision of a diagram whose last change is more than a week old, and the user may edit it, draw.io first saves the
+  current diagram as a backup attachment on the page, with the comment "draw.io diagram backup". So
+  `drawio_getDiagram` with `revision` could add an attachment to the page, as the reader. Its query
+  parameter `noHistVerCheck` skips that backup and is used for nothing else, so the tool now always sends
+  `noHistVerCheck=true`. A test checks it, and it fails without the fix.
+- **Checked:** the search's `diagramTypes` takes `DRAWIO` or `GLIFFY`, and the tool asks for `DRAWIO`. The read
+  route also takes a `Sec-Fetch-Site` header, which browsers send, to tell cross-site requests apart. Without the
+  header, draw.io treats the request as one from its own pages, which is why the backup could happen.
+- **Noted:** a diagram too large for draw.io's request budget answers 413, and the tool reports it as an error.
+
 **The draw.io file format** is shared with [draw.io for Jira](#drawio-for-jira): the decoding and the summary are in
 the common package (`drawio-file.ts`).
 
@@ -281,9 +295,13 @@ The bundled Jira server was driven against a test HTTP server answering draw.io'
 neither tool was listed directly. The tool search found both, and a `jira_runCode` script listed an issue's diagrams
 and read a compressed one: "Client" connected to "Gateway" by "HTTPS".
 
+**Review (2026-11-17).** Both requests match 11.2.1's routes, and its diagram read has no editor side effect like the
+Confluence app's backup: it only reads. No bug turned up.
+
 **Not covered yet:** creating and editing diagrams. As in Confluence, a save needs a PNG preview ("A save reached the
 image writer with no preview"); see the [roadmap](#roadmap). Revision history needs the attachment's id and version
-too.
+too: `GET /diagram/revisions/{diagramName}/{issueKey}` and `GET /diagram/revision/{diagramName}/{issueKey}` answer 400
+unless `containerId`, `attachmentId` and `expectedVersion` are all given.
 
 ## Zephyr
 
@@ -497,6 +515,8 @@ Apps are added in this order, each step in its own release-ready change.
      [Xray](#xray)
    - [x] ScriptRunner: no bug found against 10.20.0; built-in scripts can be validated and previewed before a run,
      behind the run setting. See [ScriptRunner](#scriptrunner)
-   - [ ] Review the other apps' tools for bugs and gaps, one app per step: draw.io, Zephyr, BigPicture
+   - [x] draw.io: reading a Confluence diagram's earlier revision could save a backup attachment; it never does now.
+     draw.io for Jira had no bug. See [draw.io for Confluence](#drawio-for-confluence)
+   - [ ] Review the other apps' tools for bugs and gaps, one app per step: Zephyr, BigPicture
 7. Then the most popular Data Center apps for Jira, Confluence and Bitbucket, one at a time, each with the reason it
    was chosen.

@@ -35,13 +35,20 @@ export interface DiagramRequest {
   format?: 'summary' | 'xml';
 }
 
+/*
+ * draw.io serves this route to its editor too. When an editor opens an earlier revision of a diagram whose last
+ * change is over a week old, draw.io first saves the current one as a backup attachment on the page.
+ * `noHistVerCheck` skips that, and only that, so reading a diagram never writes to Confluence.
+ */
+const READ_ONLY = { noHistVerCheck: true };
+
 /** One diagram: who changed it and when, and each page as shapes and connections, or as XML. */
 export async function getDiagram({ pageId, diagramName, revision, format = 'summary' }: DiagramRequest) {
   const diagram = asRecord(await callDrawio({
     method: 'GET',
     url: '/diagram/crud/{diagramName}/{owningPageId}',
     path: { diagramName, owningPageId: pageId },
-    query: { revision },
+    query: { revision, ...READ_ONLY },
   }, `Diagram "${diagramName}" on page ${pageId}`));
   const pages = readDrawioPages(String(diagram.xml ?? ''));
   return { ...drawioDiagramDetails(diagram), pages: format === 'xml' ? pages : pages.map(summarizeDrawioPage) };
