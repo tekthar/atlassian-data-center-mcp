@@ -113,7 +113,8 @@ describe('draw.io tools', () => {
     const xml = await tools.callJson('drawio_getDiagram', { pageId: '100', diagramName: 'Flow', format: 'xml', revision: 2 });
 
     expect(sent(0)).toMatchObject({ path: { diagramName: 'Flow', owningPageId: '100' } });
-    expect(sent(1).query).toEqual({ revision: 2 });
+    expect(sent(0).query).toEqual({ revision: undefined, noHistVerCheck: true });
+    expect(sent(1).query).toEqual({ revision: 2, noHistVerCheck: true });
     expect(summary.data).toMatchObject({ name: 'Flow', revision: 3, pages: [{ name: 'Flow', connections: [{ from: 'Cart page', to: 'Pay', label: 'submit' }, { from: 'Pay', to: '(unconnected)', label: 'retry' }] }] });
     expect(summary.data).not.toHaveProperty('xml');
     expect(summary.data).not.toHaveProperty('thumbnailURL');
