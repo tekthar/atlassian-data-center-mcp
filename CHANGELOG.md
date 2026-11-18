@@ -13,9 +13,9 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 * **jira:** `xray_getTests` takes a saved Jira filter as `filterId`, as well as keys and JQL.
 
-* **jira:** BigPicture support (Appfire). Twenty-two tools, reached through `jira_searchTools` when BigPicture is installed:
+* **jira:** BigPicture support (Appfire). Twenty-three tools, reached through `jira_searchTools` when BigPicture is installed:
   * the box hierarchy of portfolios, programs, projects and iterations, without archived boxes unless asked;
-  * one box, and box types and statuses, and adding a box;
+  * one box and the Jira issues it plans, box types and statuses, and adding a box;
   * the boxes a Jira issue is in, and reading and setting its BigPicture fields;
   * teams and their members, and adding and changing team members. Removing one is destructive, so the tool search
     never offers it;
