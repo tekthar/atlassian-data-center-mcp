@@ -20,6 +20,9 @@ import { SCRIPTRUNNER_CATALOG } from './scriptrunner/catalog.js';
 import { startScriptRunnerRequest } from './scriptrunner/client.js';
 import { registerScriptRunnerReadTools } from './scriptrunner/read-tools.js';
 import { registerScriptRunnerOptInTools } from './scriptrunner/opt-in-tools.js';
+import { TEMPO_CATALOG } from './tempo/catalog.js';
+import { startTempoRequest } from './tempo/client.js';
+import { registerTempoReadTools } from './tempo/read-tools.js';
 import { XRAY_CATALOG } from './xray/catalog.js';
 import { startXrayRequest } from './xray/client.js';
 import { registerXrayReadTools } from './xray/read-tools.js';
@@ -84,6 +87,13 @@ export const JIRA_APPS: JiraApp[] = [
       registerBigPictureReadTools(tools, context);
       registerBigPictureWriteTools(tools, context);
     },
+  },
+  {
+    id: 'tempo',
+    name: 'Tempo Timesheets',
+    catalog: TEMPO_CATALOG,
+    probe: (timeoutMs) => withTimeout(startTempoRequest({ method: 'GET', url: '/period/current' }), timeoutMs),
+    register: registerTempoReadTools,
   },
 ];
 
