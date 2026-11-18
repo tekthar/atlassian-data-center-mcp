@@ -12,6 +12,7 @@ Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and th
 | [draw.io](#drawio-for-jira), diagrams | Jira | 11 | Beta, read-only |
 | [Zephyr](#zephyr), test management | Jira | 12 | Beta |
 | [BigPicture](#bigpicture), portfolio and project management | Jira | 8 | Beta |
+| [Tempo Timesheets](#tempo-timesheets), time tracking | Jira | 20 | Beta, read-only so far |
 
 - **Tested** means the tools were run against a live instance of that app version.
 - **Beta** means the tools were built and checked as described below, but not yet run against a live instance. Please
@@ -459,6 +460,56 @@ handlers only query. Field values come back plain, such as `"PROJ-1"` or `5`, an
 scope definitions; duplicating and deleting boxes; creating and changing global teams; and updating many issues' fields
 at once. Deleting boxes is left out on purpose.
 
+## Tempo Timesheets
+
+Time tracking by Tempo Software, Marketplace key `is.origo.jira.tempo-plugin`. Added after 0.47.1, in the next
+release. It was the first app chosen from the Marketplace's most popular Data Center apps; see the
+[roadmap](#roadmap) for why.
+
+| | |
+|---|---|
+| Built from | Timesheets by Tempo **20.0.1** for Data Center (Marketplace build 1313322, released 2026-10-26) |
+| Jira | 10.0 to 11.3, as this build's Marketplace listing gives |
+| REST API used | `/rest/tempo-timesheets/4`, the Timesheets REST API that Tempo documents for Data Center |
+| Tools | 6, all read-only, in the toolsets `tempo_worklogs` and `tempo_timesheets` |
+| Detection | `GET /rest/tempo-timesheets/4/period/current` at startup, unless `JIRA_APPS` names the apps to offer |
+| Status | Beta: not yet run against a live Tempo instance |
+
+**How the tools were built.** The Marketplace download is an OBR bundle: the Timesheets plugin jar, with Tempo's
+accounts, teams, planning and platform jars beside it. The Timesheets jar declares REST modules for versions 1 to 5 under
+`/tempo-timesheets`, each in a Jakarta and a `javax` copy. Version 4 is the one Tempo documents. `javap` on its Jakarta
+resources gave 40 routes, and these tools use six of them:
+
+| Tool | Request |
+|---|---|
+| `tempo_searchWorklogs` | `POST /worklogs/search`. The body's JSON names come from `@JsonProperty` on `SearchParamsBean`: `from`, `to`, `worker`, `taskKey`, `projectKey`, `epicKey`, `teamId`, `accountKey`, `filterId` and `includeSubtasks`, matching Tempo's documentation |
+| `tempo_getWorklog` | `GET /worklogs/{worklogId}` |
+| `tempo_getPeriods` | `GET /period/current`, or `GET /period?dateFrom&dateTo` for a range |
+| `tempo_getTimesheetApproval` | `GET /timesheet-approval/current?userKey&periodStartDate` |
+| `tempo_getTeamTimesheetApprovals` | `GET /timesheet-approval?teamId&periodStartDate` |
+| `tempo_getPendingTimesheetApprovals` | `GET /timesheet-approval/pending?reviewerKey` |
+
+A worklog comes back with `tempoWorklogId`, `issue`, `worker`, `started`, `timeSpentSeconds`, `billableSeconds`,
+`comment` and `attributes`, from the getters of `TempoWorklogV4Bean`. A timesheet approval carries its `status`
+(`open`, `ready_to_submit`, `waiting_for_approval` or `approved`), `workedSeconds`, `submittedSeconds`,
+`requiredSeconds`, and the reviewer's last action.
+
+**Searching worklogs.** The search handler calls `WorklogSearchService.findWorklogs` and returns every match, without
+paging or a cap. So `tempo_searchWorklogs` requires both dates, adds up `hours` and `billableHours` over every match,
+and lists only the first `limit` worklogs, marking the answer `truncated` when there are more.
+
+**Reading only reads.** `javap -c` on the handler behind each of the six routes, and on the approval services they call,
+found only lookups: `findWorklogs`, `findWorklogById`, `getPeriods`, `getCurrentPeriod`, `findCurrentForDateFrom` and
+`getPendingApprovals`. None of the six routes has a resource filter; Tempo checks each user's access itself.
+
+**How they were checked.** Unit tests check each tool's method, URL, path, query and body, the search's JSON names,
+the totals and the truncation, the date checks, and the 404 message. Detection is tested with all six Jira apps
+installed, with only some of them, and with `JIRA_APPS`. The catalog test checks that the tools are reached through the
+tool search unless `TOOLSETS` names their toolset.
+
+**Not covered yet:** logging, changing and deleting time; submitting and approving timesheets; Tempo accounts and
+teams, which are their own bundled apps with their own REST APIs; and Tempo Planner.
+
 ## Jira Service Management
 
 Atlassian's service desk app. Its tools are the `jira_service_desk` toolset, which is off until `TOOLSETS` names it.
@@ -488,6 +539,7 @@ annotations, and the list is compared with the build the tools came from. The ap
 | draw.io for Jira | 11.2.1 | 11.2.1 | No newer build |
 | Zephyr | 12.12.1-jira11 | 12.12.1-jira11 | No newer build |
 | BigPicture | 8.70.11.6 | 8.70.11.6 | No newer build |
+| Tempo Timesheets | 20.0.1 | 20.0.1 | No newer build |
 
 A route list says nothing about what a resource returns, so a change inside a response body would still need a live
 instance to find. Please [open an issue](https://github.com/tekthar/atlassian-data-center-mcp/issues) if a tool stops
@@ -540,3 +592,14 @@ Apps are added in this order, each step in its own release-ready change.
    - [x] BigPicture: no bug found; the issues a box plans can be listed. See [BigPicture](#bigpicture)
 7. Then the most popular Data Center apps for Jira, Confluence and Bitbucket, one at a time, each with the reason it
    was chosen.
+   - **Tempo Timesheets** (`is.origo.jira.tempo-plugin`), chosen on 2026-11-18. The Marketplace API's popular Data Center
+     apps for Jira, by installs, were ScriptRunner (33,864), Microsoft Teams for Jira (26,205), Tempo Timesheets
+     (25,855), Xray, JMWE (16,166) and Zephyr. ScriptRunner and Xray are supported already, and Microsoft Teams for
+     Jira connects to Teams rather than holding project data an agent reads. Tempo holds data agents are asked about
+     every day, logged time and timesheets, and documents a REST API for Data Center. For Confluence, draw.io (59,375)
+     is supported and the next two are diagram apps, Lucidchart (25,240) and Gliffy (15,355); Bitbucket's most popular
+     app has 1,857 installs.
+     - [x] Read: worklogs, with total hours, timesheet periods, and approval statuses for a person, a team or a
+       reviewer
+     - [ ] Write: log, change and delete time; submit and approve timesheets
+     - [ ] Read Tempo accounts and teams
