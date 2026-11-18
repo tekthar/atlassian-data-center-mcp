@@ -19,6 +19,13 @@ export const bigPictureToolSchemas = {
     includeArchived: z.boolean().optional().describe('Also list archived boxes (default false)'),
   },
   getBox: { boxId },
+  getBoxIssues: {
+    boxId,
+    fieldNames: z.array(z.string().min(1)).min(1).max(20).optional()
+      .describe('BigPicture fields to read for each issue, by the names bigpicture_getAvailableFields lists; leave out for Key and Summary'),
+    startAt: z.number().int().min(0).optional().describe('Index of the first issue (default 0)'),
+    limit: z.number().int().min(1).max(200).optional().describe('Issues per page (default: the server page size)'),
+  },
   getBoxTypesAndStatuses: {},
   getIssueBoxes: { issueKey },
   getIssueFields: {

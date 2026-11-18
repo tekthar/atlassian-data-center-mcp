@@ -170,6 +170,52 @@ describe('BigPicture tools', () => {
     expect(mockedRequest).not.toHaveBeenCalled();
   });
 
+  it('lists a page of the issues a box plans, with their Key and Summary as plain values by default', async () => {
+    routeRequests({
+      [`${BASE}/ppm/boxarea/task/scope`]: { taskInBoxes: [{ boxId: '2', tasks: [{ taskId: '11', childTaskIds: ['15'] }, { taskId: '12' }, { taskId: '13' }] }] },
+      [`${BASE}/ppm/task/core/task/field/bulk`]: { tasksFields: [
+        { taskId: '11', fields: [{ name: 'Key', value: { dataTypeId: 'STRING', value: 'PROJ-1' } }, { name: 'Summary', value: { dataTypeId: 'STRING', value: 'Checkout' } }] },
+        { taskId: '12', fields: [{ name: 'Key', value: { dataTypeId: 'STRING', value: 'PROJ-2' } }] },
+      ] },
+    });
+
+    const result = await setup().callJson('bigpicture_getBoxIssues', { boxId: '2', limit: 2 });
+
+    expect(sent(0)).toMatchObject({ method: 'POST', body: { boxIds: ['2'] } });
+    expect(sent(1)).toMatchObject({ method: 'POST', body: { taskIdOrExtPlatformTaskKeys: ['11', '12'], fieldNames: ['Key', 'Summary'] } });
+    expect(result.data).toEqual({
+      boxId: '2', total: 3, startAt: 0,
+      issues: [
+        { taskId: '11', fields: { Key: 'PROJ-1', Summary: 'Checkout' }, childTaskIds: ['15'] },
+        { taskId: '12', fields: { Key: 'PROJ-2' } },
+      ],
+    });
+  });
+
+  it('reads the fields asked for from where the page starts, keeping richer values as objects', async () => {
+    routeRequests({
+      [`${BASE}/ppm/boxarea/task/scope`]: { taskInBoxes: [{ boxId: '2', tasks: [{ taskId: '11' }, { taskId: '12' }] }] },
+      [`${BASE}/ppm/task/core/task/field/bulk`]: { tasksFields: [{ taskId: '12', fields: [
+        { name: 'Story Points', value: { dataTypeId: 'NUMBER', number: 5 } },
+        { name: 'Assignee', value: { dataTypeId: 'USER', key: 'JIRAUSER10000', name: 'Dana' } },
+      ] }] },
+    });
+
+    const result = await setup().callJson('bigpicture_getBoxIssues', { boxId: '2', startAt: 1, fieldNames: ['Story Points', 'Assignee'] });
+
+    expect(sent(1).body).toEqual({ taskIdOrExtPlatformTaskKeys: ['12'], fieldNames: ['Story Points', 'Assignee'] });
+    expect(result.data.issues).toEqual([{ taskId: '12', fields: { 'Story Points': 5, Assignee: { key: 'JIRAUSER10000', name: 'Dana' } } }]);
+  });
+
+  it('reads no fields for a box that plans nothing', async () => {
+    routeRequests({ [`${BASE}/ppm/boxarea/task/scope`]: { taskInBoxes: [{ boxId: '2', tasks: [] }] } });
+
+    const result = await setup().callJson('bigpicture_getBoxIssues', { boxId: '2' });
+
+    expect(result.data).toEqual({ boxId: '2', total: 0, startAt: 0, issues: [] });
+    expect(mockedRequest).toHaveBeenCalledTimes(1);
+  });
+
   it('explains a 404 in terms of the subject and BigPicture', async () => {
     routeRequests({ [`${BASE}/ppm/box/boxes/{boxId}`]: Object.assign(new Error('Not Found'), { status: 404 }) });
 

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { respond, type PolicyRegistrar } from '@atlassian-dc-mcp/common';
 import type { JiraToolContext } from '../../tools/context.js';
+import { getBoxIssues } from './box-issues.js';
 import * as bigPicture from './operations.js';
 import { registerBigPictureResourceTools } from './resource-tools.js';
 import { bigPictureToolSchemas as schemas } from './schemas.js';
@@ -15,6 +16,11 @@ function registerBoxTools(tools: PolicyRegistrar, context: JiraToolContext): voi
     description: `Get one BigPicture box from the ${context.instanceType} by id: its name, type, status, dates, leader and description.`,
     inputSchema: z.object(schemas.getBox),
   }, async ({ boxId }) => respond(() => bigPicture.getBox(boxId), 'Error fetching BigPicture box'));
+
+  tools.registerTool('bigpicture_getBoxIssues', {
+    description: `List the Jira issues a BigPicture box plans in the ${context.instanceType}, a page at a time: each issue's BigPicture task id and its Key and Summary, or the fields named, and its sub-tasks' task ids. total counts them all. BigPicture's own tasks, which no Jira issue backs, have no Key.`,
+    inputSchema: z.object(schemas.getBoxIssues),
+  }, async (page) => respond(() => getBoxIssues(page, context.getPageSize()), 'Error listing the issues of the BigPicture box'));
 
   tools.registerTool('bigpicture_getBoxTypesAndStatuses', {
     description: `List the BigPicture box types (such as portfolio, program, project, iteration) and box statuses configured in the ${context.instanceType}, to read the type and status ids boxes carry.`,

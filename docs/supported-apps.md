@@ -384,7 +384,7 @@ Added after 0.47.1, in the next release.
 | Built from | BigPicture **8.70.11.6** for Data Center (Marketplace build 40002006696, released 2026-10-28) |
 | Jira | 11.0 to 11.3, as this build's Marketplace listing gives |
 | REST API used | `/rest/softwareplant-bigpicture/1.0/public`, BigPicture's public API |
-| Tools | 22: 17 read, 4 write and 1 destructive, in the toolsets `bigpicture_boxes`, `bigpicture_issues`, `bigpicture_teams` and `bigpicture_resources` |
+| Tools | 23: 18 read, 4 write and 1 destructive, in the toolsets `bigpicture_boxes`, `bigpicture_issues`, `bigpicture_teams` and `bigpicture_resources` |
 | Detection | `GET /rest/softwareplant-bigpicture/1.0/public/ppm/box/box-types` at startup, unless `JIRA_APPS` names the apps to offer |
 | Status | Beta: not yet run against a live BigPicture instance |
 
@@ -445,6 +445,15 @@ plan by id and all plans, the capacity body and the hours added, and that a capa
 badly written date is refused. Detection is tested with all five Jira apps installed, with only some of them, and
 with `JIRA_APPS`. The catalog test checks that the tools are reached through the tool search unless
 `TOOLSETS` names their toolset.
+
+**Review (2026-11-18).** Every route the tools call was checked again against 8.70.11.6, still the newest build: the
+paths, query parameters and bodies match, `/ppm/teams` reads `boxIds` as a set, which the repeated query keys fill,
+and the hierarchy's `boxArchived` and `boxChildren` are the names the pruning uses. `javap -c` on every read route's
+handler found no call that saves, creates, updates or deletes, unlike the draw.io for Confluence read. No bug turned
+up. One gap was filled: the tools could say which boxes an issue is in, but not which issues a box plans.
+`bigpicture_getBoxIssues` asks `POST /ppm/boxarea/task/scope` for the box's tasks, which it names by BigPicture task
+id, then reads each page's Key and Summary, or the fields asked for, with `POST /ppm/task/core/task/field/bulk`. Both
+handlers only query. Field values come back plain, such as `"PROJ-1"` or `5`, and richer ones as objects.
 
 **Not covered yet:** changing resource planning (skills, absences, holiday and workload plans); box fields and box
 scope definitions; duplicating and deleting boxes; creating and changing global teams; and updating many issues' fields
@@ -528,6 +537,6 @@ Apps are added in this order, each step in its own release-ready change.
    - [x] draw.io: reading a Confluence diagram's earlier revision could save a backup attachment; it never does now.
      draw.io for Jira had no bug. See [draw.io for Confluence](#drawio-for-confluence)
    - [x] Zephyr: no bug found; many results can be recorded in one call. See [Zephyr](#zephyr)
-   - [ ] Review the other apps' tools for bugs and gaps, one app per step: BigPicture
+   - [x] BigPicture: no bug found; the issues a box plans can be listed. See [BigPicture](#bigpicture)
 7. Then the most popular Data Center apps for Jira, Confluence and Bitbucket, one at a time, each with the reason it
    was chosen.
