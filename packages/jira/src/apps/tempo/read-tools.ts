@@ -39,6 +39,11 @@ function registerTimesheetTools(tools: PolicyRegistrar, context: JiraToolContext
     inputSchema: z.object(schemas.getPendingTimesheetApprovals),
   }, async ({ reviewerKey }) =>
     respond(() => tempo.getPendingTimesheetApprovals(reviewerKey), 'Error fetching pending Tempo timesheets'));
+
+  tools.registerTool('tempo_getSuggestedReviewers', {
+    description: `List the people Tempo suggests to approve a timesheet in the ${context.instanceType}, for tempo_submitTimesheet. Leave out the person for your own timesheet.`,
+    inputSchema: z.object(schemas.getSuggestedReviewers),
+  }, async ({ userKey }) => respond(() => tempo.getSuggestedReviewers(userKey), 'Error fetching Tempo suggested reviewers'));
 }
 
 export function registerTempoReadTools(tools: PolicyRegistrar, context: JiraToolContext): void {

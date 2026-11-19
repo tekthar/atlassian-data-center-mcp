@@ -11,10 +11,12 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Features
 
-* **jira:** Tempo Timesheets support, starting with reading. Six tools, reached through `jira_searchTools` when Tempo is installed:
+* **jira:** Tempo Timesheets support. Twelve tools, reached through `jira_searchTools` when Tempo is installed:
   * worklogs between two dates, by person, issue, project, epic, Tempo team, account or saved filter, with the total and billable hours of every match;
   * one worklog;
-  * timesheet periods, and timesheet approval statuses for a person, a team or a reviewer.
+  * timesheet periods, and timesheet approval statuses for a person, a team or a reviewer;
+  * logging and changing time on an issue, in hours, as you or someone else, and deleting a worklog, which is destructive, so the tool search never offers it;
+  * submitting a timesheet to a reviewer Tempo suggests, and approving, rejecting or reopening one.
 
   Built from Tempo 20.0.1. See [Supported apps](docs/supported-apps.md#tempo-timesheets).
 * **jira:** `xray_getTests` takes a saved Jira filter as `filterId`, as well as keys and JQL.

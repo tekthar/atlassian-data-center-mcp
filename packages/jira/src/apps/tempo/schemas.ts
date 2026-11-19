@@ -37,6 +37,9 @@ export const tempoToolSchemas = {
     teamId: z.number().int().positive().describe('The Tempo team id'),
     periodStartDate: date('Start of the timesheet period; leave out for the current one').optional(),
   },
+  getSuggestedReviewers: {
+    userKey: userKey.optional().describe('Jira user key of whose timesheet it is; leave out for you'),
+  },
   getPendingTimesheetApprovals: {
     reviewerKey: userKey.optional().describe('Jira user key of the reviewer; leave out for you'),
   },

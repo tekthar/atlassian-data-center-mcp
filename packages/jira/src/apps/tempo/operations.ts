@@ -1,5 +1,6 @@
 import { stripNoise } from '../../tools/context.js';
 import { callTempo } from './client.js';
+import { userKeyOrMine } from './user.js';
 
 type Query = Record<string, string | number | undefined>;
 
@@ -78,3 +79,8 @@ export const getTeamTimesheetApprovals = (teamId: number, periodStartDate?: stri
 
 export const getPendingTimesheetApprovals = (reviewerKey?: string) =>
   get('/timesheet-approval/pending', `The timesheets waiting for ${reviewerKey ?? 'the current user'}`, { reviewerKey });
+
+export async function getSuggestedReviewers(userKey: string | undefined) {
+  const key = await userKeyOrMine(userKey);
+  return get('/timesheet-approval/user/{userKey}/suggestedreviewers', `User ${key}`, undefined, { userKey: key });
+}

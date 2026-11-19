@@ -143,7 +143,7 @@ Service Management's tools are the `jira_service_desk` toolset in [Toolsets](#to
 | draw.io, diagrams | 11 | Beta, read-only |
 | Zephyr, test management | 12 | Beta |
 | BigPicture, portfolio and project management | 8 | Beta |
-| Tempo Timesheets, time tracking | 20 | Beta, read-only so far |
+| Tempo Timesheets, time tracking | 20 | Beta |
 | Jira Service Management | not recorded | Beta |
 
 Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists the
@@ -216,14 +216,16 @@ test cycle a test run, so cycle keys look like `QA-R4`.
 BigPicture's own permissions decide who may add boxes and change teams. Setting an issue's BigPicture fields is offered
 only to people who can edit issues.
 
-**Tempo Timesheets** tools, all read-only for now:
+**Tempo Timesheets** tools:
 
 | Toolset | Tools |
 |---|---|
-| `tempo_worklogs`: time logged, with total hours | `tempo_searchWorklogs`, `tempo_getWorklog` |
-| `tempo_timesheets`: timesheet periods and approvals | `tempo_getPeriods`, `tempo_getTimesheetApproval`, `tempo_getTeamTimesheetApprovals`, `tempo_getPendingTimesheetApprovals` |
+| `tempo_worklogs`: time logged, with total hours | `tempo_searchWorklogs`, `tempo_getWorklog`, `tempo_logTime`, `tempo_updateWorklog`, `tempo_deleteWorklog` (destructive) |
+| `tempo_timesheets`: timesheet periods and approvals | `tempo_getPeriods`, `tempo_getTimesheetApproval`, `tempo_getTeamTimesheetApprovals`, `tempo_getPendingTimesheetApprovals`, `tempo_getSuggestedReviewers`, `tempo_submitTimesheet`, `tempo_reviewTimesheet` |
 
 Tempo returns every worklog a search matches at once, so `tempo_searchWorklogs` totals them all and lists the first ones.
+Logging, changing and deleting time are offered to people with Jira's matching worklog permissions; Tempo's own
+permissions decide who may submit and review timesheets.
 
 ## Settings
 
