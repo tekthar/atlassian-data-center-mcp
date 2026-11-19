@@ -119,6 +119,46 @@ describe('Tempo tools', () => {
     expect(sent(2).query).toEqual({ reviewerKey: undefined });
   });
 
+  it('lists accounts without archived ones by default, reads one by key, and the account of an issue', async () => {
+    routeRequests({
+      '/tempo-accounts/1/account': [{ id: 3, key: 'ACME', name: 'Acme support', self: 'https://jira/x' }],
+      '/tempo-accounts/1/account/key/{accountKey}': { key: 'ACME' },
+      '/tempo-accounts/1/account/issue/{issueKey}/current': { key: 'ACME' },
+    });
+    const tools = setup();
+
+    const accounts = await tools.callJson('tempo_getAccounts', {});
+    await tools.callJson('tempo_getAccounts', { includeArchived: true });
+    await tools.callJson('tempo_getAccount', { accountKey: 'ACME' });
+    await tools.callJson('tempo_getIssueAccount', { issueKey: 'PROJ-12' });
+
+    expect(sent(0).query).toEqual({ skipArchived: true });
+    expect(sent(1).query).toEqual({ skipArchived: false });
+    expect(sent(2).path).toEqual({ accountKey: 'ACME' });
+    expect(sent(3).path).toEqual({ issueKey: 'PROJ-12' });
+    expect(accounts.data).toEqual([{ id: 3, key: 'ACME', name: 'Acme support' }]);
+  });
+
+  it('lists teams, reads one and its current members, and the teams a person is in', async () => {
+    routeRequests({
+      '/tempo-teams/2/team': [{ id: 4, name: 'Payments' }],
+      '/tempo-teams/2/team/{id}': { id: 4 },
+      '/tempo-teams/2/team/{id}/member': [],
+      '/tempo-teams/2/user/{userName}/memberships': [],
+    });
+    const tools = setup();
+
+    await tools.callJson('tempo_getTeams', {});
+    await tools.callJson('tempo_getTeam', { teamId: 4 });
+    await tools.callJson('tempo_getTeamMembers', { teamId: 4 });
+    await tools.callJson('tempo_getUserTeams', { userName: 'dana', from: '2026-11-01', to: '2026-11-30' });
+
+    expect(sent(0).url).toBe('/tempo-teams/2/team');
+    expect(sent(1).path).toEqual({ id: 4 });
+    expect(sent(2)).toMatchObject({ path: { id: 4 }, query: { onlyActive: true } });
+    expect(sent(3)).toMatchObject({ path: { userName: 'dana' }, query: { from: '2026-11-01', to: '2026-11-30' } });
+  });
+
   it('explains a 404 in terms of the subject and Tempo', async () => {
     routeRequests({ [`${BASE}/worklogs/{worklogId}`]: Object.assign(new Error('Not Found'), { status: 404 }) });
 

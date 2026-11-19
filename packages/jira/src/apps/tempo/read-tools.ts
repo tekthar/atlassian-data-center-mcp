@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { respond, type PolicyRegistrar } from '@atlassian-dc-mcp/common';
 import type { JiraToolContext } from '../../tools/context.js';
+import { registerTempoDirectoryTools } from './directory-tools.js';
 import * as tempo from './operations.js';
 import { tempoToolSchemas as schemas } from './schemas.js';
 
@@ -49,4 +50,5 @@ function registerTimesheetTools(tools: PolicyRegistrar, context: JiraToolContext
 export function registerTempoReadTools(tools: PolicyRegistrar, context: JiraToolContext): void {
   registerWorklogTools(tools, context);
   registerTimesheetTools(tools, context);
+  registerTempoDirectoryTools(tools, context);
 }
