@@ -12,7 +12,7 @@ Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and th
 | [draw.io](#drawio-for-jira), diagrams | Jira | 11 | Beta, read-only |
 | [Zephyr](#zephyr), test management | Jira | 12 | Beta |
 | [BigPicture](#bigpicture), portfolio and project management | Jira | 8 | Beta |
-| [Tempo Timesheets](#tempo-timesheets), time tracking | Jira | 20 | Beta, read-only so far |
+| [Tempo Timesheets](#tempo-timesheets), time tracking | Jira | 20 | Beta |
 
 - **Tested** means the tools were run against a live instance of that app version.
 - **Beta** means the tools were built and checked as described below, but not yet run against a live instance. Please
@@ -471,7 +471,7 @@ release. It was the first app chosen from the Marketplace's most popular Data Ce
 | Built from | Timesheets by Tempo **20.0.1** for Data Center (Marketplace build 1313322, released 2026-10-26) |
 | Jira | 10.0 to 11.3, as this build's Marketplace listing gives |
 | REST API used | `/rest/tempo-timesheets/4`, the Timesheets REST API that Tempo documents for Data Center |
-| Tools | 6, all read-only, in the toolsets `tempo_worklogs` and `tempo_timesheets` |
+| Tools | 12: 7 read, 4 write and 1 destructive, in the toolsets `tempo_worklogs` and `tempo_timesheets` |
 | Detection | `GET /rest/tempo-timesheets/4/period/current` at startup, unless `JIRA_APPS` names the apps to offer |
 | Status | Beta: not yet run against a live Tempo instance |
 
@@ -502,13 +502,35 @@ and lists only the first `limit` worklogs, marking the answer `truncated` when t
 found only lookups: `findWorklogs`, `findWorklogById`, `getPeriods`, `getCurrentPeriod`, `findCurrentForDateFrom` and
 `getPendingApprovals`. None of the six routes has a resource filter; Tempo checks each user's access itself.
 
+**Writing.** `javap -v -p` on the request classes gave the JSON names, and `javap -c` on the code that reads them gave
+the formats:
+
+| Tool | Request |
+|---|---|
+| `tempo_logTime` | `POST /worklogs` with `TimesheetWorklogBean`: `worker`, `originTaskId` (the issue key), `started`, `timeSpentSeconds`, `billableSeconds`, `remainingEstimate`, `comment`, `endDate` and `includeNonWorkingDays`. Tempo's validator refuses a worklog without a worker or a date, and can require a comment |
+| `tempo_updateWorklog` | `PUT /worklogs/{worklogId}` with only the keys `WorklogChangesBean` reads: `started`, `timeSpentSeconds`, `billableSeconds`, `comment` and `remainingEstimate` |
+| `tempo_deleteWorklog` | `DELETE /worklogs/{worklogId}` |
+| `tempo_getSuggestedReviewers` | `GET /timesheet-approval/user/{userKey}/suggestedreviewers` |
+| `tempo_submitTimesheet`, `tempo_reviewTimesheet` | `POST /timesheet-approval` with `ApprovalBean`: `user`, `period.dateFrom` and `action` (`name`, `comment`, `reviewer`). Tempo finds each user by `key` or `name`; the tools send `key`. The action names are Tempo's `Approval$Action`: `submit`, `approve`, `reject` and `reopen` |
+
+The tools take hours and convert them to seconds. `started` is a day, or a day and start time, which the tool sends as
+`yyyy-MM-dd` or `yyyy-MM-dd'T'HH:mm:ss.SSS`, two of the four formats Tempo's `UIDateParser` reads. Tempo needs the
+worker's Jira user key, so when none is given the tools read the token owner's from `/rest/api/2/myself`.
+
+Logging time needs Jira's Work On Issues permission, changing a worklog Edit Own or Edit All Worklogs, and deleting one
+Delete Own or Delete All Worklogs; Tempo checks them too. Deleting is destructive, so the tool search never offers it.
+Submitting and reviewing timesheets are decided by Tempo's own permissions, which Jira's permission list doesn't report,
+so those two are ungated.
+
 **How they were checked.** Unit tests check each tool's method, URL, path, query and body, the search's JSON names,
-the totals and the truncation, the date checks, and the 404 message. Detection is tested with all six Jira apps
+the totals and the truncation, the date checks, and the 404 message. For the writes they check the bodies under
+Tempo's names, the conversion to seconds and Tempo's date format, the current-user lookup and when it is skipped, that
+an update sends only what changes, and the approval bodies. Detection is tested with all six Jira apps
 installed, with only some of them, and with `JIRA_APPS`. The catalog test checks that the tools are reached through the
 tool search unless `TOOLSETS` names their toolset.
 
-**Not covered yet:** logging, changing and deleting time; submitting and approving timesheets; Tempo accounts and
-teams, which are their own bundled apps with their own REST APIs; and Tempo Planner.
+**Not covered yet:** work attributes on a worklog; moving a worklog to another issue; Tempo accounts and teams,
+which are their own bundled apps with their own REST APIs; and Tempo Planner.
 
 ## Jira Service Management
 
@@ -601,5 +623,5 @@ Apps are added in this order, each step in its own release-ready change.
      app has 1,857 installs.
      - [x] Read: worklogs, with total hours, timesheet periods, and approval statuses for a person, a team or a
        reviewer
-     - [ ] Write: log, change and delete time; submit and approve timesheets
+     - [x] Write: log, change and delete time; submit, approve, reject and reopen timesheets
      - [ ] Read Tempo accounts and teams

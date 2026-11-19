@@ -41,10 +41,19 @@ const worklog = (id: number, seconds: number, billable: number) =>
 describe('Tempo tools', () => {
   beforeEach(() => jest.resetAllMocks());
 
-  it('registers every catalogued tool, all read-only, in toolsets that are off by default', () => {
-    expect(setup().registrar.registeredTools().sort()).toEqual(Object.keys(TEMPO_CATALOG.tools).sort());
-    expect(Object.values(TEMPO_CATALOG.tools).every((entry) => entry.access === 'read')).toBe(true);
+  it('registers every catalogued read tool, in toolsets that are off by default', () => {
+    const reads = Object.entries(TEMPO_CATALOG.tools).filter(([, entry]) => entry.access === 'read').map(([name]) => name);
+
+    expect(setup().registrar.registeredTools().sort()).toEqual(reads.sort());
     expect(Object.values(TEMPO_CATALOG.toolsets).every((toolset) => !toolset.default)).toBe(true);
+  });
+
+  it('lists the suggested reviewers of your own timesheet, looking up your user key', async () => {
+    routeRequests({ '/api/2/myself': { key: 'JIRAUSER10000' }, [`${BASE}/timesheet-approval/user/{userKey}/suggestedreviewers`]: [] });
+
+    await setup().callJson('tempo_getSuggestedReviewers', {});
+
+    expect(sent(1).path).toEqual({ userKey: 'JIRAUSER10000' });
   });
 
   it('searches worklogs under the JSON names Tempo reads, leaving out the filters not given', async () => {
