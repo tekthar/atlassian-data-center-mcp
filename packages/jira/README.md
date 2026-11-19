@@ -221,6 +221,8 @@ only to people who can edit issues.
 | Toolset | Tools |
 |---|---|
 | `tempo_worklogs`: time logged, with total hours | `tempo_searchWorklogs`, `tempo_getWorklog`, `tempo_logTime`, `tempo_updateWorklog`, `tempo_deleteWorklog` (destructive) |
+| `tempo_accounts`: accounts time is logged against | `tempo_getAccounts`, `tempo_getAccount`, `tempo_getIssueAccount` |
+| `tempo_teams`: teams and their members | `tempo_getTeams`, `tempo_getTeam`, `tempo_getTeamMembers`, `tempo_getUserTeams` |
 | `tempo_timesheets`: timesheet periods and approvals | `tempo_getPeriods`, `tempo_getTimesheetApproval`, `tempo_getTeamTimesheetApprovals`, `tempo_getPendingTimesheetApprovals`, `tempo_getSuggestedReviewers`, `tempo_submitTimesheet`, `tempo_reviewTimesheet` |
 
 Tempo returns every worklog a search matches at once, so `tempo_searchWorklogs` totals them all and lists the first ones.

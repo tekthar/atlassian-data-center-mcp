@@ -470,8 +470,8 @@ release. It was the first app chosen from the Marketplace's most popular Data Ce
 |---|---|
 | Built from | Timesheets by Tempo **20.0.1** for Data Center (Marketplace build 1313322, released 2026-10-26) |
 | Jira | 10.0 to 11.3, as this build's Marketplace listing gives |
-| REST API used | `/rest/tempo-timesheets/4`, the Timesheets REST API that Tempo documents for Data Center |
-| Tools | 12: 7 read, 4 write and 1 destructive, in the toolsets `tempo_worklogs` and `tempo_timesheets` |
+| REST APIs used | `/rest/tempo-timesheets/4`, the Timesheets REST API that Tempo documents for Data Center; `/rest/tempo-accounts/1` and `/rest/tempo-teams/2` from its bundled Accounts and Teams apps |
+| Tools | 19: 14 read, 4 write and 1 destructive, in the toolsets `tempo_worklogs`, `tempo_timesheets`, `tempo_accounts` and `tempo_teams` |
 | Detection | `GET /rest/tempo-timesheets/4/period/current` at startup, unless `JIRA_APPS` names the apps to offer |
 | Status | Beta: not yet run against a live Tempo instance |
 
@@ -529,8 +529,27 @@ an update sends only what changes, and the approval bodies. Detection is tested 
 installed, with only some of them, and with `JIRA_APPS`. The catalog test checks that the tools are reached through the
 tool search unless `TOOLSETS` names their toolset.
 
-**Not covered yet:** work attributes on a worklog; moving a worklog to another issue; Tempo accounts and teams,
-which are their own bundled apps with their own REST APIs; and Tempo Planner.
+**Accounts and teams.** Tempo's Accounts (`com.tempoplugin.tempo-accounts`) and Teams (`com.tempoplugin.tempo-teams`)
+apps come in the same OBR bundle, each with its own REST modules. The tools use the versions Tempo documents:
+
+| Tool | Request |
+|---|---|
+| `tempo_getAccounts` | `GET /rest/tempo-accounts/1/account?skipArchived` |
+| `tempo_getAccount` | `GET /rest/tempo-accounts/1/account/key/{accountKey}` |
+| `tempo_getIssueAccount` | `GET /rest/tempo-accounts/1/account/issue/{issueKey}/current` |
+| `tempo_getTeams` | `GET /rest/tempo-teams/2/team`, the teams `TeamVisibilityService` lets the user see |
+| `tempo_getTeam` | `GET /rest/tempo-teams/2/team/{id}` |
+| `tempo_getTeamMembers` | `GET /rest/tempo-teams/2/team/{id}/member?onlyActive` |
+| `tempo_getUserTeams` | `GET /rest/tempo-teams/2/user/{userName}/memberships?from&to` |
+
+An account carries `id`, `key`, `name`, `status`, `lead`, `contact`, `customer`, `category`, `monthlyBudget`, `global`
+and `links`; a team `id`, `name`, `mission`, `summary`, `lead` and `program`; a member their `member` and their
+`membership`, with `role`, `availability`, `dateFrom`, `dateTo` and `status`. `javap -c` on each handler found only
+lookups: `AccountService.getAccounts`, `getAccountByKey` and `getCurrentAccountForIssue`, and `TeamService.getTeam`,
+`getActiveUsers`, `getAllUsers` and `getMembershipsForUser`. Unit tests check each request's path and query.
+
+**Not covered yet:** work attributes on a worklog; moving a worklog to another issue; changing accounts and teams;
+and Tempo Planner.
 
 ## Jira Service Management
 
@@ -624,4 +643,4 @@ Apps are added in this order, each step in its own release-ready change.
      - [x] Read: worklogs, with total hours, timesheet periods, and approval statuses for a person, a team or a
        reviewer
      - [x] Write: log, change and delete time; submit, approve, reject and reopen timesheets
-     - [ ] Read Tempo accounts and teams
+     - [x] Read Tempo accounts and teams
