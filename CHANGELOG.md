@@ -11,6 +11,13 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Features
 
+* **jira:** JMWE (Jira Misc Workflow Extensions) support, starting with reading. Seven tools, reached through `jira_searchTools` when JMWE is installed:
+  * the workflows that use JMWE, and one workflow's JMWE post-functions, conditions and validators by transition;
+  * shared actions, conditions, validators and scripts;
+  * event-based and scheduled actions, and how the scheduled ones last ran;
+  * execution logs by issue, extension or user, errors and warnings by default.
+
+  JMWE's run route for scheduled actions is a `GET`, so no tool calls it. Built from JMWE 10.1.3. See [Supported apps](docs/supported-apps.md#jmwe).
 * **jira:** Tempo Timesheets support. Nineteen tools, reached through `jira_searchTools` when Tempo is installed:
   * worklogs between two dates, by person, issue, project, epic, Tempo team, account or saved filter, with the total and billable hours of every match;
   * one worklog;

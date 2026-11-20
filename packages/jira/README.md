@@ -4,7 +4,7 @@
 
 The server runs on your machine. Your MCP client starts it and talks to it over stdio; it calls Jira's REST API with
 your personal access token, lists the everyday issue tools, and keeps 43 more one search away, plus the tools of
-supported Jira apps such as Xray, Zephyr, ScriptRunner, BigPicture, Tempo and draw.io when they're installed. Jira's own
+supported Jira apps such as Xray, Zephyr, ScriptRunner, BigPicture, Tempo, JMWE and draw.io when they're installed. Jira's own
 permissions decide what you can do: the server can hide tools, never unlock them.
 
 ```bash
@@ -144,6 +144,7 @@ Service Management's tools are the `jira_service_desk` toolset in [Toolsets](#to
 | Zephyr, test management | 12 | Beta |
 | BigPicture, portfolio and project management | 8 | Beta |
 | Tempo Timesheets, time tracking | 20 | Beta |
+| JMWE, workflow extensions | 10 | Beta, read-only so far |
 | Jira Service Management | not recorded | Beta |
 
 Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists the
@@ -229,6 +230,16 @@ Tempo returns every worklog a search matches at once, so `tempo_searchWorklogs` 
 Logging, changing and deleting time are offered to people with Jira's matching worklog permissions; Tempo's own
 permissions decide who may submit and review timesheets.
 
+**JMWE** tools, all read-only for now:
+
+| Toolset | Tools |
+|---|---|
+| `jmwe_workflows`: JMWE's workflow extensions and shared items | `jmwe_getWorkflowExtensions`, `jmwe_getSharedItems` |
+| `jmwe_actions`: event-based and scheduled actions | `jmwe_getEventBasedActions`, `jmwe_getScheduledActions`, `jmwe_getScheduledActionStatus` |
+| `jmwe_logs`: execution logs | `jmwe_getLogs`, `jmwe_getLogDetails` |
+
+JMWE decides who may read these; most of its configuration is for Jira administrators.
+
 ## Settings
 
 Every setting is an environment variable. Each comes from the first of these that has it: the environment, the dotenv
@@ -258,7 +269,7 @@ keychain.
 | `CODE_EXECUTION` | `off` removes `jira_runCode`. |
 | `PERMISSION_FILTER` | `off` lists tools without asking Jira for your permissions first. |
 | `JIRA_PERMISSION_PROJECTS` | Project keys, e.g. `ACS,BPO`. Without it, a permission you hold in any project counts; with it, only these projects count. |
-| `JIRA_APPS` | Which [Jira apps](#jira-apps) to offer. Unset or `auto` checks which are installed; a list such as `xray,zephyr,scriptrunner,drawio,bigpicture,tempo` offers those without checking; `off` offers none. |
+| `JIRA_APPS` | Which [Jira apps](#jira-apps) to offer. Unset or `auto` checks which are installed; a list such as `xray,zephyr,scriptrunner,drawio,bigpicture,tempo,jmwe` offers those without checking; `off` offers none. |
 
 **Turning on risky tools**
 
