@@ -16,6 +16,9 @@ import { registerBigPictureWriteTools } from './bigpicture/write-tools.js';
 import { DRAWIO_CATALOG } from './drawio/catalog.js';
 import { startDrawioRequest } from './drawio/client.js';
 import { registerDrawioReadTools } from './drawio/read-tools.js';
+import { JMWE_CATALOG } from './jmwe/catalog.js';
+import { startJmweRequest } from './jmwe/client.js';
+import { registerJmweReadTools } from './jmwe/read-tools.js';
 import { SCRIPTRUNNER_CATALOG } from './scriptrunner/catalog.js';
 import { startScriptRunnerRequest } from './scriptrunner/client.js';
 import { registerScriptRunnerReadTools } from './scriptrunner/read-tools.js';
@@ -98,6 +101,13 @@ export const JIRA_APPS: JiraApp[] = [
       registerTempoReadTools(tools, context);
       registerTempoWriteTools(tools, context);
     },
+  },
+  {
+    id: 'jmwe',
+    name: 'JMWE',
+    catalog: JMWE_CATALOG,
+    probe: (timeoutMs) => withTimeout(startJmweRequest({ method: 'GET', url: '/status/picker' }), timeoutMs),
+    register: registerJmweReadTools,
   },
 ];
 

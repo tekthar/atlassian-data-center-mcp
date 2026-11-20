@@ -13,6 +13,7 @@ Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and th
 | [Zephyr](#zephyr), test management | Jira | 12 | Beta |
 | [BigPicture](#bigpicture), portfolio and project management | Jira | 8 | Beta |
 | [Tempo Timesheets](#tempo-timesheets), time tracking | Jira | 20 | Beta |
+| [JMWE](#jmwe), workflow extensions | Jira | 10 | Beta, read-only so far |
 
 - **Tested** means the tools were run against a live instance of that app version.
 - **Beta** means the tools were built and checked as described below, but not yet run against a live instance. Please
@@ -551,6 +552,49 @@ lookups: `AccountService.getAccounts`, `getAccountByKey` and `getCurrentAccountF
 **Not covered yet:** work attributes on a worklog; moving a worklog to another issue; changing accounts and teams;
 and Tempo Planner.
 
+## JMWE
+
+Jira Misc Workflow Extensions by Appfire, Marketplace key `com.innovalog.jmwe.jira-misc-workflow-extensions`. Added
+after 0.47.1, in the next release. It was the second app chosen from the Marketplace's most popular Data Center apps;
+see the [roadmap](#roadmap) for why.
+
+| | |
+|---|---|
+| Built from | JMWE **10.1.3** for Data Center (Marketplace build 900300580, released 2026-10-29) |
+| Jira | 11.0 to 11.3, as this build's Marketplace listing gives |
+| REST API used | `/rest/jmwe/1`, the API JMWE's own admin pages use. JMWE doesn't publish it as a public API |
+| Tools | 7, all read-only, in the toolsets `jmwe_workflows`, `jmwe_actions` and `jmwe_logs` |
+| Detection | `GET /rest/jmwe/1/status/picker` at startup, which reads Jira's statuses without a permission check, unless `JIRA_APPS` names the apps to offer |
+| Status | Beta: not yet run against a live JMWE instance |
+
+**How the tools were built.** The plugin declares one REST module, `jmwe` version 1, with its resources found by their
+annotations. `javap` on them gave 91 routes. These tools use the list and get routes:
+
+| Tool | Request |
+|---|---|
+| `jmwe_getWorkflowExtensions` | `GET /workflows`, or `GET /workflows/workflow?workflowName` for one workflow's extensions by transition |
+| `jmwe_getSharedItems` | `GET /shared-actions`, `/shared-conditions`, `/shared-validators` or `/shared-scripts`, or one by id or name. Lists leave out each item's content unless asked (`skipContent`) |
+| `jmwe_getEventBasedActions` | `GET /event-actions`, or `/event-actions/{actionId}` |
+| `jmwe_getScheduledActions` | `GET /scheduled-actions`, or `/scheduled-actions/{actionId}` |
+| `jmwe_getScheduledActionStatus` | `GET /scheduled-actions/status`: whether each is running, its last run and number of issues, its last error and its next run |
+| `jmwe_getLogs` | `GET /logs?issueKey&extensionName&triggeredBy&errors&warnings&successes&skipped&page&pageSize`. JMWE's own defaults apply to what's left out: errors and warnings, 20 to a page |
+| `jmwe_getLogDetails` | `GET /logs/{correlationId}` |
+
+**Reading only reads.** `javap -c` on each of these handlers found no call that saves, changes or runs anything; the
+only setters fill in the objects they answer with. One route needs care: `GET /scheduled-actions/{actionId}/run` runs a
+scheduled action although it is a `GET`, so no tool calls it, and a test checks the scheduled action tools stay on their
+list, get and status routes. Some handlers check Jira's global permissions themselves; none of the routes has a
+resource filter.
+
+**How they were checked.** Unit tests check each tool's path and query, the shared items' content switch, the logs'
+defaults, and the 403 message. Detection is tested with all seven Jira apps installed, with only some of them, and with
+`JIRA_APPS`. The catalog test checks that the tools are reached through the tool search unless `TOOLSETS` names their
+toolset.
+
+**Not covered yet:** running a scheduled action, running or testing Groovy and Nunjucks, changing actions, shared
+items and preferences, and acknowledging or deleting logs. Running anything would follow ScriptRunner's rule:
+destructive, behind its own setting, and never offered by the tool search or `jira_runCode`.
+
 ## Jira Service Management
 
 Atlassian's service desk app. Its tools are the `jira_service_desk` toolset, which is off until `TOOLSETS` names it.
@@ -581,6 +625,7 @@ annotations, and the list is compared with the build the tools came from. The ap
 | Zephyr | 12.12.1-jira11 | 12.12.1-jira11 | No newer build |
 | BigPicture | 8.70.11.6 | 8.70.11.6 | No newer build |
 | Tempo Timesheets | 20.0.1 | 20.0.1 | No newer build |
+| JMWE | 10.1.3 | 10.1.3 | No newer build |
 
 A route list says nothing about what a resource returns, so a change inside a response body would still need a live
 instance to find. Please [open an issue](https://github.com/tekthar/atlassian-data-center-mcp/issues) if a tool stops
@@ -644,3 +689,11 @@ Apps are added in this order, each step in its own release-ready change.
        reviewer
      - [x] Write: log, change and delete time; submit, approve, reject and reopen timesheets
      - [x] Read Tempo accounts and teams
+   - **JMWE** (`com.innovalog.jmwe.jira-misc-workflow-extensions`), chosen on 2026-11-20. It is the next most installed
+     Jira app on the Marketplace's popular list (16,166) after the ones already supported and Microsoft Teams for Jira.
+     Like ScriptRunner it holds workflow automation that administrators debug, and its execution logs answer why a
+     post-function did or didn't run on an issue. Its REST API is the one its own admin pages use, not a published one.
+     - [x] Read: workflow extensions, shared items, event-based and scheduled actions with their run status, and
+       execution logs
+     - [ ] Opt-in: run a scheduled action, under ScriptRunner's rule (destructive, its own setting, never offered by the
+       tool search or `jira_runCode`)
