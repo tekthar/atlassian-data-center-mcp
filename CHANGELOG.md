@@ -11,13 +11,14 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Features
 
-* **jira:** JMWE (Jira Misc Workflow Extensions) support, starting with reading. Seven tools, reached through `jira_searchTools` when JMWE is installed:
+* **jira:** JMWE (Jira Misc Workflow Extensions) support. Seven read tools, reached through `jira_searchTools` when JMWE is installed, and one opt-in tool:
   * the workflows that use JMWE, and one workflow's JMWE post-functions, conditions and validators by transition;
   * shared actions, conditions, validators and scripts;
   * event-based and scheduled actions, and how the scheduled ones last ran;
-  * execution logs by issue, extension or user, errors and warnings by default.
+  * execution logs by issue, extension or user, errors and warnings by default;
+  * `jmwe_runScheduledAction` starts a scheduled action now (`JIRA_JMWE_SCHEDULED_ACTION_RUN_ENABLED`). Like ScriptRunner's tools that run code, it is destructive, shown only to Jira administrators, listed only when `TOOLSETS` names `jmwe_actions`, and never offered by the tool search or `jira_runCode`.
 
-  JMWE's run route for scheduled actions is a `GET`, so no tool calls it. Built from JMWE 10.1.3. See [Supported apps](docs/supported-apps.md#jmwe).
+  JMWE's run route for scheduled actions is a `GET`, so the read tools never call it. Built from JMWE 10.1.3. See [Supported apps](docs/supported-apps.md#jmwe).
 * **jira:** Tempo Timesheets support. Nineteen tools, reached through `jira_searchTools` when Tempo is installed:
   * worklogs between two dates, by person, issue, project, epic, Tempo team, account or saved filter, with the total and billable hours of every match;
   * one worklog;
