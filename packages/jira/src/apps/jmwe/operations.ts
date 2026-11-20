@@ -22,8 +22,8 @@ export function getSharedItems(kind: SharedKind, id: string | undefined, include
 }
 
 /*
- * Each action's own route, GET /scheduled-actions/{id}/run, runs it; these tools only ever call the list and
- * get routes.
+ * Each action's own route, GET /scheduled-actions/{id}/run, runs it. These read tools only ever call the list
+ * and get routes; only the opt-in jmwe_runScheduledAction calls the run route.
  */
 const actions = (url: string, what: string, actionId?: string) => (actionId === undefined
   ? get(url, `The ${what}`)

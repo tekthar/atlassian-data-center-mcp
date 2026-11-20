@@ -144,7 +144,7 @@ Service Management's tools are the `jira_service_desk` toolset in [Toolsets](#to
 | Zephyr, test management | 12 | Beta |
 | BigPicture, portfolio and project management | 8 | Beta |
 | Tempo Timesheets, time tracking | 20 | Beta |
-| JMWE, workflow extensions | 10 | Beta, read-only so far |
+| JMWE, workflow extensions | 10 | Beta |
 | Jira Service Management | not recorded | Beta |
 
 Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists the
@@ -230,15 +230,16 @@ Tempo returns every worklog a search matches at once, so `tempo_searchWorklogs` 
 Logging, changing and deleting time are offered to people with Jira's matching worklog permissions; Tempo's own
 permissions decide who may submit and review timesheets.
 
-**JMWE** tools, all read-only for now:
+**JMWE** tools:
 
 | Toolset | Tools |
 |---|---|
 | `jmwe_workflows`: JMWE's workflow extensions and shared items | `jmwe_getWorkflowExtensions`, `jmwe_getSharedItems` |
-| `jmwe_actions`: event-based and scheduled actions | `jmwe_getEventBasedActions`, `jmwe_getScheduledActions`, `jmwe_getScheduledActionStatus` |
+| `jmwe_actions`: event-based and scheduled actions | `jmwe_getEventBasedActions`, `jmwe_getScheduledActions`, `jmwe_getScheduledActionStatus`, `jmwe_runScheduledAction` (destructive, opt-in) |
 | `jmwe_logs`: execution logs | `jmwe_getLogs`, `jmwe_getLogDetails` |
 
-JMWE decides who may read these; most of its configuration is for Jira administrators.
+JMWE decides who may read these; most of its configuration is for Jira administrators. `jmwe_runScheduledAction` is off
+unless `JIRA_JMWE_SCHEDULED_ACTION_RUN_ENABLED` is `true`, like ScriptRunner's tools that run code.
 
 ## Settings
 
@@ -280,6 +281,7 @@ keychain.
 | `JIRA_SCRIPTRUNNER_BUILTIN_RUN_ENABLED` | `true` turns on `scriptrunner_runBuiltInScript`, with `scriptrunner_validateBuiltInScript` and `scriptrunner_previewBuiltInScript` to check a run first. Also name `scriptrunner_builtin_scripts` in `TOOLSETS`. |
 | `JIRA_SCRIPTRUNNER_FILE_SAVE_ENABLED` | `true` turns on `scriptrunner_saveScriptFile`, which creates or replaces script files. Also name `scriptrunner_script_editor` in `TOOLSETS`. |
 | `JIRA_SCRIPTRUNNER_BEHAVIOURS_EDIT_ENABLED` | `true` turns on the four tools that create, replace, switch on or off, and map behaviours. Also name `scriptrunner_behaviours` in `TOOLSETS`. |
+| `JIRA_JMWE_SCHEDULED_ACTION_RUN_ENABLED` | `true` turns on `jmwe_runScheduledAction`, which starts a JMWE scheduled action outside its schedule. Also name `jmwe_actions` in `TOOLSETS`. |
 | `JIRA_ATTACHMENTS_UPLOAD_ENABLED`, `JIRA_ATTACHMENTS_DOWNLOAD_ENABLED` | `true` lets attachments be uploaded from, or saved to, your disk. Default off: downloads come back inline and never touch the disk. |
 | `JIRA_ATTACHMENTS_UPLOAD_ROOTS`, `JIRA_ATTACHMENTS_DOWNLOAD_ROOTS` | Folders allowed for each direction, separated like your OS `PATH`. |
 | `JIRA_ATTACHMENTS_DIR` | One folder used for both directions. |

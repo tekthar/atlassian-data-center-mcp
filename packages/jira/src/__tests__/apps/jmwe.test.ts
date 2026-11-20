@@ -1,6 +1,7 @@
 import { createRecordingRegistrar } from '@atlassian-dc-mcp/common';
 import { request } from '../../jira-client/core/request.js';
 import { JMWE_CATALOG } from '../../apps/jmwe/catalog.js';
+import { JMWE_OPT_IN_SETTINGS, registerJmweOptInTools } from '../../apps/jmwe/opt-in-tools.js';
 import { registerJmweReadTools } from '../../apps/jmwe/read-tools.js';
 
 jest.mock('../../jira-client/core/request.js', () => ({
@@ -37,9 +38,10 @@ function setup() {
 describe('JMWE tools', () => {
   beforeEach(() => jest.resetAllMocks());
 
-  it('registers every catalogued tool, all read-only, in toolsets that are off by default', () => {
-    expect(setup().registrar.registeredTools().sort()).toEqual(Object.keys(JMWE_CATALOG.tools).sort());
-    expect(Object.values(JMWE_CATALOG.tools).every((entry) => entry.access === 'read')).toBe(true);
+  it('registers every catalogued read tool, in toolsets that are off by default', () => {
+    const reads = Object.entries(JMWE_CATALOG.tools).filter(([, entry]) => entry.access === 'read').map(([name]) => name);
+
+    expect(setup().registrar.registeredTools().sort()).toEqual(reads.sort());
     expect(Object.values(JMWE_CATALOG.toolsets).every((toolset) => !toolset.default)).toBe(true);
   });
 
@@ -101,5 +103,36 @@ describe('JMWE tools', () => {
     const result = await setup().callJson('jmwe_getSharedItems', { kind: 'scripts' });
 
     expect(result.error).toContain('JMWE refused this (403)');
+  });
+});
+
+describe('JMWE tools that run something', () => {
+  beforeEach(() => jest.resetAllMocks());
+
+  const setupOptIns = (env: Record<string, string | undefined>) => {
+    const recorder = createRecordingRegistrar();
+    registerJmweOptInTools(recorder.registrar, { instanceType: 'JIRA Data Center edition instance', getPageSize: () => 25 }, env);
+    return recorder;
+  };
+
+  it('registers the run tool only when its own setting is true', () => {
+    expect(setupOptIns({}).registrar.registeredTools()).toEqual([]);
+    expect(setupOptIns({ JIRA_JMWE_SCHEDULED_ACTION_RUN_ENABLED: 'false' }).registrar.registeredTools()).toEqual([]);
+    expect(setupOptIns({ JIRA_JMWE_SCHEDULED_ACTION_RUN_ENABLED: 'true' }).registrar.registeredTools()).toEqual(['jmwe_runScheduledAction']);
+  });
+
+  it('catalogues it as destructive and for Jira administrators', () => {
+    for (const name of Object.keys(JMWE_OPT_IN_SETTINGS)) {
+      expect(JMWE_CATALOG.tools[name]).toMatchObject({ access: 'destructive', anyOfPermissions: ['ADMINISTER', 'SYSTEM_ADMIN'] });
+    }
+  });
+
+  it('starts a scheduled action on its run route and points to the status tool', async () => {
+    routeRequests({ [`${BASE}/scheduled-actions/{actionId}/run`]: undefined });
+
+    const result = await setupOptIns({ JIRA_JMWE_SCHEDULED_ACTION_RUN_ENABLED: 'yes' }).callJson('jmwe_runScheduledAction', { actionId: 'nightly-cleanup' });
+
+    expect(sent()).toMatchObject({ method: 'GET', url: `${BASE}/scheduled-actions/{actionId}/run`, path: { actionId: 'nightly-cleanup' } });
+    expect(result.data).toEqual({ started: true, actionId: 'nightly-cleanup', followWith: 'jmwe_getScheduledActionStatus' });
   });
 });

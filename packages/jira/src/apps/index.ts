@@ -18,6 +18,7 @@ import { startDrawioRequest } from './drawio/client.js';
 import { registerDrawioReadTools } from './drawio/read-tools.js';
 import { JMWE_CATALOG } from './jmwe/catalog.js';
 import { startJmweRequest } from './jmwe/client.js';
+import { registerJmweOptInTools } from './jmwe/opt-in-tools.js';
 import { registerJmweReadTools } from './jmwe/read-tools.js';
 import { SCRIPTRUNNER_CATALOG } from './scriptrunner/catalog.js';
 import { startScriptRunnerRequest } from './scriptrunner/client.js';
@@ -107,7 +108,10 @@ export const JIRA_APPS: JiraApp[] = [
     name: 'JMWE',
     catalog: JMWE_CATALOG,
     probe: (timeoutMs) => withTimeout(startJmweRequest({ method: 'GET', url: '/status/picker' }), timeoutMs),
-    register: registerJmweReadTools,
+    register: (tools, context) => {
+      registerJmweReadTools(tools, context);
+      registerJmweOptInTools(tools, context);
+    },
   },
 ];
 
