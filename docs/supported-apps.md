@@ -14,6 +14,7 @@ Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and th
 | [BigPicture](#bigpicture), portfolio and project management | Jira | 8 | Beta |
 | [Tempo Timesheets](#tempo-timesheets), time tracking | Jira | 20 | Beta |
 | [JMWE](#jmwe), workflow extensions | Jira | 10 | Beta |
+| [Structure](#structure), hierarchies and portfolio planning | Jira | 9 | Beta, read-only so far |
 
 - **Tested** means the tools were run against a live instance of that app version.
 - **Beta** means the tools were built and checked as described below, but not yet run against a live instance. Please
@@ -602,6 +603,61 @@ and its request.
 **Not covered yet:** running or testing Groovy and Nunjucks, switching actions on and off, changing actions, shared
 items and preferences, and acknowledging or deleting logs.
 
+## Structure
+
+Structure by Tempo, formerly by ALM Works, Marketplace key `com.almworks.jira.structure`. Added after 0.47.1, in the
+next release. It was the third app chosen from the Marketplace's most popular Data Center apps; see the
+[roadmap](#roadmap) for why.
+
+| | |
+|---|---|
+| Built from | Structure **9.14.1** for Data Center (Marketplace build 1004183, released 2026-10-21) |
+| Jira | 9.12 to 11.3, as this build's Marketplace listing gives |
+| REST API used | `/rest/structure/2.0`, which Tempo documents in its [Structure REST API reference](https://help.tempo.io/structure-dc/latest/structure-rest-api-reference) |
+| Tools | 4, all read-only, in the toolset `structure_hierarchies` |
+| Detection | `GET /rest/structure/2.0/structure?limit=1` at startup, the documented structure search, unless `JIRA_APPS` names the apps to offer |
+| Status | Beta: not yet run against a live Structure instance |
+
+**How the tools were built.** The plugin declares its REST modules once for each Jira line: `javax` resources for
+Jira 9 and 10 and `jakarta` ones for Jira 11. `javap` on the version 2.0 resources gave the same 115 routes for both.
+Tempo's reference documents the search, structure, forest and value routes these tools use, and calls version 2.0
+not yet stable, so each new build is worth checking.
+
+| Tool | Request |
+|---|---|
+| `structure_getStructures` | `GET /structure?name&permission&archived&limit&page&withOwner`. Structure matches the name, ignoring case, or the id, sorts by name, and allows up to 100 to a page; the tool asks for 25 unless told |
+| `structure_getStructure` | `GET /structure/{id}?withOwner&withPermissions`. Structure gives the sharing rules only to those who control the structure |
+| `structure_getStructureRows` | `GET /forest/latest?s={"structureId":…}` for the rows, then `POST /value` for the values of one page of them, each attribute as `text` |
+| `structure_getIssueStructures` | `GET /rest/api/2/issue/{key}` for the issue's id, then `GET /structure/list?anchorIssue` |
+
+**Reading the rows.** `/forest/latest` sends a structure's rows as a formula: comma-separated rows, each
+`rowId:depth:item`, sometimes followed by a fourth field Structure keeps for itself. An issue's item is its id; any
+other item is `typeId/id`, or `typeId//id` for a URI-encoded string id, and `itemTypes` names each type. `javap -c` on
+Structure's `ItemSerializer` confirms the format Tempo documents. The tool turns each row into its rowId, depth, item
+type (`issue`, `folder`, `generator`, ...) and item id, narrows them to one row's subtree or a depth when asked, and
+asks `/value` for the page's values: `key`, `summary` and `status` unless other attributes are named. The attribute
+ids are Structure's `CoreAttributeSpecs`; Structure converts numbers, times, durations, users and yes-or-no values to
+text. `/value` lists the rows the user may not read, and the tool marks them `inaccessible`.
+
+**The structures an issue is in.** `/structure/list` isn't in Tempo's reference. It lists your recent, favorite and
+default structures and, given an issue id, the ones Structure's issue index says hold the issue and that you can view,
+recent ones first, with their total. It shortens each list to a length it takes from a Jira setting, so the tool
+reports the total and says when the list is shorter.
+
+**Reading only reads.** `javap -c` on each handler these tools reach found no call that saves or changes anything:
+they only build their answers, and `/value` sets the request's rendering context. Building the forest formula may give
+an item type Structure hasn't met before a number in Structure's own type registry. Structure can rate-limit the
+structure search per user, but only once an administrator turns that on; the tools then pass on its 429.
+
+**How they were checked.** Unit tests check each tool's requests, the formula with issues, folders, generators and a
+string id, the subtree and depth filters, paging, inaccessible rows, the issue lookup, and the 404 message. Detection
+is tested with all eight Jira apps installed, with only some of them, and with `JIRA_APPS`. The catalog test checks
+that the tools are reached through the tool search unless `TOOLSETS` names their toolset.
+
+**Not covered yet:** a structure's change history; formula columns and other attributes with parameters, such as
+progress; generators and automation; and changing structures: adding, moving and removing rows, and creating
+structures.
+
 ## Jira Service Management
 
 Atlassian's service desk app. Its tools are the `jira_service_desk` toolset, which is off until `TOOLSETS` names it.
@@ -633,6 +689,7 @@ annotations, and the list is compared with the build the tools came from. The ap
 | BigPicture | 8.70.11.6 | 8.70.11.6 | No newer build |
 | Tempo Timesheets | 20.0.1 | 20.0.1 | No newer build |
 | JMWE | 10.1.3 | 10.1.3 | No newer build |
+| Structure | 9.14.1 | 9.14.1 | No newer build |
 
 A route list says nothing about what a resource returns, so a change inside a response body would still need a live
 instance to find. Please [open an issue](https://github.com/tekthar/atlassian-data-center-mcp/issues) if a tool stops
@@ -704,3 +761,12 @@ Apps are added in this order, each step in its own release-ready change.
        execution logs
      - [x] Opt-in: run a scheduled action, under ScriptRunner's rule (destructive, its own setting, never offered by the
        tool search or `jira_runCode`)
+   - **Structure by Tempo** (`com.almworks.jira.structure`), chosen on 2026-11-21. On the Marketplace's popular Data
+     Center apps for Jira, by installs, the most installed ones not yet supported were Microsoft Teams for Jira (26,193),
+     Zendesk Support for Jira (12,806) and Structure (12,463). Like Microsoft Teams for Jira, Zendesk Support for Jira
+     connects Jira to another service, and its tickets stay in Zendesk. Structure holds the hierarchies teams plan in,
+     epics, stories and folders across projects, which agents are asked to read and summarize, and Tempo documents its
+     REST API for Data Center.
+     - [x] Read: find structures, one structure, a structure's rows with issue values, and the structures an issue is in
+     - [ ] Read: a structure's change history
+     - [ ] Write: add, move and remove rows, and create structures

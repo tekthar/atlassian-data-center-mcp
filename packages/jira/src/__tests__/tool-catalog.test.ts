@@ -7,6 +7,7 @@ import { BIGPICTURE_CATALOG } from '../apps/bigpicture/catalog.js';
 import { DRAWIO_CATALOG } from '../apps/drawio/catalog.js';
 import { JMWE_CATALOG } from '../apps/jmwe/catalog.js';
 import { SCRIPTRUNNER_CATALOG } from '../apps/scriptrunner/catalog.js';
+import { STRUCTURE_CATALOG } from '../apps/structure/catalog.js';
 import { TEMPO_CATALOG } from '../apps/tempo/catalog.js';
 import { XRAY_CATALOG } from '../apps/xray/catalog.js';
 import { ZEPHYR_CATALOG } from '../apps/zephyr/catalog.js';
@@ -155,6 +156,7 @@ describe('JIRA_TOOL_CATALOG', () => {
     ['BigPicture', BIGPICTURE_CATALOG, 'bigpicture_boxes', 'bigpicture_getBoxHierarchy'],
     ['Tempo', TEMPO_CATALOG, 'tempo_worklogs', 'tempo_searchWorklogs'],
     ['JMWE', JMWE_CATALOG, 'jmwe_logs', 'jmwe_getLogs'],
+    ['Structure', STRUCTURE_CATALOG, 'structure_hierarchies', 'structure_getStructureRows'],
   ])('offers %s tools through the gateway by default, and lists them once TOOLSETS names their toolset', (_app, catalog, toolset, tool) => {
     const appTools = Object.entries(catalog.tools).filter(([, entry]) => entry.access !== 'destructive').map(([name]) => name);
 
