@@ -11,9 +11,10 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Features
 
-* **jira:** Structure by Tempo support, starting with reading. Four tools, reached through `jira_searchTools` when Structure is installed:
+* **jira:** Structure by Tempo support, starting with reading. Five tools, reached through `jira_searchTools` when Structure is installed:
   * find the structures shared with you by name, and get one with its owner and sharing rules;
   * read a structure's hierarchy a page at a time: each row's depth, item type and values such as the issue key, summary and status, for the whole structure, one row's subtree or down to a depth, with the rows you may not read marked;
+  * a structure's change history, newest first: who added, copied, moved or removed rows, or which synchronizer, and the issues they were;
   * list the structures an issue is in.
 
   Built from Structure 9.14.1. See [Supported apps](docs/supported-apps.md#structure).

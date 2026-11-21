@@ -614,7 +614,7 @@ next release. It was the third app chosen from the Marketplace's most popular Da
 | Built from | Structure **9.14.1** for Data Center (Marketplace build 1004183, released 2026-10-21) |
 | Jira | 9.12 to 11.3, as this build's Marketplace listing gives |
 | REST API used | `/rest/structure/2.0`, which Tempo documents in its [Structure REST API reference](https://help.tempo.io/structure-dc/latest/structure-rest-api-reference) |
-| Tools | 4, all read-only, in the toolset `structure_hierarchies` |
+| Tools | 5, all read-only, in the toolset `structure_hierarchies` |
 | Detection | `GET /rest/structure/2.0/structure?limit=1` at startup, the documented structure search, unless `JIRA_APPS` names the apps to offer |
 | Status | Beta: not yet run against a live Structure instance |
 
@@ -629,6 +629,7 @@ not yet stable, so each new build is worth checking.
 | `structure_getStructure` | `GET /structure/{id}?withOwner&withPermissions`. Structure gives the sharing rules only to those who control the structure |
 | `structure_getStructureRows` | `GET /forest/latest?s={"structureId":…}` for the rows, then `POST /value` for the values of one page of them, each attribute as `text` |
 | `structure_getIssueStructures` | `GET /rest/api/2/issue/{key}` for the issue's id, then `GET /structure/list?anchorIssue` |
+| `structure_getStructureHistory` | `GET /history/{id}/versions?maxCount&maxVersion` |
 
 **Reading the rows.** `/forest/latest` sends a structure's rows as a formula: comma-separated rows, each
 `rowId:depth:item`, sometimes followed by a fourth field Structure keeps for itself. An issue's item is its id; any
@@ -644,19 +645,29 @@ default structures and, given an issue id, the ones Structure's issue index says
 recent ones first, with their total. It shortens each list to a length it takes from a Jira setting, so the tool
 reports the total and says when the list is shorter.
 
+**The change history.** Structure records each change to a structure's rows as a new version, with the user or the
+synchronizer that made it and each change in it: added, copied, moved or removed, the item at the top of the change,
+how many rows it covered, and the issue's key and summary when the item is an issue the user may see. `javap -c` on
+the history resource and its SQL shows that versions come newest first and that `maxVersion` is exclusive: the query
+is `C_ID < (structureId << 32 | maxVersion)`, ordered by `C_ID` descending. So the tool's `beforeVersion` is sent as
+`maxVersion`, and the oldest version of a full page is the next page's `beforeVersion`. The resource accepts a
+`minVersion` but doesn't use it in 9.14.1, so the tool doesn't offer it. A change's item is written the way the
+forest formula writes items, and is read the same way.
+
 **Reading only reads.** `javap -c` on each handler these tools reach found no call that saves or changes anything:
 they only build their answers, and `/value` sets the request's rendering context. Building the forest formula may give
 an item type Structure hasn't met before a number in Structure's own type registry. Structure can rate-limit the
 structure search per user, but only once an administrator turns that on; the tools then pass on its 429.
 
 **How they were checked.** Unit tests check each tool's requests, the formula with issues, folders, generators and a
-string id, the subtree and depth filters, paging, inaccessible rows, the issue lookup, and the 404 message. Detection
+string id, the subtree and depth filters, paging, inaccessible rows, the issue lookup, the history's users,
+synchronizers, changes and paging, and the 404 message. Detection
 is tested with all eight Jira apps installed, with only some of them, and with `JIRA_APPS`. The catalog test checks
 that the tools are reached through the tool search unless `TOOLSETS` names their toolset.
 
-**Not covered yet:** a structure's change history; formula columns and other attributes with parameters, such as
-progress; generators and automation; and changing structures: adding, moving and removing rows, and creating
-structures.
+**Not covered yet:** where in the structure each change happened (`GET /history/{id}/version/{v}` gives the parent rows
+before and after); formula columns and other attributes with parameters, such as progress; generators and automation;
+and changing structures: adding, moving and removing rows, and creating structures.
 
 ## Jira Service Management
 
@@ -768,5 +779,5 @@ Apps are added in this order, each step in its own release-ready change.
      epics, stories and folders across projects, which agents are asked to read and summarize, and Tempo documents its
      REST API for Data Center.
      - [x] Read: find structures, one structure, a structure's rows with issue values, and the structures an issue is in
-     - [ ] Read: a structure's change history
+     - [x] Read: a structure's change history
      - [ ] Write: add, move and remove rows, and create structures

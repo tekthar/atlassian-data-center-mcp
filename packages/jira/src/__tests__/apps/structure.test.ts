@@ -60,6 +60,7 @@ describe('Structure tools', () => {
   beforeEach(() => jest.resetAllMocks());
 
   it('registers every catalogued tool, all reading, in a toolset that is off by default', () => {
+    expect(Object.keys(STRUCTURE_CATALOG.tools)).toHaveLength(5);
     expect(setup().registrar.registeredTools().sort()).toEqual(Object.keys(STRUCTURE_CATALOG.tools).sort());
     expect(Object.values(STRUCTURE_CATALOG.tools).every((entry) => entry.access === 'read')).toBe(true);
     expect(Object.values(STRUCTURE_CATALOG.toolsets).every((toolset) => !toolset.default)).toBe(true);
@@ -173,6 +174,58 @@ describe('Structure tools', () => {
       structures: [{ id: 7, name: 'Roadmap' }, { id: 9, name: 'Q4 plan' }],
       note: 'Structure lists only the first 2, your recent structures first.',
     });
+  });
+
+  it('reads a structure\'s history newest first: who changed it, or which synchronizer, and what', async () => {
+    routeRequests({
+      [`GET ${BASE}/history/{structureId}/versions`]: {
+        versions: [
+          {
+            structure: 7, version: 12, timestamp: Date.UTC(2026, 10, 20, 9, 30), dateTimeFormatted: '20/Nov/26 9:30 AM',
+            user: { name: 'anna', userKey: 'JIRAUSER10000', displayName: 'Anna Berg', avatarUrl: 'https://jira/avatar' },
+            changes: [
+              { operation: 'move', moveDirection: 1, forestSize: 3, itemId: '10002', issueKey: 'PROJ-12', issueSummary: 'Checkout' },
+              { operation: 'remove', forestSize: 1, itemId: '10009' },
+            ],
+          },
+          {
+            structure: 7, version: 11, timestamp: Date.UTC(2026, 10, 19, 17, 0), synchronizer: { id: 4, description: 'Agile sync with board 12' },
+            changes: [{ operation: 'add', forestSize: 2, itemId: '5/240' }], itemTypes: { 5: 'com.almworks.jira.structure:type-folder' },
+          },
+        ],
+        itemTypes: {},
+      },
+    });
+
+    const result = await setup().callJson('structure_getStructureHistory', { structureId: 7, limit: 2 });
+
+    expect(sentTo(`${BASE}/history/{structureId}/versions`)[0]).toMatchObject({ path: { structureId: 7 }, query: { maxCount: 2, maxVersion: undefined } });
+    expect(result.data).toEqual({
+      structureId: 7,
+      versions: [
+        {
+          version: 12, at: '2026-11-20T09:30:00.000Z', user: 'Anna Berg', userName: 'anna',
+          changes: [
+            { operation: 'move', type: 'issue', itemId: '10002', issueKey: 'PROJ-12', issueSummary: 'Checkout', rows: 3 },
+            { operation: 'remove', type: 'issue', itemId: '10009', rows: 1 },
+          ],
+        },
+        {
+          version: 11, at: '2026-11-19T17:00:00.000Z', synchronizer: 'Agile sync with board 12',
+          changes: [{ operation: 'add', type: 'folder', itemId: '240', rows: 2 }],
+        },
+      ],
+      nextBeforeVersion: 11,
+    });
+  });
+
+  it('asks for the versions before the one given, and offers no next page after a short one', async () => {
+    routeRequests({ [`GET ${BASE}/history/{structureId}/versions`]: { versions: [{ version: 3, timestamp: 0, changes: [] }], itemTypes: {} } });
+
+    const result = await setup().callJson('structure_getStructureHistory', { structureId: 7, beforeVersion: 4 });
+
+    expect(sentTo(`${BASE}/history/{structureId}/versions`)[0].query).toEqual({ maxCount: 20, maxVersion: 4 });
+    expect(result.data).toEqual({ structureId: 7, versions: [{ version: 3, at: '1970-01-01T00:00:00.000Z', changes: [] }] });
   });
 
   it('explains a 404 in terms of the structure and Structure', async () => {
