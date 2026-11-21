@@ -31,6 +31,12 @@ export const structureToolSchemas = {
     offset: z.number().int().min(0).optional().describe('Rows to skip, for the next page (default 0)'),
     limit: z.number().int().min(1).max(MAX_ROWS).optional().describe(`Rows per page (default 100, up to ${MAX_ROWS})`),
   },
+  getStructureHistory: {
+    structureId,
+    beforeVersion: z.number().int().min(1).optional()
+      .describe('Only versions older than this one; for the next page, the nextBeforeVersion of the last call'),
+    limit: z.number().int().min(1).max(100).optional().describe('Versions per page (default 20, up to 100)'),
+  },
   getIssueStructures: {
     issueKey: z.string().regex(/^[A-Za-z][A-Za-z0-9_]*-\d+$/, 'Expected a Jira issue key such as PROJ-12').describe('The Jira issue key, e.g. PROJ-12'),
   },

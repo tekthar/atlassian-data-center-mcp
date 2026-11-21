@@ -4,11 +4,9 @@
  * `typeId//stringId` with the string URI-encoded, and `itemTypes` names each typeId.
  */
 
-export interface ForestRow {
+export interface ForestRow extends ForestItem {
   rowId: number;
   depth: number;
-  type: string;
-  itemId: string;
 }
 
 const STRUCTURE_TYPE_PREFIX = 'com.almworks.jira.structure:type-';
@@ -16,14 +14,23 @@ const STRUCTURE_TYPE_PREFIX = 'com.almworks.jira.structure:type-';
 const typeName = (typeKey: string) =>
   (typeKey.startsWith(STRUCTURE_TYPE_PREFIX) ? typeKey.slice(STRUCTURE_TYPE_PREFIX.length) : typeKey);
 
-function parseRow(component: string, itemTypes: Record<string, string>): ForestRow {
-  const [rowId, depth, item = ''] = component.split(':');
-  const row = { rowId: Number(rowId), depth: Number(depth) };
+export interface ForestItem {
+  type: string;
+  itemId: string;
+}
+
+/** One item as Structure writes it: an issue id, `typeId/longId`, or `typeId//stringId`. */
+export function parseItem(item: string, itemTypes: Record<string, string> = {}): ForestItem {
   const slash = item.indexOf('/');
-  if (slash < 0) return { ...row, type: 'issue', itemId: item };
+  if (slash < 0) return { type: 'issue', itemId: item };
   const typeId = item.slice(0, slash);
   const id = item.slice(slash + 1);
-  return { ...row, type: typeName(itemTypes[typeId] ?? typeId), itemId: id.startsWith('/') ? decodeURIComponent(id.slice(1)) : id };
+  return { type: typeName(itemTypes[typeId] ?? typeId), itemId: id.startsWith('/') ? decodeURIComponent(id.slice(1)) : id };
+}
+
+function parseRow(component: string, itemTypes: Record<string, string>): ForestRow {
+  const [rowId, depth, item = ''] = component.split(':');
+  return { rowId: Number(rowId), depth: Number(depth), ...parseItem(item, itemTypes) };
 }
 
 export function parseForest(formula: string, itemTypes: Record<string, string> = {}): ForestRow[] {
