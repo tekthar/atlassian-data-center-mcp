@@ -24,6 +24,9 @@ import { SCRIPTRUNNER_CATALOG } from './scriptrunner/catalog.js';
 import { startScriptRunnerRequest } from './scriptrunner/client.js';
 import { registerScriptRunnerReadTools } from './scriptrunner/read-tools.js';
 import { registerScriptRunnerOptInTools } from './scriptrunner/opt-in-tools.js';
+import { STRUCTURE_CATALOG } from './structure/catalog.js';
+import { startStructureRequest } from './structure/client.js';
+import { registerStructureReadTools } from './structure/read-tools.js';
 import { TEMPO_CATALOG } from './tempo/catalog.js';
 import { startTempoRequest } from './tempo/client.js';
 import { registerTempoReadTools } from './tempo/read-tools.js';
@@ -112,6 +115,14 @@ export const JIRA_APPS: JiraApp[] = [
       registerJmweReadTools(tools, context);
       registerJmweOptInTools(tools, context);
     },
+  },
+  {
+    id: 'structure',
+    name: 'Structure',
+    catalog: STRUCTURE_CATALOG,
+    // Structure's documented structure search; a signed-in user who may use Structure gets a page, often empty.
+    probe: (timeoutMs) => withTimeout(startStructureRequest({ method: 'GET', url: '/structure', query: { limit: 1 } }), timeoutMs),
+    register: registerStructureReadTools,
   },
 ];
 
