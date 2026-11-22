@@ -614,7 +614,7 @@ next release. It was the third app chosen from the Marketplace's most popular Da
 | Built from | Structure **9.14.1** for Data Center (Marketplace build 1004183, released 2026-10-21) |
 | Jira | 9.12 to 11.3, as this build's Marketplace listing gives |
 | REST API used | `/rest/structure/2.0`, which Tempo documents in its [Structure REST API reference](https://help.tempo.io/structure-dc/latest/structure-rest-api-reference) |
-| Tools | 8 in the toolset `structure_hierarchies`: 5 that read, and 3 that add, move and remove rows |
+| Tools | 10 in the toolset `structure_hierarchies`: 5 that read, and 5 that create structures and folders and add, move and remove rows |
 | Detection | `GET /rest/structure/2.0/structure?limit=1` at startup, the documented structure search, unless `JIRA_APPS` names the apps to offer |
 | Status | Beta: not yet run against a live Structure instance |
 
@@ -633,6 +633,8 @@ not yet stable, so each new build is worth checking.
 | `structure_addIssues` | `POST /rest/api/2/search` for the issues' ids, `GET /forest/latest` for the rows and version, then `POST /forest/update` with an `add` action |
 | `structure_moveRows` | `GET /forest/latest`, then `POST /forest/update` with a `move` action |
 | `structure_removeRows` | `GET /forest/latest`, then `POST /forest/update` with a `remove` action. Destructive |
+| `structure_createStructure` | `POST /structure` with a name and description |
+| `structure_addFolder` | `GET /forest/latest`, then `POST /item/create` with the folder type |
 
 **Reading the rows.** `/forest/latest` sends a structure's rows as a formula: comma-separated rows, each
 `rowId:depth:item`, sometimes followed by a fourth field Structure keeps for itself. An issue's item is its id; any
@@ -674,6 +676,15 @@ an issue link deletes the link. Structure lists these in `effects`, which the to
 destructive, so the tool search never offers it. Structure decides who may change each structure, so these tools name
 no Jira permission. `structure_addIssues` checks first that Jira finds every issue, and adds none if it doesn't.
 
+**Creating structures and folders.** `POST /structure` checks that Structure's settings let the user create
+structures, requires a name, and makes the user the owner; the tool sends only the name and description, so sharing is
+left to Structure. A folder is an item Structure creates and places in one call, `POST /item/create`, with the type
+`com.almworks.jira.structure:type-folder` and its name as the `summary` value (`FolderItemType` reads that key). The
+request carries the forest's version, a negative temporary row id and the place, worked out as for the other changes.
+`javap -c` on `ItemResource` shows it reads `items.version` only after it has made the folder, so the tool always
+sends one (version 0); without it the folder would be made and the call would still fail. The answer gives the new row
+id, the folder's item id, and Structure's form and field errors, which the tool reports.
+
 **Reading only reads.** `javap -c` on each handler the read tools reach found no call that saves or changes anything:
 they only build their answers, and `/value` sets the request's rendering context. Building the forest formula may give
 an item type Structure hasn't met before a number in Structure's own type registry. Structure can rate-limit the
@@ -682,13 +693,14 @@ structure search per user, but only once an administrator turns that on; the too
 **How they were checked.** Unit tests check each tool's requests, the formula with issues, folders, generators and a
 string id, the subtree and depth filters, paging, inaccessible rows, the issue lookup, the history's users,
 synchronizers, changes and paging, and the 404 message. For the changes, they check each action's body and
-placement, the temporary row ids, the issue lookup, refusals and Structure's questions, and the effects. Detection
+placement, the temporary row ids, the issue lookup, refusals and Structure's questions, the effects, the new structure,
+and the folder's request, new row and errors. Detection
 is tested with all eight Jira apps installed, with only some of them, and with `JIRA_APPS`. The catalog test checks
 that the tools are reached through the tool search unless `TOOLSETS` names their toolset.
 
 **Not covered yet:** where in the structure each change happened (`GET /history/{id}/version/{v}` gives the parent rows
 before and after); formula columns and other attributes with parameters, such as progress; generators and automation;
-copying rows; and creating structures and folders.
+copying rows; sharing, renaming, archiving and deleting structures; and renaming folders.
 
 ## Jira Service Management
 
@@ -802,4 +814,4 @@ Apps are added in this order, each step in its own release-ready change.
      - [x] Read: find structures, one structure, a structure's rows with issue values, and the structures an issue is in
      - [x] Read: a structure's change history
      - [x] Write: add issues, and move and remove rows
-     - [ ] Write: create structures and folders
+     - [x] Write: create structures and folders

@@ -12,7 +12,7 @@ const mockedRequest = request as jest.Mock;
 interface RequestOptions {
   method: string;
   url: string;
-  body?: { jql?: string; validateQuery?: boolean; spec?: unknown; version?: unknown; actions?: Record<string, unknown>[] };
+  body?: { jql?: string; validateQuery?: boolean; spec?: unknown; version?: unknown; actions?: Record<string, unknown>[]; [field: string]: unknown };
 }
 
 const BASE = '/structure/2.0';
@@ -127,6 +127,44 @@ describe('Structure write tools', () => {
       effects: [{ description: 'Delete link PROJ-1 blocks PROJ-3', external: true, reversible: true }],
       problems: ['A sorter skipped one row'],
     });
+  });
+
+  it('creates a structure with a name and description, owned by whoever creates it', async () => {
+    routeRequests({ [`POST ${BASE}/structure`]: { id: 12, name: 'Q1 plan', description: 'Epics for Q1', owner: 'user:anna', readOnly: false } });
+
+    const result = await setup().callJson('structure_createStructure', { name: 'Q1 plan', description: 'Epics for Q1' });
+
+    expect(sentTo(`${BASE}/structure`)[0].body).toEqual({ name: 'Q1 plan', description: 'Epics for Q1' });
+    expect(result.data).toEqual({ id: 12, name: 'Q1 plan', description: 'Epics for Q1', owner: 'user:anna' });
+  });
+
+  it('adds a folder last under a row, sending the items version Structure reads after creating it', async () => {
+    routeRequests({
+      [`GET ${BASE}/forest/latest`]: FOREST,
+      [`POST ${BASE}/item/create`]: { successfulActions: 1, itemId: 'com.almworks.jira.structure:type-folder/31', oldRowIds: [-1], newRowIds: [301] },
+    });
+
+    const result = await setup().callJson('structure_addFolder', { structureId: 7, name: 'Backend', underRowId: 101 });
+
+    expect(sentTo(`${BASE}/item/create`)[0].body).toEqual({
+      forest: { spec: { structureId: 7 }, version: VERSION },
+      items: { version: { signature: 0, version: 0 } },
+      rowId: -1,
+      item: { type: 'com.almworks.jira.structure:type-folder', values: { summary: 'Backend' } },
+      under: 101, after: 103, before: 0,
+    });
+    expect(result.data).toEqual({ structureId: 7, name: 'Backend', rowId: 301, itemId: 'com.almworks.jira.structure:type-folder/31' });
+  });
+
+  it('explains Structure\'s form errors for a folder, and refuses a blank name before calling it', async () => {
+    routeRequests({ [`GET ${BASE}/forest/latest`]: FOREST, [`POST ${BASE}/item/create`]: { formErrors: [], fieldErrors: { summary: 'Folder name cannot be empty' } } });
+    const tools = setup();
+
+    const refused = await tools.callJson('structure_addFolder', { structureId: 7, name: 'x' });
+    await expect(tools.call('structure_addFolder', { structureId: 7, name: '   ' })).rejects.toThrow();
+
+    expect(refused.error).toContain('Structure didn\'t create the folder in structure 7: Folder name cannot be empty');
+    expect(sentTo(`${BASE}/item/create`)).toHaveLength(1);
   });
 
   it('explains a refusal and a choice Structure can\'t ask for here', async () => {
