@@ -51,3 +51,25 @@ export function scopeRows(rows: ForestRow[], underRowId?: number, maxDepth?: num
   const scoped = underRowId === undefined ? rows : subtree(rows, underRowId);
   return maxDepth === undefined ? scoped : scoped.filter((row) => row.depth <= maxDepth);
 }
+
+/** A row's children in order; 0 stands for the top level. */
+export function childrenOf(rows: ForestRow[], parentRowId: number): ForestRow[] {
+  if (parentRowId === 0) return rows.filter((row) => row.depth === 0);
+  const below = subtree(rows, parentRowId);
+  return below.filter((row) => row.depth === below[0].depth + 1);
+}
+
+/** Where Structure puts new or moved rows: under a parent (0 for the top level), after a sibling or else last. */
+export interface Placement {
+  under: number;
+  after: number;
+  before: number;
+}
+
+export function placeRows(rows: ForestRow[], under = 0, afterRowId?: number, moving: number[] = []): Placement {
+  const siblings = childrenOf(rows, under).filter((row) => !moving.includes(row.rowId));
+  if (afterRowId === undefined) return { under, after: siblings[siblings.length - 1]?.rowId ?? 0, before: 0 };
+  const index = siblings.findIndex((row) => row.rowId === afterRowId);
+  if (index < 0) throw new Error(`Row ${afterRowId} is not directly under ${under === 0 ? 'the top level' : `row ${under}`}. Give afterRowId from the same level.`);
+  return { under, after: afterRowId, before: siblings[index + 1]?.rowId ?? 0 };
+}

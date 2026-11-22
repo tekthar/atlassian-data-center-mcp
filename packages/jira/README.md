@@ -145,7 +145,7 @@ Service Management's tools are the `jira_service_desk` toolset in [Toolsets](#to
 | BigPicture, portfolio and project management | 8 | Beta |
 | Tempo Timesheets, time tracking | 20 | Beta |
 | JMWE, workflow extensions | 10 | Beta |
-| Structure, hierarchies and portfolio planning | 9 | Beta, read-only so far |
+| Structure, hierarchies and portfolio planning | 9 | Beta |
 | Jira Service Management | not recorded | Beta |
 
 Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists the
@@ -242,15 +242,17 @@ permissions decide who may submit and review timesheets.
 JMWE decides who may read these; most of its configuration is for Jira administrators. `jmwe_runScheduledAction` is off
 unless `JIRA_JMWE_SCHEDULED_ACTION_RUN_ENABLED` is `true`, like ScriptRunner's tools that run code.
 
-**Structure** tools, all read-only for now:
+**Structure** tools:
 
 | Toolset | Tools |
 |---|---|
-| `structure_hierarchies`: structures, their rows and their history | `structure_getStructures`, `structure_getStructure`, `structure_getStructureRows`, `structure_getStructureHistory`, `structure_getIssueStructures` |
+| `structure_hierarchies`: structures, their rows and their history | `structure_getStructures`, `structure_getStructure`, `structure_getStructureRows`, `structure_getStructureHistory`, `structure_getIssueStructures`, `structure_addIssues`, `structure_moveRows`, `structure_removeRows` (destructive) |
 
 `structure_getStructureRows` reads a structure's hierarchy a page at a time, up to 500 rows, with each row's depth, item
 type and values such as the issue key, summary and status. `structure_getStructureHistory` says who added, moved or
-removed rows, newest first. Structure decides which structures and rows each user sees.
+removed rows, newest first. Structure decides which structures and rows each user sees and changes. In a structure
+built by generators, a change can also change issues, such as a grouping field or a link; the tools return what
+Structure did.
 
 ## Settings
 
