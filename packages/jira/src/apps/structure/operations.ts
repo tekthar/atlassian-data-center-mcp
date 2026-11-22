@@ -50,6 +50,7 @@ export async function getIssueStructures(issueKey: string) {
 interface ForestResponse {
   formula?: string;
   itemTypes?: Record<string, string>;
+  version?: { signature?: number; version?: number };
 }
 
 interface ValueResponse {
@@ -60,11 +61,12 @@ interface ValueResponse {
   }[];
 }
 
-async function getRows(structureId: number): Promise<ForestRow[]> {
+/** A structure's rows now, with the version Structure wants back with any change to them. */
+export async function loadForest(structureId: number): Promise<{ rows: ForestRow[]; version: ForestResponse['version'] }> {
   const forest = await callStructure<ForestResponse>({
     method: 'GET', url: '/forest/latest', query: { s: JSON.stringify({ structureId }) },
   }, `Structure ${structureId}`);
-  return parseForest(forest?.formula ?? '', forest?.itemTypes);
+  return { rows: parseForest(forest?.formula ?? '', forest?.itemTypes), version: forest?.version };
 }
 
 /** Each row's values by rowId; a row you may not read gets `inaccessible` instead. */
@@ -93,7 +95,7 @@ export interface RowsRequest {
 
 /** A page of a structure's rows in order, with each row's depth, item and values. */
 export async function getStructureRows({ structureId, attributes, underRowId, maxDepth, offset = 0, limit = 100 }: RowsRequest) {
-  const rows = scopeRows(await getRows(structureId), underRowId, maxDepth);
+  const rows = scopeRows((await loadForest(structureId)).rows, underRowId, maxDepth);
   const page = rows.slice(offset, offset + limit);
   const values = page.length ? await getRowValues(structureId, page.map((row) => row.rowId), attributes ?? DEFAULT_ROW_ATTRIBUTES) : new Map();
   const next = offset + page.length;

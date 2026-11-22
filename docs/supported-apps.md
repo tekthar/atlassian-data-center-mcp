@@ -14,7 +14,7 @@ Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and th
 | [BigPicture](#bigpicture), portfolio and project management | Jira | 8 | Beta |
 | [Tempo Timesheets](#tempo-timesheets), time tracking | Jira | 20 | Beta |
 | [JMWE](#jmwe), workflow extensions | Jira | 10 | Beta |
-| [Structure](#structure), hierarchies and portfolio planning | Jira | 9 | Beta, read-only so far |
+| [Structure](#structure), hierarchies and portfolio planning | Jira | 9 | Beta |
 
 - **Tested** means the tools were run against a live instance of that app version.
 - **Beta** means the tools were built and checked as described below, but not yet run against a live instance. Please
@@ -614,7 +614,7 @@ next release. It was the third app chosen from the Marketplace's most popular Da
 | Built from | Structure **9.14.1** for Data Center (Marketplace build 1004183, released 2026-10-21) |
 | Jira | 9.12 to 11.3, as this build's Marketplace listing gives |
 | REST API used | `/rest/structure/2.0`, which Tempo documents in its [Structure REST API reference](https://help.tempo.io/structure-dc/latest/structure-rest-api-reference) |
-| Tools | 5, all read-only, in the toolset `structure_hierarchies` |
+| Tools | 8 in the toolset `structure_hierarchies`: 5 that read, and 3 that add, move and remove rows |
 | Detection | `GET /rest/structure/2.0/structure?limit=1` at startup, the documented structure search, unless `JIRA_APPS` names the apps to offer |
 | Status | Beta: not yet run against a live Structure instance |
 
@@ -630,6 +630,9 @@ not yet stable, so each new build is worth checking.
 | `structure_getStructureRows` | `GET /forest/latest?s={"structureId":…}` for the rows, then `POST /value` for the values of one page of them, each attribute as `text` |
 | `structure_getIssueStructures` | `GET /rest/api/2/issue/{key}` for the issue's id, then `GET /structure/list?anchorIssue` |
 | `structure_getStructureHistory` | `GET /history/{id}/versions?maxCount&maxVersion` |
+| `structure_addIssues` | `POST /rest/api/2/search` for the issues' ids, `GET /forest/latest` for the rows and version, then `POST /forest/update` with an `add` action |
+| `structure_moveRows` | `GET /forest/latest`, then `POST /forest/update` with a `move` action |
+| `structure_removeRows` | `GET /forest/latest`, then `POST /forest/update` with a `remove` action. Destructive |
 
 **Reading the rows.** `/forest/latest` sends a structure's rows as a formula: comma-separated rows, each
 `rowId:depth:item`, sometimes followed by a fourth field Structure keeps for itself. An issue's item is its id; any
@@ -654,20 +657,38 @@ is `C_ID < (structureId << 32 | maxVersion)`, ordered by `C_ID` descending. So t
 `minVersion` but doesn't use it in 9.14.1, so the tool doesn't offer it. A change's item is written the way the
 forest formula writes items, and is read the same way.
 
-**Reading only reads.** `javap -c` on each handler these tools reach found no call that saves or changes anything:
+**Changing rows.** Tempo's reference shows `POST /forest/update` with `add`, `move` and `remove` actions, each placed by
+row ids `under`, `after` and `before`, where 0 means the top level, the first place or the last. `add` takes a forest
+in the formula's format with negative temporary row ids. `javap -c` on `ForestResource` gives the rest:
+- Structure wants the forest's `version` back, so each tool reads the forest first and places the rows from it: last
+  under the parent unless `afterRowId` names a sibling.
+- The answer maps the temporary row ids to the new ones in `oldRowIds` and `newRowIds`.
+- When Structure refuses a change, or needs the user to choose between two meanings of it, it answers 200 with
+  `updateError`. The tools report that as an error. They can't answer Structure's question, so they say to make that
+  change in Structure itself.
+- Each action is applied whole or not at all, and the tools send one at a time.
+
+A change can do more than change the rows. In a structure built by generators, moving a row between groups sets the
+grouping field, moving it in a structure sorted by rank changes the rank, and removing a row a generator added through
+an issue link deletes the link. Structure lists these in `effects`, which the tools return. Removing rows is
+destructive, so the tool search never offers it. Structure decides who may change each structure, so these tools name
+no Jira permission. `structure_addIssues` checks first that Jira finds every issue, and adds none if it doesn't.
+
+**Reading only reads.** `javap -c` on each handler the read tools reach found no call that saves or changes anything:
 they only build their answers, and `/value` sets the request's rendering context. Building the forest formula may give
 an item type Structure hasn't met before a number in Structure's own type registry. Structure can rate-limit the
 structure search per user, but only once an administrator turns that on; the tools then pass on its 429.
 
 **How they were checked.** Unit tests check each tool's requests, the formula with issues, folders, generators and a
 string id, the subtree and depth filters, paging, inaccessible rows, the issue lookup, the history's users,
-synchronizers, changes and paging, and the 404 message. Detection
+synchronizers, changes and paging, and the 404 message. For the changes, they check each action's body and
+placement, the temporary row ids, the issue lookup, refusals and Structure's questions, and the effects. Detection
 is tested with all eight Jira apps installed, with only some of them, and with `JIRA_APPS`. The catalog test checks
 that the tools are reached through the tool search unless `TOOLSETS` names their toolset.
 
 **Not covered yet:** where in the structure each change happened (`GET /history/{id}/version/{v}` gives the parent rows
 before and after); formula columns and other attributes with parameters, such as progress; generators and automation;
-and changing structures: adding, moving and removing rows, and creating structures.
+copying rows; and creating structures and folders.
 
 ## Jira Service Management
 
@@ -780,4 +801,5 @@ Apps are added in this order, each step in its own release-ready change.
      REST API for Data Center.
      - [x] Read: find structures, one structure, a structure's rows with issue values, and the structures an issue is in
      - [x] Read: a structure's change history
-     - [ ] Write: add, move and remove rows, and create structures
+     - [x] Write: add issues, and move and remove rows
+     - [ ] Write: create structures and folders

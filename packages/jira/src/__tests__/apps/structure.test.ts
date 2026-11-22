@@ -59,10 +59,11 @@ function values(options: RequestOptions) {
 describe('Structure tools', () => {
   beforeEach(() => jest.resetAllMocks());
 
-  it('registers every catalogued tool, all reading, in a toolset that is off by default', () => {
-    expect(Object.keys(STRUCTURE_CATALOG.tools)).toHaveLength(5);
-    expect(setup().registrar.registeredTools().sort()).toEqual(Object.keys(STRUCTURE_CATALOG.tools).sort());
-    expect(Object.values(STRUCTURE_CATALOG.tools).every((entry) => entry.access === 'read')).toBe(true);
+  it('registers every catalogued read tool, in a toolset that is off by default', () => {
+    const reads = Object.entries(STRUCTURE_CATALOG.tools).filter(([, entry]) => entry.access === 'read').map(([name]) => name);
+
+    expect(reads).toHaveLength(5);
+    expect(setup().registrar.registeredTools().sort()).toEqual(reads.sort());
     expect(Object.values(STRUCTURE_CATALOG.toolsets).every((toolset) => !toolset.default)).toBe(true);
   });
 
