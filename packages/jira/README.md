@@ -246,7 +246,7 @@ unless `JIRA_JMWE_SCHEDULED_ACTION_RUN_ENABLED` is `true`, like ScriptRunner's t
 
 | Toolset | Tools |
 |---|---|
-| `structure_hierarchies`: structures, their rows and their history | `structure_getStructures`, `structure_getStructure`, `structure_getStructureRows`, `structure_getStructureHistory`, `structure_getIssueStructures`, `structure_addIssues`, `structure_moveRows`, `structure_removeRows` (destructive) |
+| `structure_hierarchies`: structures, their rows and their history | `structure_getStructures`, `structure_getStructure`, `structure_getStructureRows`, `structure_getStructureHistory`, `structure_getIssueStructures`, `structure_createStructure`, `structure_addFolder`, `structure_addIssues`, `structure_moveRows`, `structure_removeRows` (destructive) |
 
 `structure_getStructureRows` reads a structure's hierarchy a page at a time, up to 500 rows, with each row's depth, item
 type and values such as the issue key, summary and status. `structure_getStructureHistory` says who added, moved or

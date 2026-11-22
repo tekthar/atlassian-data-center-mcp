@@ -15,7 +15,7 @@ import { loadForest } from './operations.js';
 
 type ForestAction = Partial<Placement> & { action: 'add' | 'move' | 'remove'; forest?: string; rowIds?: number[] };
 
-interface UpdateResponse {
+export interface UpdateResponse {
   successfulActions?: number;
   updateError?: {
     error?: { message?: string; itemDescription?: string };
@@ -27,7 +27,7 @@ interface UpdateResponse {
   problems?: { description?: string }[];
 }
 
-function refusal(structureId: number, error: NonNullable<UpdateResponse['updateError']>): Error {
+export function refusal(structureId: number, error: NonNullable<UpdateResponse['updateError']>): Error {
   const interaction = error.interactions?.[0];
   const about = (item?: string) => (item ? ` (${item})` : '');
   if (interaction) {
@@ -46,14 +46,14 @@ async function updateForest(structureId: number, version: unknown, action: Fores
 }
 
 /** What the change did beyond the rows themselves, as Structure reports it. */
-function effectsOf(response: UpdateResponse) {
+export function effectsOf(response: UpdateResponse) {
   const effects = (response.effects ?? []).flatMap((batch) => batch.effects ?? [])
     .map(({ description, external, reversible }) => ({ description, external, reversible }));
   const problems = (response.problems ?? []).map((problem) => problem.description);
   return { ...(effects.length ? { effects } : {}), ...(problems.length ? { problems } : {}) };
 }
 
-function requireRows(rows: ForestRow[], rowIds: number[]): void {
+export function requireRows(rows: ForestRow[], rowIds: number[]): void {
   const missing = rowIds.filter((rowId) => !rows.some((row) => row.rowId === rowId));
   if (missing.length) throw new Error(`Row ${missing.join(', ')} is not in this structure. Take row ids from structure_getStructureRows.`);
 }

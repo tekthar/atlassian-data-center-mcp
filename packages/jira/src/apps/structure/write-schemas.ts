@@ -21,6 +21,16 @@ export const structureWriteSchemas = {
     underRowId,
     afterRowId,
   },
+  createStructure: {
+    name: z.string().trim().min(1).max(255).describe('The new structure\'s name'),
+    description: z.string().max(4000).optional().describe('What the structure is for'),
+  },
+  addFolder: {
+    structureId,
+    name: z.string().trim().min(1).max(255).describe('The folder\'s name'),
+    underRowId,
+    afterRowId,
+  },
   removeRows: {
     structureId,
     rowIds: z.array(rowId).min(1).max(MAX_ROWS_PER_CHANGE).describe('The rows to remove, from structure_getStructureRows; the rows under each go too'),

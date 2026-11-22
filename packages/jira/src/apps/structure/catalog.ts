@@ -9,7 +9,7 @@ import type { ToolCatalog } from '@atlassian-dc-mcp/common';
 export const STRUCTURE_CATALOG: ToolCatalog = {
   toolsets: {
     structure_hierarchies: {
-      description: 'Structure by Tempo: structures, the hierarchies of issues and folders teams plan in, their rows with issue values, who changed them, the structures an issue is in, and adding, moving and removing rows',
+      description: 'Structure by Tempo: structures, the hierarchies of issues and folders teams plan in, their rows with issue values, who changed them, the structures an issue is in, creating structures and folders, and adding, moving and removing rows',
       default: false,
     },
   },
@@ -21,6 +21,8 @@ export const STRUCTURE_CATALOG: ToolCatalog = {
     structure_getStructureHistory: { toolset: 'structure_hierarchies', access: 'read' },
     structure_addIssues: { toolset: 'structure_hierarchies', access: 'write' },
     structure_moveRows: { toolset: 'structure_hierarchies', access: 'write' },
+    structure_createStructure: { toolset: 'structure_hierarchies', access: 'write' },
+    structure_addFolder: { toolset: 'structure_hierarchies', access: 'write' },
     structure_removeRows: { toolset: 'structure_hierarchies', access: 'destructive' },
   },
 };
