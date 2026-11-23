@@ -1,6 +1,6 @@
 import { stripNoise } from '../../tools/context.js';
 import { callTempo } from './client.js';
-import { userKeyOrMine } from './user.js';
+import { userKeyOrMine } from '../user-key.js';
 
 type Query = Record<string, string | number | undefined>;
 

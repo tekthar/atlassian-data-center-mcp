@@ -4,7 +4,7 @@
 
 The server runs on your machine. Your MCP client starts it and talks to it over stdio; it calls Jira's REST API with
 your personal access token, lists the everyday issue tools, and keeps 43 more one search away, plus the tools of
-supported Jira apps such as Xray, Zephyr, ScriptRunner, BigPicture, Tempo, JMWE, Structure and draw.io when they're installed. Jira's own
+supported Jira apps such as Xray, Zephyr, ScriptRunner, BigPicture, Tempo, JMWE, Structure, Timesheet Tracking and draw.io when they're installed. Jira's own
 permissions decide what you can do: the server can hide tools, never unlock them.
 
 ```bash
@@ -146,6 +146,7 @@ Service Management's tools are the `jira_service_desk` toolset in [Toolsets](#to
 | Tempo Timesheets, time tracking | 20 | Beta |
 | JMWE, workflow extensions | 10 | Beta |
 | Structure, hierarchies and portfolio planning | 9 | Beta |
+| Timesheet Tracking, planned work and timers | 9 | Beta, read-only |
 | Jira Service Management | not recorded | Beta |
 
 Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists the
@@ -254,6 +255,15 @@ removed rows, newest first. Structure decides which structures and rows each use
 built by generators, a change can also change issues, such as a grouping field or a link; the tools return what
 Structure did.
 
+**Timesheet Tracking** tools, all read-only for now:
+
+| Toolset | Tools |
+|---|---|
+| `timesheettracking_work`: planned work and timers | `timesheettracking_getWorkPlans`, `timesheettracking_getIssueWorkPlans`, `timesheettracking_getTimers` |
+
+Work plans are the time people plan on issues; the tools give hours and totals. The app shows each user the plans on
+issues they may manage, and Jira administrators every running timer.
+
 ## Settings
 
 Every setting is an environment variable. Each comes from the first of these that has it: the environment, the dotenv
@@ -283,7 +293,7 @@ keychain.
 | `CODE_EXECUTION` | `off` removes `jira_runCode`. |
 | `PERMISSION_FILTER` | `off` lists tools without asking Jira for your permissions first. |
 | `JIRA_PERMISSION_PROJECTS` | Project keys, e.g. `ACS,BPO`. Without it, a permission you hold in any project counts; with it, only these projects count. |
-| `JIRA_APPS` | Which [Jira apps](#jira-apps) to offer. Unset or `auto` checks which are installed; a list such as `xray,zephyr,scriptrunner,drawio,bigpicture,tempo,jmwe,structure` offers those without checking; `off` offers none. |
+| `JIRA_APPS` | Which [Jira apps](#jira-apps) to offer. Unset or `auto` checks which are installed; a list such as `xray,zephyr,scriptrunner,drawio,bigpicture,tempo,jmwe,structure,timesheettracking` offers those without checking; `off` offers none. |
 
 **Turning on risky tools**
 

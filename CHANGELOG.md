@@ -11,6 +11,12 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Features
 
+* **jira:** Timesheet Tracking for Jira support, starting with reading. Three tools, reached through `jira_searchTools` when the app is installed:
+  * a person's planned work between two days, with hours and the total, optionally narrowed by JQL;
+  * the work planned on one issue, by anyone;
+  * running timers, everyone's for Jira administrators, or the timers on one issue.
+
+  Built from Timesheet Tracking 9.3.8-jira-11. See [Supported apps](docs/supported-apps.md#timesheet-tracking).
 * **confluence:** Gliffy Diagrams support, starting with reading. Four tools, reached through `confluence_searchTools` when Gliffy is installed:
   * find diagrams by name, space or creator;
   * list the diagrams a page shows, including ones from other pages;

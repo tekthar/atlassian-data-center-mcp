@@ -29,6 +29,7 @@ const BIGPICTURE_PROBE = '/softwareplant-bigpicture/1.0/public/ppm/box/box-types
 const TEMPO_PROBE = '/tempo-timesheets/4/period/current';
 const JMWE_PROBE = '/jmwe/1/status/picker';
 const STRUCTURE_PROBE = '/structure/2.0/structure';
+const TIMESHEET_TRACKING_PROBE = '/reportrest/1.0/reportrestglobal/get-jira-settings';
 const NOT_FOUND = () => { throw apiError(404, 'Not Found'); };
 
 /** Answer each app's check by its URL. */
@@ -50,15 +51,15 @@ describe('detectJiraApps', () => {
   beforeEach(() => jest.resetAllMocks());
 
   it('asks each app for something cheap when JIRA_APPS is unset, and offers the apps that answer', async () => {
-    answerProbes({ [XRAY_PROBE]: () => [{ name: 'PASS' }], [SCRIPTRUNNER_PROBE]: () => ({}), [DRAWIO_PROBE]: () => [], [ZEPHYR_PROBE]: () => undefined, [BIGPICTURE_PROBE]: () => [], [TEMPO_PROBE]: () => ({}), [JMWE_PROBE]: () => [], [STRUCTURE_PROBE]: () => ({ structures: [], haveMore: false }) });
+    answerProbes({ [XRAY_PROBE]: () => [{ name: 'PASS' }], [SCRIPTRUNNER_PROBE]: () => ({}), [DRAWIO_PROBE]: () => [], [ZEPHYR_PROBE]: () => undefined, [BIGPICTURE_PROBE]: () => [], [TEMPO_PROBE]: () => ({}), [JMWE_PROBE]: () => [], [STRUCTURE_PROBE]: () => ({ structures: [], haveMore: false }), [TIMESHEET_TRACKING_PROBE]: () => ({ hoursPerDay: '8' }) });
 
-    expect(await detect({})).toEqual({ ids: ['xray', 'scriptrunner', 'drawio', 'zephyr', 'bigpicture', 'tempo', 'jmwe', 'structure'], warnings: [] });
-    expect(probedUrls()).toEqual([XRAY_PROBE, SCRIPTRUNNER_PROBE, DRAWIO_PROBE, ZEPHYR_PROBE, BIGPICTURE_PROBE, TEMPO_PROBE, JMWE_PROBE, STRUCTURE_PROBE].sort());
+    expect(await detect({})).toEqual({ ids: ['xray', 'scriptrunner', 'drawio', 'zephyr', 'bigpicture', 'tempo', 'jmwe', 'structure', 'timesheettracking'], warnings: [] });
+    expect(probedUrls()).toEqual([XRAY_PROBE, SCRIPTRUNNER_PROBE, DRAWIO_PROBE, ZEPHYR_PROBE, BIGPICTURE_PROBE, TEMPO_PROBE, JMWE_PROBE, STRUCTURE_PROBE, TIMESHEET_TRACKING_PROBE].sort());
     expect(mockedRequest.mock.calls.every((call) => call[1].method === 'GET')).toBe(true);
   });
 
   it('offers only the apps that are installed', async () => {
-    answerProbes({ [XRAY_PROBE]: NOT_FOUND, [SCRIPTRUNNER_PROBE]: () => ({}), [DRAWIO_PROBE]: NOT_FOUND, [ZEPHYR_PROBE]: NOT_FOUND, [BIGPICTURE_PROBE]: NOT_FOUND, [TEMPO_PROBE]: NOT_FOUND, [JMWE_PROBE]: NOT_FOUND, [STRUCTURE_PROBE]: NOT_FOUND });
+    answerProbes({ [XRAY_PROBE]: NOT_FOUND, [SCRIPTRUNNER_PROBE]: () => ({}), [DRAWIO_PROBE]: NOT_FOUND, [ZEPHYR_PROBE]: NOT_FOUND, [BIGPICTURE_PROBE]: NOT_FOUND, [TEMPO_PROBE]: NOT_FOUND, [JMWE_PROBE]: NOT_FOUND, [STRUCTURE_PROBE]: NOT_FOUND, [TIMESHEET_TRACKING_PROBE]: NOT_FOUND });
 
     expect(await detect({})).toEqual({ ids: ['scriptrunner'], warnings: [] });
   });
@@ -70,7 +71,7 @@ describe('detectJiraApps', () => {
   });
 
   it('leaves an app out with a warning when its check fails another way', async () => {
-    answerProbes({ [XRAY_PROBE]: () => { throw apiError(500, 'Server Error'); }, [SCRIPTRUNNER_PROBE]: NOT_FOUND, [DRAWIO_PROBE]: NOT_FOUND, [ZEPHYR_PROBE]: NOT_FOUND, [BIGPICTURE_PROBE]: NOT_FOUND, [TEMPO_PROBE]: NOT_FOUND, [JMWE_PROBE]: NOT_FOUND, [STRUCTURE_PROBE]: NOT_FOUND });
+    answerProbes({ [XRAY_PROBE]: () => { throw apiError(500, 'Server Error'); }, [SCRIPTRUNNER_PROBE]: NOT_FOUND, [DRAWIO_PROBE]: NOT_FOUND, [ZEPHYR_PROBE]: NOT_FOUND, [BIGPICTURE_PROBE]: NOT_FOUND, [TEMPO_PROBE]: NOT_FOUND, [JMWE_PROBE]: NOT_FOUND, [STRUCTURE_PROBE]: NOT_FOUND, [TIMESHEET_TRACKING_PROBE]: NOT_FOUND });
 
     const { ids, warnings } = await detect({});
 

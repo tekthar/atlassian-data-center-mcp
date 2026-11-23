@@ -32,6 +32,9 @@ import { TEMPO_CATALOG } from './tempo/catalog.js';
 import { startTempoRequest } from './tempo/client.js';
 import { registerTempoReadTools } from './tempo/read-tools.js';
 import { registerTempoWriteTools } from './tempo/write-tools.js';
+import { TIMESHEET_TRACKING_CATALOG } from './timesheettracking/catalog.js';
+import { startTimesheetTrackingRequest } from './timesheettracking/client.js';
+import { registerTimesheetTrackingReadTools } from './timesheettracking/read-tools.js';
 import { XRAY_CATALOG } from './xray/catalog.js';
 import { startXrayRequest } from './xray/client.js';
 import { registerXrayReadTools } from './xray/read-tools.js';
@@ -127,6 +130,14 @@ export const JIRA_APPS: JiraApp[] = [
       registerStructureReadTools(tools, context);
       registerStructureWriteTools(tools, context);
     },
+  },
+  {
+    id: 'timesheettracking',
+    name: 'Timesheet Tracking',
+    catalog: TIMESHEET_TRACKING_CATALOG,
+    // Jira's time tracking settings as the app reads them, for any signed-in user.
+    probe: (timeoutMs) => withTimeout(startTimesheetTrackingRequest({ method: 'GET', url: '/reportrestglobal/get-jira-settings' }), timeoutMs),
+    register: registerTimesheetTrackingReadTools,
   },
 ];
 

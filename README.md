@@ -90,6 +90,7 @@ The servers also have tools for these Marketplace apps:
 | Tempo Timesheets, time tracking | Jira | 20 | Beta |
 | JMWE, workflow extensions | Jira | 10 | Beta |
 | Structure, hierarchies and portfolio planning | Jira | 9 | Beta |
+| Timesheet Tracking, planned work and timers | Jira | 9 | Beta, read-only |
 
 Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](docs/supported-apps.md) lists the
 exact versions each app's tools were built from and how they were checked.
