@@ -1,7 +1,7 @@
-import { MyselfService } from '../../jira-client/index.js';
-import { asRecord } from '../../tools/context.js';
+import { MyselfService } from '../jira-client/index.js';
+import { asRecord } from '../tools/context.js';
 
-/** The Jira user key Tempo names people by: the one given, or the token's own user's. */
+/** The Jira user key an app names people by: the one given, or the token's own user's. */
 export async function userKeyOrMine(given: string | undefined): Promise<string> {
   if (given) return given;
   const key = asRecord(await MyselfService.getUser()).key;

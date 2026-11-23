@@ -16,6 +16,7 @@ Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and th
 | [Tempo Timesheets](#tempo-timesheets), time tracking | Jira | 20 | Beta |
 | [JMWE](#jmwe), workflow extensions | Jira | 10 | Beta |
 | [Structure](#structure), hierarchies and portfolio planning | Jira | 9 | Beta |
+| [Timesheet Tracking](#timesheet-tracking), planned work and timers | Jira | 9 | Beta, read-only |
 
 - **Tested** means the tools were run against a live instance of that app version.
 - **Beta** means the tools were built and checked as described below, but not yet run against a live instance. Please
@@ -703,6 +704,50 @@ that the tools are reached through the tool search unless `TOOLSETS` names their
 before and after); formula columns and other attributes with parameters, such as progress; generators and automation;
 copying rows; sharing, renaming, archiving and deleting structures; and renaming folders.
 
+## Timesheet Tracking
+
+Timesheet Tracking for Jira by TouchDown Apps, Marketplace key `com.tda.timesheet.report`. Added after 0.47.1, in the
+next release. It was the fifth app chosen from the Marketplace's most popular Data Center apps; see the
+[roadmap](#roadmap) for why.
+
+| | |
+|---|---|
+| Built from | Timesheet Tracking **9.3.8-jira-11** for Data Center (released 2026-09-17) |
+| REST API used | `/rest/reportrest/1.0`, the API the app's own pages use. It isn't published |
+| Tools | 3, all read-only, in the toolset `timesheettracking_work` |
+| Detection | `GET /rest/reportrest/1.0/reportrestglobal/get-jira-settings` at startup, which reads Jira's time tracking settings for any signed-in user, unless `JIRA_APPS` names the apps to offer |
+| Status | Beta: not yet run against a live Timesheet Tracking instance |
+
+**How the tools were built.** The plugin declares three REST modules over one package; `javap` on the
+`/rest/reportrest/1.0` resources gave 53 routes. The app's reports are drawn in the browser from Jira's worklogs,
+which the Jira server already reads, so these tools cover what only the app holds: work plans, the time people plan
+on issues, and timers.
+
+| Tool | Request |
+|---|---|
+| `timesheettracking_getWorkPlans` | `POST /workplan/get-workplans` with `userKey`, `startedDate`, `endDate` and `jql` |
+| `timesheettracking_getIssueWorkPlans` | `GET /workplan/get-issue-workplans?issueKey` |
+| `timesheettracking_getTimers` | `GET /timer`, or `POST /timer/get-issue-timers` with `issueKey` for one issue |
+
+`javap -c` on `WorkplanService` and `TimerService` shows what each answers:
+- The work plan query takes its dates as `dd/MM/yyyy` and includes the whole last day. It lists only plans not yet
+  completed, for the person's user key, and keeps those on issues the caller may manage. It calls `jql.isEmpty()`
+  without a null check, so the tool always sends `jql`, empty when none is given. `timePlanned` is in seconds (the
+  app's `reverseTimeFormatter` converts to seconds); the tools add hours and a total.
+- `GET /timer` lists running timers: everyone's for Jira administrators, and the caller's own otherwise.
+- The answers are the app's own objects, which Jackson writes field by field (`@JsonAutoDetect(fieldVisibility = ANY)`).
+
+**Reading only reads.** The services' reads only fill in the objects they answer with. Some of the app's `GET`
+routes delete: `saved-report/delete-report`, `timer/delete`, `timer/delete-all-timers`, `timer/delete-my-timers` and
+`workplan/delete`. No tool calls them, and a test checks the timer tool stays on its reading routes.
+
+**How they were checked.** Unit tests check each tool's request, the date format, the empty JQL, looking up the
+caller's own user key, hours and totals, completed plans, stopped timers, the 403 message, and that dates in another
+format are refused before any call. Detection is tested with all nine Jira apps installed, with only some of them, and
+with `JIRA_APPS`.
+
+**Not covered yet:** saved reports; creating, changing and deleting work plans; starting and stopping timers.
+
 ## Gliffy
 
 Gliffy Diagrams for Confluence, Marketplace key `com.gliffy.integration.confluence`. Added after 0.47.1, in the next
@@ -794,6 +839,7 @@ annotations, and the list is compared with the build the tools came from. The ap
 | JMWE | 10.1.3 | 10.1.3 | No newer build |
 | Structure | 9.14.1 | 9.14.1 | No newer build |
 | Gliffy | 13.5.0 | 13.5.0 | No newer build |
+| Timesheet Tracking | 9.3.8-jira-11 | 9.3.8-jira-11 | No newer build |
 
 A route list says nothing about what a resource returns, so a change inside a response body would still need a live
 instance to find. Please [open an issue](https://github.com/tekthar/atlassian-data-center-mcp/issues) if a tool stops
@@ -884,3 +930,10 @@ Apps are added in this order, each step in its own release-ready change.
      Jira server already reads.
      - [x] Read: find diagrams, list a page's diagrams, read one as shapes and connections or as Gliffy JSON, and its
        versions
+   - **Timesheet Tracking for Jira** (`com.tda.timesheet.report`), chosen on 2026-11-23. The most installed apps not
+     yet supported were then Table Filter, Charts & Spreadsheets for Confluence (14,830), Timesheet Tracking (12,419)
+     and JSU Automation Suite (11,917). Table Filter filters and charts tables that are already page content, which the
+     Confluence server reads. JSU serves three small REST resources, and its rules live in workflow definitions.
+     Timesheet Tracking keeps its own data in Jira: the work people plan on issues, and their running timers, which
+     agents are asked about when planning a week.
+     - [x] Read: a person's work plans for a period, the work planned on an issue, and running timers
