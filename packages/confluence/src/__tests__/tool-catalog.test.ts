@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { isGatewayTool, isToolAllowed, resolveToolPolicy } from '@atlassian-dc-mcp/common';
 import { DRAWIO_CATALOG } from '../apps/drawio/catalog.js';
+import { GLIFFY_CATALOG } from '../apps/gliffy/catalog.js';
 import { CONFLUENCE_CORE_CATALOG, CONFLUENCE_TOOL_CATALOG } from '../tool-catalog.js';
 
 const SOURCE_DIR = path.join(__dirname, '..');
@@ -32,12 +33,15 @@ const gatewayBy = (env: Record<string, string>) => {
 };
 
 describe('CONFLUENCE_TOOL_CATALOG', () => {
-  it('offers draw.io tools through the tool search by default, and lists them once TOOLSETS names their toolset', () => {
-    const drawioTools = Object.keys(DRAWIO_CATALOG.tools);
+  it.each([
+    ['draw.io', DRAWIO_CATALOG, 'drawio_diagrams'],
+    ['Gliffy', GLIFFY_CATALOG, 'gliffy_diagrams'],
+  ])('offers %s tools through the tool search by default, and lists them once TOOLSETS names their toolset', (_app, catalog, toolset) => {
+    const appTools = Object.keys(catalog.tools);
 
-    expect(allowedBy({}).filter((name) => drawioTools.includes(name))).toEqual([]);
-    expect(gatewayBy({}).filter((name) => drawioTools.includes(name))).toEqual(drawioTools);
-    expect(allowedBy({ TOOLSETS: 'default,drawio_diagrams' })).toEqual(expect.arrayContaining(drawioTools));
+    expect(allowedBy({}).filter((name) => appTools.includes(name))).toEqual([]);
+    expect(gatewayBy({}).filter((name) => appTools.includes(name))).toEqual(appTools);
+    expect(allowedBy({ TOOLSETS: `default,${toolset}` })).toEqual(expect.arrayContaining(appTools));
   });
 
   it('has an entry for every tool the server registers, and nothing else', () => {

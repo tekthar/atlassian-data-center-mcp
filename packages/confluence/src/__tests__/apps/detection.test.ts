@@ -28,18 +28,36 @@ async function detect(env: Record<string, string>) {
 describe('detectConfluenceApps', () => {
   beforeEach(() => jest.resetAllMocks());
 
-  it('asks draw.io for its editor config when CONFLUENCE_APPS is unset, and offers it when that works', async () => {
-    mockedRequest.mockReturnValue(answer(() => ({})));
+  const DRAWIO_PROBE = '/rest/drawio/1.0/config';
+  const GLIFFY_PROBE = '/rest/gliffy/1.0/transform/config';
+  const notFound = () => { throw Object.assign(new Error('Not Found'), { status: 404 }); };
 
-    expect(await detect({})).toEqual({ ids: ['drawio'], warnings: [] });
-    expect(mockedRequest.mock.calls[0][1]).toMatchObject({ method: 'GET', url: '/rest/drawio/1.0/config' });
+  /** Answer each app's check by its URL. */
+  function answerProbes(outcomes: Record<string, () => unknown>) {
+    mockedRequest.mockImplementation((_config: unknown, options: { url: string }) => answer(outcomes[options.url]));
+  }
+
+  it('asks draw.io for its editor config and Gliffy for its converters when CONFLUENCE_APPS is unset, and offers those that answer', async () => {
+    answerProbes({ [DRAWIO_PROBE]: () => ({}), [GLIFFY_PROBE]: () => ({ transformers: [] }) });
+
+    expect(await detect({})).toEqual({ ids: ['drawio', 'gliffy'], warnings: [] });
+    expect(mockedRequest.mock.calls.map((call) => call[1])).toEqual(expect.arrayContaining([
+      expect.objectContaining({ method: 'GET', url: DRAWIO_PROBE }),
+      expect.objectContaining({ method: 'GET', url: GLIFFY_PROBE }),
+    ]));
   });
 
-  it('leaves draw.io out quietly when the instance answers 404, and with a warning on another error', async () => {
-    mockedRequest.mockReturnValue(answer(() => { throw Object.assign(new Error('Not Found'), { status: 404 }); }));
+  it('offers only the apps that are there', async () => {
+    answerProbes({ [DRAWIO_PROBE]: notFound, [GLIFFY_PROBE]: () => ({}) });
+
+    expect(await detect({})).toEqual({ ids: ['gliffy'], warnings: [] });
+  });
+
+  it('leaves an app out quietly when the instance answers 404, and with a warning on another error', async () => {
+    answerProbes({ [DRAWIO_PROBE]: notFound, [GLIFFY_PROBE]: notFound });
     expect(await detect({})).toEqual({ ids: [], warnings: [] });
 
-    mockedRequest.mockReturnValue(answer(() => { throw Object.assign(new Error('Bad Gateway'), { status: 502, statusText: 'Bad Gateway' }); }));
+    answerProbes({ [DRAWIO_PROBE]: () => { throw Object.assign(new Error('Bad Gateway'), { status: 502, statusText: 'Bad Gateway' }); }, [GLIFFY_PROBE]: notFound });
     const { warnings } = await detect({});
     expect(warnings).toEqual([expect.stringContaining('Could not check whether draw.io is installed (502 Bad Gateway)')]);
     expect(warnings[0]).toContain('Set CONFLUENCE_APPS=drawio');
@@ -47,6 +65,7 @@ describe('detectConfluenceApps', () => {
 
   it('offers named apps without checking, and none with CONFLUENCE_APPS=off', async () => {
     expect((await detect({ CONFLUENCE_APPS: 'drawio' })).ids).toEqual(['drawio']);
+    expect((await detect({ CONFLUENCE_APPS: 'gliffy, drawio' })).ids).toEqual(['drawio', 'gliffy']);
     expect((await detect({ CONFLUENCE_APPS: 'off' })).ids).toEqual([]);
     expect(mockedRequest).not.toHaveBeenCalled();
   });

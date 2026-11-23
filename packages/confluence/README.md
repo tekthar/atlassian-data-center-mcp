@@ -129,6 +129,7 @@ used.
 | App | Versions | Status |
 |---|---|---|
 | draw.io, diagrams | 16 | Beta, read-only |
+| Gliffy, diagrams | 13 | Beta, read-only |
 
 **draw.io** tools, in the `drawio_diagrams` toolset:
 
@@ -139,6 +140,15 @@ used.
 | `drawio_getDiagram` | Reads a diagram. By default it returns each of its pages as the shapes it holds and the connections between them, by label; `format: "xml"` returns draw.io's XML instead. |
 
 Creating and editing diagrams isn't offered yet: draw.io saves need a preview image that this server can't render.
+
+**Gliffy** tools, in the `gliffy_diagrams` toolset:
+
+| Tool | What it's for |
+|---|---|
+| `gliffy_searchDiagrams` | Finds diagrams by name, space or creator, with the page each is on and who changed it last. |
+| `gliffy_listPageDiagrams` | Lists the diagrams a page shows, including ones from other pages. |
+| `gliffy_getDiagram` | Reads a diagram by its id, or by page and name. By default it returns the shapes it holds and the connections between them, by label; `format: "json"` returns Gliffy's own document instead. |
+| `gliffy_getDiagramHistory` | Lists a diagram's versions, with who saved each and when. |
 The Jira server, `mcp-jira-dc`, has tools for Xray, Zephyr, ScriptRunner, BigPicture, Tempo Timesheets, JMWE, Structure, Jira Service Management and draw.io.
 [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists every
 app with the versions its tools were built from.
@@ -170,7 +180,7 @@ keychain.
 | `ENABLED_TOOLS` | An exact list of tool names. Replaces `TOOLSETS`, and turns the tool search and `confluence_runCode` off. |
 | `TOOL_GATEWAY` | `off` turns the tool search off: tools outside the selected toolsets are left out. |
 | `CODE_EXECUTION` | `off` removes `confluence_runCode`. |
-| `CONFLUENCE_APPS` | Which [apps](#supported-apps) to offer. Unset or `auto` checks which are installed; a list such as `drawio` offers those without checking; `off` offers none. |
+| `CONFLUENCE_APPS` | Which [apps](#supported-apps) to offer. Unset or `auto` checks which are installed; a list such as `drawio,gliffy` offers those without checking; `off` offers none. |
 
 **Attachments on disk**
 

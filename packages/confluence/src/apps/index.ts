@@ -12,6 +12,9 @@ import type { ConfluenceToolContext } from '../tools/context.js';
 import { DRAWIO_CATALOG } from './drawio/catalog.js';
 import { startDrawioRequest } from './drawio/client.js';
 import { registerDrawioReadTools } from './drawio/read-tools.js';
+import { GLIFFY_CATALOG } from './gliffy/catalog.js';
+import { startGliffyRequest } from './gliffy/client.js';
+import { registerGliffyReadTools } from './gliffy/read-tools.js';
 
 /** Confluence apps (Marketplace plugins) whose REST APIs this server can use; see detectApps in common. */
 
@@ -27,6 +30,14 @@ export const CONFLUENCE_APPS: ConfluenceApp[] = [
     // The diagram editor reads this for every user; administrators get more of it.
     probe: (timeoutMs) => withTimeout(startDrawioRequest({ method: 'GET', url: '/config' }), timeoutMs),
     register: registerDrawioReadTools,
+  },
+  {
+    id: 'gliffy',
+    name: 'Gliffy',
+    catalog: GLIFFY_CATALOG,
+    // Lists Gliffy's file converters for any signed-in user.
+    probe: (timeoutMs) => withTimeout(startGliffyRequest({ method: 'GET', url: '/transform/config' }), timeoutMs),
+    register: registerGliffyReadTools,
   },
 ];
 

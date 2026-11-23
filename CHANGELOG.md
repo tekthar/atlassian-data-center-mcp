@@ -11,6 +11,13 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Features
 
+* **confluence:** Gliffy Diagrams support, starting with reading. Four tools, reached through `confluence_searchTools` when Gliffy is installed:
+  * find diagrams by name, space or creator;
+  * list the diagrams a page shows, including ones from other pages;
+  * read a diagram, by its id or by page and name, as its shapes and the connections between them by label, or as Gliffy's own JSON, at the latest or an earlier version;
+  * a diagram's versions, with who saved each and when.
+
+  Built from Gliffy 13.5.0. See [Supported apps](docs/supported-apps.md#gliffy).
 * **jira:** Structure by Tempo support. Ten tools, reached through `jira_searchTools` when Structure is installed:
   * find the structures shared with you by name, and get one with its owner and sharing rules;
   * read a structure's hierarchy a page at a time: each row's depth, item type and values such as the issue key, summary and status, for the whole structure, one row's subtree or down to a depth, with the rows you may not read marked;

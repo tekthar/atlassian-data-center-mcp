@@ -10,6 +10,7 @@ Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and th
 | [Jira Service Management](#jira-service-management) | Jira | not recorded | Beta |
 | [draw.io](#drawio-for-confluence), diagrams | Confluence | 16 | Beta, read-only |
 | [draw.io](#drawio-for-jira), diagrams | Jira | 11 | Beta, read-only |
+| [Gliffy](#gliffy), diagrams | Confluence | 13 | Beta, read-only |
 | [Zephyr](#zephyr), test management | Jira | 12 | Beta |
 | [BigPicture](#bigpicture), portfolio and project management | Jira | 8 | Beta |
 | [Tempo Timesheets](#tempo-timesheets), time tracking | Jira | 20 | Beta |
@@ -702,6 +703,64 @@ that the tools are reached through the tool search unless `TOOLSETS` names their
 before and after); formula columns and other attributes with parameters, such as progress; generators and automation;
 copying rows; sharing, renaming, archiving and deleting structures; and renaming folders.
 
+## Gliffy
+
+Gliffy Diagrams for Confluence, Marketplace key `com.gliffy.integration.confluence`. Added after 0.47.1, in the next
+release. It was the fourth app chosen from the Marketplace's most popular Data Center apps, and the first for
+Confluence; see the [roadmap](#roadmap) for why.
+
+| | |
+|---|---|
+| Built from | Gliffy **13.5.0** for Data Center (Marketplace build 9003001007931, released 2026-11-19) |
+| Confluence | 10.0 to 10.2, as this build's Marketplace listing gives |
+| REST API used | `/rest/gliffy/1.0`, the API Gliffy's own editor uses. Gliffy doesn't publish it, nor its file format |
+| Tools | 4, all read-only, in the toolset `gliffy_diagrams` |
+| Detection | `GET /rest/gliffy/1.0/transform/config` at startup, which lists Gliffy's file converters to any signed-in user, unless `CONFLUENCE_APPS` names the apps to offer |
+| Status | Beta: not yet run against a live Gliffy instance |
+
+**How the tools were built.** The plugin declares one REST module, `gliffy` version 1.0. `javap` on its Jakarta
+resources gave 85 routes. These tools use three of them, and Confluence's own API for pages and attachments:
+
+| Tool | Request |
+|---|---|
+| `gliffy_searchDiagrams` | `GET /diagrams?query&spaceKey&filterByUser&sort&order&results&index`. Gliffy sorts only when it is given both `sort` and `order`, so the tool sends both. `filterByUser` keeps the diagrams the user created |
+| `gliffy_listPageDiagrams` | `GET /rest/api/content/{id}?expand=body.storage`, then the page's `gliffy` macros |
+| `gliffy_getDiagram` | `GET /diagrams/{attachmentId}?version`, after `GET /rest/api/content/{id}/child/attachment?filename` when given a page and a name |
+| `gliffy_getDiagramHistory` | `GET /diagrams/{attachmentId}/history?results&index` |
+
+**Reading a diagram.** `GET /diagrams/{id}` answers with the diagram's details and its document as `gon`, Gliffy's
+JSON format (`application/gliffy+json`). Its `/content` route answers with a stored HTML export instead, so the tool
+doesn't use it. Gliffy documents neither, so the format comes from the Jackson annotations on Gliffy's own model in
+its bundled `gliffy-transform` 2.38.3 (`com.gliffy.transform.gon.document.v1`):
+- `stage.objects` holds the diagram's objects, each with `children`.
+- An object's `graphic` names its `type` (`Shape`, `Line`, `Text`, `Svg`, `Image` and others) and holds the details
+  under a key of that name.
+- A `Text` child labels its shape or line, with the text as HTML in `Text.html`. In a group, text stands on its own.
+- A line's ends are `constraints.startConstraint.StartPositionConstraint.nodeId` and
+  `constraints.endConstraint.EndPositionConstraint.nodeId`.
+
+The tool returns the shapes, each with its label, its type from the last part of its `uid` (such as `decision`) and
+the group it is in, and the connections between them by label, up to 300 of each. `format: "json"` returns Gliffy's
+document as it is.
+
+**A page's diagrams.** Gliffy's own route for them, `GET /page/{pageId}/diagrams`, needs edit permission on the page
+and lists draw.io files too, since the editor uses it to import. So the tool reads the page's `gliffy` macros, as the
+draw.io tool does: `name` is the diagram's attachment name, on this page unless `pageid`, or `space` and `page` (a
+title), name another, and `pagePin` or `version` pins a version. The parameter names come from the macro's definition
+and `GliffyMacroBean`. The scanner that reads macros is now shared by the draw.io and Gliffy tools.
+
+**Reading only reads.** `javap -c` on the handlers and on `ConfluenceDiagramManager` found no call that saves or changes
+anything. Each checks that the user may view the attachment. Reading a diagram in Gliffy's older format converts it to
+JSON and keeps the result in Gliffy's in-memory cache, without saving anything to Confluence.
+
+**How they were checked.** Unit tests check each tool's requests, the diagram summary (labels from HTML, groups, free
+text, connections and a loose end), the cap at 300, the page macros (pinned versions and diagrams from other pages),
+finding a diagram by page and name, the history, and the 404 message. Detection is tested with draw.io and Gliffy
+installed, with one of them, and with `CONFLUENCE_APPS`.
+
+**Not covered yet:** creating and editing diagrams, which need an image Gliffy renders in the browser; drafts;
+comments on a diagram.
+
 ## Jira Service Management
 
 Atlassian's service desk app. Its tools are the `jira_service_desk` toolset, which is off until `TOOLSETS` names it.
@@ -734,6 +793,7 @@ annotations, and the list is compared with the build the tools came from. The ap
 | Tempo Timesheets | 20.0.1 | 20.0.1 | No newer build |
 | JMWE | 10.1.3 | 10.1.3 | No newer build |
 | Structure | 9.14.1 | 9.14.1 | No newer build |
+| Gliffy | 13.5.0 | 13.5.0 | No newer build |
 
 A route list says nothing about what a resource returns, so a change inside a response body would still need a live
 instance to find. Please [open an issue](https://github.com/tekthar/atlassian-data-center-mcp/issues) if a tool stops
@@ -815,3 +875,12 @@ Apps are added in this order, each step in its own release-ready change.
      - [x] Read: a structure's change history
      - [x] Write: add issues, and move and remove rows
      - [x] Write: create structures and folders
+   - **Gliffy Diagrams for Confluence** (`com.gliffy.integration.confluence`), chosen on 2026-11-23. On the
+     Marketplace's popular Data Center lists, after the apps already supported, the most installed were Microsoft Teams
+     for Jira (26,187), Lucidchart Diagrams Connector (25,266), Gliffy (15,529) and Zendesk Support for Jira (12,798).
+     Microsoft Teams, Lucidchart and Zendesk connect to another service and keep their data there. Gliffy keeps its
+     diagrams in Confluence as page attachments, which agents are asked to read and explain, like draw.io's. It is the
+     first app chosen for Confluence; the next for Jira, Timesheet Tracking for Jira (12,419), reports on worklogs the
+     Jira server already reads.
+     - [x] Read: find diagrams, list a page's diagrams, read one as shapes and connections or as Gliffy JSON, and its
+       versions

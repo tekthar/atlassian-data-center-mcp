@@ -84,6 +84,7 @@ The servers also have tools for these Marketplace apps:
 | Jira Service Management | Jira | not recorded | Beta |
 | draw.io, diagrams | Confluence | 16 | Beta, read-only |
 | draw.io, diagrams | Jira | 11 | Beta, read-only |
+| Gliffy, diagrams | Confluence | 13 | Beta, read-only |
 | Zephyr, test management | Jira | 12 | Beta |
 | BigPicture, portfolio and project management | Jira | 8 | Beta |
 | Tempo Timesheets, time tracking | Jira | 20 | Beta |
