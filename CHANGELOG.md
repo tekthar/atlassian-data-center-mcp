@@ -11,6 +11,12 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Features
 
+* **jira:** Zephyr Essential (formerly Zephyr Squad) support, starting with reading. Three tools, reached through `jira_searchTools` when the app is installed:
+  * test executions found with ZQL, a page at a time: each one's test, cycle, version, status, who ran it and when, and its defects;
+  * a test's steps, with their data and expected results;
+  * an execution's step results, with each status by name.
+
+  It is a different app from Zephyr (formerly Zephyr Scale). Built from Zephyr Essential 11.1.0. See [Supported apps](docs/supported-apps.md#zephyr-essential).
 * **jira:** Timesheet Tracking for Jira support, starting with reading. Three tools, reached through `jira_searchTools` when the app is installed:
   * a person's planned work between two days, with hours and the total, optionally narrowed by JQL;
   * the work planned on one issue, by anyone;

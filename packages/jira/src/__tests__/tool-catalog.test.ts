@@ -12,6 +12,7 @@ import { TEMPO_CATALOG } from '../apps/tempo/catalog.js';
 import { TIMESHEET_TRACKING_CATALOG } from '../apps/timesheettracking/catalog.js';
 import { XRAY_CATALOG } from '../apps/xray/catalog.js';
 import { ZEPHYR_CATALOG } from '../apps/zephyr/catalog.js';
+import { ZEPHYR_ESSENTIAL_CATALOG } from '../apps/zephyressential/catalog.js';
 
 /**
  * Tools that change Jira but need nothing beyond browsing the issue or using the customer portal;
@@ -161,6 +162,7 @@ describe('JIRA_TOOL_CATALOG', () => {
     ['JMWE', JMWE_CATALOG, 'jmwe_logs', 'jmwe_getLogs'],
     ['Structure', STRUCTURE_CATALOG, 'structure_hierarchies', 'structure_getStructureRows'],
     ['Timesheet Tracking', TIMESHEET_TRACKING_CATALOG, 'timesheettracking_work', 'timesheettracking_getWorkPlans'],
+    ['Zephyr Essential', ZEPHYR_ESSENTIAL_CATALOG, 'zephyressential_tests', 'zephyressential_searchExecutions'],
   ])('offers %s tools through the gateway by default, and lists them once TOOLSETS names their toolset', (_app, catalog, toolset, tool) => {
     const appTools = Object.entries(catalog.tools).filter(([, entry]) => entry.access !== 'destructive').map(([name]) => name);
 
