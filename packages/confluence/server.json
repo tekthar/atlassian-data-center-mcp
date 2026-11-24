@@ -1,18 +1,18 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.tekthar/mcp-confluence-dc",
-  "description": "MCP server for Confluence Data Center and Confluence Server",
+  "description": "Confluence Data Center and Server, with draw.io and Gliffy diagrams",
   "repository": {
     "url": "https://github.com/tekthar/atlassian-data-center-mcp",
     "source": "github"
   },
-  "version": "0.47.1",
+  "version": "0.48.0",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "mcp-confluence-dc",
-      "version": "0.47.1",
+      "version": "0.48.0",
       "transport": {
         "type": "stdio"
       },
@@ -44,6 +44,13 @@
           "format": "string",
           "isSecret": true,
           "name": "CONFLUENCE_API_TOKEN"
+        },
+        {
+          "description": "Which Confluence apps to offer tools for. Unset or \"auto\" checks whether draw.io and Gliffy are installed; a list such as \"drawio,gliffy\" offers those; \"off\" offers none.",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "CONFLUENCE_APPS"
         }
       ]
     }

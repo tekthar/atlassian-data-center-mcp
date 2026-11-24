@@ -13,7 +13,8 @@ their own servers.**
 Your teams chose Data Center for control over their data. They shouldn't have to give up the best AI models to keep
 it. Three [Model Context Protocol](https://modelcontextprotocol.io) (MCP) servers let Claude, Cursor and any other MCP
 client work in your self-hosted Atlassian tools: search and update issues, read and write pages, review pull requests,
-without flooding the model's context. Each is one `npx` command. Your agent signs in with your personal access token, so it can do what you can, and nothing
+without flooding the model's context. They also work with the Marketplace apps your teams run on top: Xray, Zephyr,
+ScriptRunner, Tempo, Structure, BigPicture, JMWE, draw.io, Gliffy and more. Each is one `npx` command. Your agent signs in with your personal access token, so it can do what you can, and nothing
 more.
 
 ```bash
@@ -29,6 +30,9 @@ more when it needs them, and a sandbox where it can combine many reads into one 
 
 ## Why you'll like it
 
+- **Your Marketplace apps too**: at startup the servers find the apps installed on your instance and add their tools,
+  126 of them for 11 apps: test management, automation, time tracking, planning and diagrams. See
+  [Works with your Marketplace apps](#works-with-your-marketplace-apps).
 - **One command, nothing to host**: `npx` runs each server on your machine. No Python, no Docker, no server to run.
   Built for Data Center and Server, the editions Atlassian's own MCP server doesn't cover.
 - **A small tool list, with nothing out of reach**: every listed tool costs tokens in every request, so the everyday
@@ -67,15 +71,28 @@ Cloud. These servers are for Data Center and Server.
 
 | Server | npm package | What the agent can do |
 |---|---|---|
-| **Jira** | [`mcp-jira-dc`](https://www.npmjs.com/package/mcp-jira-dc) | Search with JQL, create, update and transition issues, comments, links, versions, sprints, worklogs, service desk queues, fields and users. 63 tools in 18 toolsets, plus Xray test management when it's installed. |
-| **Confluence** | [`mcp-confluence-dc`](https://www.npmjs.com/package/mcp-confluence-dc) | Search with CQL, read, create and update pages, page trees, version history and diffs, labels, comments, restrictions and attachments. 26 tools in 11 toolsets. |
+| **Jira** | [`mcp-jira-dc`](https://www.npmjs.com/package/mcp-jira-dc) | Search with JQL, create, update and transition issues, comments, links, versions, sprints, worklogs, service desk queues, fields and users. 63 tools in 18 toolsets, plus 119 tools for 10 Marketplace apps when they're installed. |
+| **Confluence** | [`mcp-confluence-dc`](https://www.npmjs.com/package/mcp-confluence-dc) | Search with CQL, read, create and update pages, page trees, version history and diffs, labels, comments, restrictions and attachments. 26 tools in 11 toolsets, plus draw.io and Gliffy diagrams when they're installed. |
 | **Bitbucket** | [`mcp-bitbucket-dc`](https://www.npmjs.com/package/mcp-bitbucket-dc) | Browse projects, repositories, files, branches and commits, search code, and review and comment on pull requests. Merging and declining are opt-in. 27 tools plus 2 opt-in. |
 
 Install only the ones you use. They share one configuration format, so a single settings file can serve all three.
 
-## Supported apps
+## Works with your Marketplace apps
 
-The servers also have tools for these Marketplace apps:
+Your teams don't run plain Jira and Confluence: they test with Xray or Zephyr, automate with ScriptRunner, log time in
+Tempo and plan in Structure. The servers find the apps installed on your instance at startup, one request per app, and
+add their tools. Like the servers' own, they wait behind the tool search, so an app costs nothing until the agent needs
+it, and every write or delete is marked as one.
+
+| What your teams use | Apps | What the agent can do |
+|---|---|---|
+| **Test management** | Xray, Zephyr, Zephyr Essential | Find tests, runs and executions with JQL, ZQL or filters, read steps and results, record results, and create test cases, cycles and plans |
+| **Automation** | ScriptRunner, JMWE | Read script files, built-in scripts, listeners, jobs, REST endpoints, behaviours and workflow extensions, and why they did or didn't run. Running or saving code is off unless you turn it on |
+| **Time tracking** | Tempo Timesheets, Timesheet Tracking | Search worklogs with totals, log and change time, submit and review timesheets, and read planned work and running timers |
+| **Planning** | Structure, BigPicture | Read structures, their rows and history, and add, move and remove rows; read boxes, teams, capacity and resources, and plan them |
+| **Diagrams** | draw.io (Jira and Confluence), Gliffy | Find diagrams and read them as shapes and connections an agent can explain, with their history |
+
+Every app's version and status:
 
 | App | Server | Versions | Status |
 |---|---|---|---|
@@ -334,12 +351,13 @@ tests run on every pull request, on Ubuntu and on Windows:
 
 ## Status and roadmap
 
-This is **0.47**, which added the token in the OS keychain on every platform, `doctor`, `install`, the audit log, and
-Jira app support starting with Xray. The [changelog](CHANGELOG.md) lists every change and what to do when upgrading.
-Until 1.0, minor versions may include breaking changes, and the changelog describes them. Coming next:
+This is **0.48**, the Marketplace release: tools for 11 apps across test management, automation, time tracking,
+planning and diagrams, in the Jira and Confluence servers. The [changelog](CHANGELOG.md) lists every change and what to
+do when upgrading. Until 1.0, minor versions may include breaking changes, and the changelog describes them. Coming next:
 
-- more apps (plugins), reached through the tool search so they cost nothing until used. Xray was the first and
-  ScriptRunner is under way; [Supported apps](docs/supported-apps.md#roadmap) has the order
+- more apps, one at a time, chosen from the Marketplace's most popular Data Center apps;
+  [Supported apps](docs/supported-apps.md#roadmap) records each choice and why
+- running the app tools against live instances of each app, to move them out of beta
 - Jira administration tools
 
 ## Have a question? Want to help?

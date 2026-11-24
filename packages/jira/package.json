@@ -1,7 +1,7 @@
 {
   "name": "mcp-jira-dc",
-  "version": "0.47.1",
-  "description": "MCP server for Jira Data Center and Jira Server: search, create, update and transition issues, with comments, links, versions, agile boards and sprints, worklogs and service desk. Not affiliated with Atlassian.",
+  "version": "0.48.0",
+  "description": "MCP server for Jira Data Center and Jira Server: search, create, update and transition issues, with comments, links, versions, agile boards and sprints, worklogs and service desk. Works with Marketplace apps: Xray, Zephyr, ScriptRunner, Tempo Timesheets, Structure, BigPicture, JMWE, draw.io and more. Not affiliated with Atlassian.",
   "keywords": [
     "mcp",
     "mcp-server",
@@ -12,7 +12,18 @@
     "data-center",
     "atlassian",
     "ai",
-    "claude"
+    "claude",
+    "xray",
+    "zephyr",
+    "scriptrunner",
+    "tempo",
+    "structure",
+    "bigpicture",
+    "jmwe",
+    "drawio",
+    "test-management",
+    "time-tracking",
+    "marketplace-apps"
   ],
   "license": "MIT",
   "type": "module",

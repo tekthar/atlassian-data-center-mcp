@@ -77,8 +77,8 @@ user's token, since it hasn't been confirmed that every user can read the test s
 
 ## ScriptRunner
 
-Scripting and automation by Adaptavist, Marketplace key `com.onresolve.jira.groovy.groovyrunner`. Added after 0.47.1,
-in the next release.
+Scripting and automation by Adaptavist, Marketplace key `com.onresolve.jira.groovy.groovyrunner`. Added in
+0.48.0.
 
 | | |
 |---|---|
@@ -193,8 +193,7 @@ The XML behaviours configuration (`/config`) isn't used: the JSON admin routes c
 
 ## draw.io for Confluence
 
-Diagrams by Seibert (draw.io), Marketplace key `com.mxgraph.confluence.plugins.diagramly`. Added after 0.47.1, in the
-next release.
+Diagrams by Seibert (draw.io), Marketplace key `com.mxgraph.confluence.plugins.diagramly`. Added in 0.48.0.
 
 | | |
 |---|---|
@@ -269,8 +268,7 @@ the common package (`drawio-file.ts`).
 
 ## draw.io for Jira
 
-Diagrams by Seibert (draw.io), Marketplace key `com.mxgraph.jira.plugins.drawio`. Added after 0.47.1, in the next
-release.
+Diagrams by Seibert (draw.io), Marketplace key `com.mxgraph.jira.plugins.drawio`. Added in 0.48.0.
 
 | | |
 |---|---|
@@ -312,7 +310,7 @@ unless `containerId`, `attachmentId` and `expectedVersion` are all given.
 ## Zephyr
 
 Test management by SmartBear, formerly Zephyr Scale and Test Management for Jira, Marketplace key
-`com.kanoah.test-manager`. Added after 0.47.1, in the next release.
+`com.kanoah.test-manager`. Added in 0.48.0.
 
 | | |
 |---|---|
@@ -383,7 +381,7 @@ dates, `assignedTo`, `version` and `iteration` aren't offered either.
 ## BigPicture
 
 Portfolio and project management by Appfire (formerly SoftwarePlant), Marketplace key `eu.softwareplant.bigpicture`.
-Added after 0.47.1, in the next release.
+Added in 0.48.0.
 
 | | |
 |---|---|
@@ -467,8 +465,7 @@ at once. Deleting boxes is left out on purpose.
 
 ## Tempo Timesheets
 
-Time tracking by Tempo Software, Marketplace key `is.origo.jira.tempo-plugin`. Added after 0.47.1, in the next
-release. It was the first app chosen from the Marketplace's most popular Data Center apps; see the
+Time tracking by Tempo Software, Marketplace key `is.origo.jira.tempo-plugin`. Added in 0.48.0. It was the first app chosen from the Marketplace's most popular Data Center apps; see the
 [roadmap](#roadmap) for why.
 
 | | |
@@ -559,7 +556,7 @@ and Tempo Planner.
 ## JMWE
 
 Jira Misc Workflow Extensions by Appfire, Marketplace key `com.innovalog.jmwe.jira-misc-workflow-extensions`. Added
-after 0.47.1, in the next release. It was the second app chosen from the Marketplace's most popular Data Center apps;
+in 0.48.0. It was the second app chosen from the Marketplace's most popular Data Center apps;
 see the [roadmap](#roadmap) for why.
 
 | | |
@@ -608,8 +605,7 @@ items and preferences, and acknowledging or deleting logs.
 
 ## Structure
 
-Structure by Tempo, formerly by ALM Works, Marketplace key `com.almworks.jira.structure`. Added after 0.47.1, in the
-next release. It was the third app chosen from the Marketplace's most popular Data Center apps; see the
+Structure by Tempo, formerly by ALM Works, Marketplace key `com.almworks.jira.structure`. Added in 0.48.0. It was the third app chosen from the Marketplace's most popular Data Center apps; see the
 [roadmap](#roadmap) for why.
 
 | | |
@@ -708,7 +704,7 @@ copying rows; sharing, renaming, archiving and deleting structures; and renaming
 ## Zephyr Essential
 
 Zephyr Essential by SmartBear, formerly Zephyr Squad and Zephyr for Jira, Marketplace key `com.thed.zephyr.je`. It
-is a different app from [Zephyr](#zephyr), formerly Zephyr Scale. Added after 0.47.1, in the next release. It was the
+is a different app from [Zephyr](#zephyr), formerly Zephyr Scale. Added in 0.48.0. It was the
 sixth app chosen from the Marketplace's most popular Data Center apps; see the [roadmap](#roadmap) for why.
 
 | | |
@@ -750,8 +746,7 @@ creating cycles.
 
 ## Timesheet Tracking
 
-Timesheet Tracking for Jira by TouchDown Apps, Marketplace key `com.tda.timesheet.report`. Added after 0.47.1, in the
-next release. It was the fifth app chosen from the Marketplace's most popular Data Center apps; see the
+Timesheet Tracking for Jira by TouchDown Apps, Marketplace key `com.tda.timesheet.report`. Added in 0.48.0. It was the fifth app chosen from the Marketplace's most popular Data Center apps; see the
 [roadmap](#roadmap) for why.
 
 | | |
@@ -794,8 +789,7 @@ with `JIRA_APPS`.
 
 ## Gliffy
 
-Gliffy Diagrams for Confluence, Marketplace key `com.gliffy.integration.confluence`. Added after 0.47.1, in the next
-release. It was the fourth app chosen from the Marketplace's most popular Data Center apps, and the first for
+Gliffy Diagrams for Confluence, Marketplace key `com.gliffy.integration.confluence`. Added in 0.48.0. It was the fourth app chosen from the Marketplace's most popular Data Center apps, and the first for
 Confluence; see the [roadmap](#roadmap) for why.
 
 | | |

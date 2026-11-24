@@ -1,7 +1,7 @@
 {
   "name": "mcp-confluence-dc",
-  "version": "0.47.1",
-  "description": "MCP server for Confluence Data Center and Confluence Server: search, read, create and update pages, with page trees, history, labels, comments and attachments. Not affiliated with Atlassian.",
+  "version": "0.48.0",
+  "description": "MCP server for Confluence Data Center and Confluence Server: search, read, create and update pages, with page trees, history, labels, comments and attachments. Works with the draw.io and Gliffy diagram apps. Not affiliated with Atlassian.",
   "keywords": [
     "mcp",
     "mcp-server",
@@ -12,7 +12,11 @@
     "data-center",
     "atlassian",
     "ai",
-    "claude"
+    "claude",
+    "drawio",
+    "gliffy",
+    "diagrams",
+    "marketplace-apps"
   ],
   "license": "MIT",
   "type": "module",

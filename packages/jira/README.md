@@ -7,6 +7,10 @@ your personal access token, lists the everyday issue tools, and keeps 43 more on
 supported Jira apps such as Xray, Zephyr, ScriptRunner, BigPicture, Tempo, JMWE, Structure, Timesheet Tracking, Zephyr Essential and draw.io when they're installed. Jira's own
 permissions decide what you can do: the server can hide tools, never unlock them.
 
+**Works with your Marketplace apps:** 119 more tools for test management (Xray, Zephyr, Zephyr Essential), automation
+(ScriptRunner, JMWE), time tracking (Tempo Timesheets, Timesheet Tracking), planning (Structure, BigPicture) and
+diagrams (draw.io), found on your instance at startup. See [Jira apps](#jira-apps).
+
 ```bash
 npx -y mcp-jira-dc setup                    # saves your Jira address and token
 claude mcp add jira -- npx -y mcp-jira-dc   # connects Claude Code

@@ -3,7 +3,27 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-## Unreleased
+## [0.48.0](https://github.com/tekthar/atlassian-data-center-mcp/releases/tag/v0.48.0) (2026-11-24)
+
+**Your agent now works with the Marketplace apps your teams run on Data Center.** The Jira and Confluence servers find
+the apps installed on your instance at startup and add their tools: 126 tools for 11 apps, reached through the tool
+search so they cost nothing until used.
+
+| What your teams use | Apps | What the agent can do |
+|---|---|---|
+| Test management | Xray, Zephyr, Zephyr Essential | Find tests, runs and executions, read steps and results, record results, and plan and track test cycles |
+| Automation | ScriptRunner, JMWE | Read scripts, listeners, jobs, behaviours and workflow extensions, and their logs. Running or saving code is off unless you turn it on |
+| Time tracking | Tempo Timesheets, Timesheet Tracking | Search worklogs with totals, log time, review timesheets, and read planned work and running timers |
+| Planning | Structure, BigPicture | Read and reorganize structures and their history, and read and plan boxes, teams, capacity and resources |
+| Diagrams | draw.io (Jira and Confluence), Gliffy | Find diagrams and read them as shapes and connections, with their history |
+
+Each app's tools were built from its newest Data Center build and checked as [Supported apps](docs/supported-apps.md)
+records. They are beta: not yet run against a live instance of every app. [Open an issue](https://github.com/tekthar/atlassian-data-center-mcp/issues)
+with your app's version if something doesn't work.
+
+### Dependencies
+
+* `@inquirer/prompts` 8.8.0, which needs Node.js 22.22.2 or later, as the servers already do; `dotenv` 18.0.10.
 
 ### Bug fixes
 
