@@ -17,6 +17,7 @@ Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and th
 | [JMWE](#jmwe), workflow extensions | Jira | 10 | Beta |
 | [Structure](#structure), hierarchies and portfolio planning | Jira | 9 | Beta |
 | [Timesheet Tracking](#timesheet-tracking), planned work and timers | Jira | 9 | Beta, read-only |
+| [Zephyr Essential](#zephyr-essential), test management (formerly Zephyr Squad) | Jira | 11 | Beta, read-only |
 
 - **Tested** means the tools were run against a live instance of that app version.
 - **Beta** means the tools were built and checked as described below, but not yet run against a live instance. Please
@@ -704,6 +705,49 @@ that the tools are reached through the tool search unless `TOOLSETS` names their
 before and after); formula columns and other attributes with parameters, such as progress; generators and automation;
 copying rows; sharing, renaming, archiving and deleting structures; and renaming folders.
 
+## Zephyr Essential
+
+Zephyr Essential by SmartBear, formerly Zephyr Squad and Zephyr for Jira, Marketplace key `com.thed.zephyr.je`. It
+is a different app from [Zephyr](#zephyr), formerly Zephyr Scale. Added after 0.47.1, in the next release. It was the
+sixth app chosen from the Marketplace's most popular Data Center apps; see the [roadmap](#roadmap) for why.
+
+| | |
+|---|---|
+| Built from | Zephyr Essential **11.1.0** for Data Center (Marketplace build 111010383, released 2026-11-05) |
+| Jira | 11.0 to 11.3, as this build's Marketplace listing gives |
+| REST API used | `/rest/zapi/latest` (ZAPI), which SmartBear documents. Its pages render in the browser, so the app's own response beans were the source |
+| Tools | 3, all read-only, in the toolset `zephyressential_tests` |
+| Detection | `GET /rest/zapi/latest/util/testExecutionStatus` at startup, the execution statuses any signed-in user reads, unless `JIRA_APPS` names the apps to offer |
+| Status | Beta: not yet run against a live Zephyr Essential instance |
+
+**How the tools were built.** The plugin declares two REST modules, `zephyr` and `zapi`, both version 1.0 and both
+serving every resource it annotates. `javap` on its Jakarta resources gave 257 routes. These tools use three:
+
+| Tool | Request |
+|---|---|
+| `zephyressential_searchExecutions` | `GET /zql/executeSearch?zqlQuery&offset&maxRecords`. On `/rest/zapi/latest` the app allows up to 10,000 records a call (`ApplicationConstants.MAX_ITEM_IN_ZAPI_REQUEST_CALL`); the tool asks for up to 100 |
+| `zephyressential_getTestSteps` | `GET /rest/api/2/issue/{key}` for the test's id, then `GET /teststep/{issueId}` |
+| `zephyressential_getStepResults` | `GET /stepResult?executionId` |
+
+The answers are the app's JAXB beans, whose JSON names are their field names:
+- `ZQLSearchResultBean` holds `executions` (`ZQLScheduleBean`: the test, cycle, version, folder, `status` with its
+  `name`, who ran it and when, the assignee, the comment, and `defects` with `key`, `summary` and `status`) and
+  `totalCount`.
+- `TeststepBeanWrapper` holds `stepBeanCollection` (`TeststepBean`: `step`, `data`, `result`, `orderId`). The tool
+  also takes a bare list, as older versions answered.
+- `StepResultBean` gives each step's `status` as an id, and its `executionStatus` list names the ids.
+
+**Reading only reads.** `javap -c` on the three handlers found only reads from Zephyr's managers, and on
+`StepResultManagerImpl`, which earlier Zephyr versions used to fill in missing step results on reading, only queries
+(`ActiveObjects.find` and `count`).
+
+**How they were checked.** Unit tests check each tool's request, the shape of what it returns, paging, the status
+names, both test step answers, the page limit, and the 403 message. Detection is tested with all ten Jira apps
+installed, with only some of them, and with `JIRA_APPS`.
+
+**Not covered yet:** cycles and folders, test coverage of requirements, executing tests and recording results, and
+creating cycles.
+
 ## Timesheet Tracking
 
 Timesheet Tracking for Jira by TouchDown Apps, Marketplace key `com.tda.timesheet.report`. Added after 0.47.1, in the
@@ -840,6 +884,7 @@ annotations, and the list is compared with the build the tools came from. The ap
 | Structure | 9.14.1 | 9.14.1 | No newer build |
 | Gliffy | 13.5.0 | 13.5.0 | No newer build |
 | Timesheet Tracking | 9.3.8-jira-11 | 9.3.8-jira-11 | No newer build |
+| Zephyr Essential | 11.1.0 | 11.1.0 | No newer build |
 
 A route list says nothing about what a resource returns, so a change inside a response body would still need a live
 instance to find. Please [open an issue](https://github.com/tekthar/atlassian-data-center-mcp/issues) if a tool stops
@@ -937,3 +982,12 @@ Apps are added in this order, each step in its own release-ready change.
      Timesheet Tracking keeps its own data in Jira: the work people plan on issues, and their running timers, which
      agents are asked about when planning a week.
      - [x] Read: a person's work plans for a period, the work planned on an issue, and running timers
+   - **Zephyr Essential** (`com.thed.zephyr.je`), formerly Zephyr Squad, chosen on 2026-11-24. Next on the popular
+     Data Center list for Jira came Easy Reports Free (11,598), eazyBI (10,654), Status Time Reports Free (10,503),
+     TestRail's Jira integration (10,218) and Zephyr Essential (9,753). Easy Reports keeps chart definitions over Jira
+     data, and Status Time Reports works out time in status from Jira's own history; the Jira server reads both. eazyBI
+     serves its API from a JRuby servlet rather than JAX-RS resources, so its routes can't be checked as the others
+     were, and TestRail's app connects to TestRail. Zephyr Essential keeps test cycles, executions and step results in
+     Jira, which agents are asked about at every release, and SmartBear documents its ZAPI.
+     - [x] Read: test executions found with ZQL, a test's steps, and an execution's step results
+     - [ ] Read: cycles and folders, and test coverage of requirements
