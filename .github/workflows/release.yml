@@ -65,7 +65,10 @@ jobs:
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "$TAG already exists."
           else
+            # The version's CHANGELOG.md section leads the notes; GitHub's list of merged pull requests follows it.
+            scripts/release-notes.sh "${TAG#v}" > "$RUNNER_TEMP/release-notes.md"
             gh release create "$TAG" --target "$GITHUB_SHA" --generate-notes \
+              --notes-file "$RUNNER_TEMP/release-notes.md" \
               $([[ "$TAG" == *-* ]] && echo --prerelease)
           fi
 

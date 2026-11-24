@@ -3,8 +3,9 @@
 **Connect Claude, Cursor and any other MCP client to Confluence Data Center and Confluence Server, signed in as you.**
 
 The server runs on your machine. Your MCP client starts it and talks to it over stdio; it calls Confluence's REST API
-with your personal access token, lists the everyday page tools, and keeps 17 more one search away. Confluence's own
-permissions decide what you can do: the server can hide tools, never unlock them.
+with your personal access token, lists the everyday page tools, and keeps 17 more one search away, plus the tools of
+the draw.io and Gliffy diagram apps when they're installed, so an agent can read and explain your diagrams. Confluence's
+own permissions decide what you can do: the server can hide tools, never unlock them.
 
 ```bash
 npx -y mcp-confluence-dc setup                          # saves your Confluence address and token
