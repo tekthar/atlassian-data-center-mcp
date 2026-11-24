@@ -712,18 +712,21 @@ sixth app chosen from the Marketplace's most popular Data Center apps; see the [
 | Built from | Zephyr Essential **11.1.0** for Data Center (Marketplace build 111010383, released 2026-11-05) |
 | Jira | 11.0 to 11.3, as this build's Marketplace listing gives |
 | REST API used | `/rest/zapi/latest` (ZAPI), which SmartBear documents. Its pages render in the browser, so the app's own response beans were the source |
-| Tools | 3, all read-only, in the toolset `zephyressential_tests` |
+| Tools | 6, all read-only, in the toolset `zephyressential_tests` |
 | Detection | `GET /rest/zapi/latest/util/testExecutionStatus` at startup, the execution statuses any signed-in user reads, unless `JIRA_APPS` names the apps to offer |
 | Status | Beta: not yet run against a live Zephyr Essential instance |
 
 **How the tools were built.** The plugin declares two REST modules, `zephyr` and `zapi`, both version 1.0 and both
-serving every resource it annotates. `javap` on its Jakarta resources gave 257 routes. These tools use three:
+serving every resource it annotates. `javap` on its Jakarta resources gave 257 routes. These tools use six:
 
 | Tool | Request |
 |---|---|
 | `zephyressential_searchExecutions` | `GET /zql/executeSearch?zqlQuery&offset&maxRecords`. On `/rest/zapi/latest` the app allows up to 10,000 records a call (`ApplicationConstants.MAX_ITEM_IN_ZAPI_REQUEST_CALL`); the tool asks for up to 100 |
 | `zephyressential_getTestSteps` | `GET /rest/api/2/issue/{key}` for the test's id, then `GET /teststep/{issueId}` |
 | `zephyressential_getStepResults` | `GET /stepResult?executionId` |
+| `zephyressential_getCycles` | `GET /rest/api/2/project/{key}` for the project's id, then `GET /cycle?projectId&versionId` |
+| `zephyressential_getCycleFolders` | The project's id as above, then `GET /cycle/{cycleId}/folders?projectId&versionId` |
+| `zephyressential_getRequirementCoverage` | `GET /traceability/testsByRequirement?requirementIdOrKeyList&versionId` |
 
 The answers are the app's JAXB beans, whose JSON names are their field names:
 - `ZQLSearchResultBean` holds `executions` (`ZQLScheduleBean`: the test, cycle, version, folder, `status` with its
@@ -733,16 +736,25 @@ The answers are the app's JAXB beans, whose JSON names are their field names:
   also takes a bare list, as older versions answered.
 - `StepResultBean` gives each step's `status` as an id, and its `executionStatus` list names the ids.
 
-**Reading only reads.** `javap -c` on the three handlers found only reads from Zephyr's managers, and on
+**Cycles, folders and coverage.** `javap -c` on `CycleResourceDelegateImpl` shows `GET /cycle` answers an object of
+cycles by id beside `recordsCount`; `-1` is the version's ad hoc cycle. Each cycle has its build, environment, dates,
+`totalExecutions`, `totalExecuted`, and `executionSummaries.executionSummary` with a count for each status. Given a
+project and no version, the same route groups the cycles by version instead, so the tool always sends a version: `-1`
+for Unscheduled, or an id from `jira_getProjectVersions`. `GET /cycle/{cycleId}/folders` answers the cycle's folders
+(`folderId`, `folderName`, `folderDescription`) with the same summaries. `TraceabilityResource` answers each
+requirement with its `tests`, each with `test`, `executionStat` and `defectStat` (a `total` and `statuses` with a
+`count` each), and `totalDefects`. The tools give the counts by status name.
+
+**Reading only reads.** `javap -c` on the handlers found only reads from Zephyr's managers, and on
 `StepResultManagerImpl`, which earlier Zephyr versions used to fill in missing step results on reading, only queries
 (`ActiveObjects.find` and `count`).
 
 **How they were checked.** Unit tests check each tool's request, the shape of what it returns, paging, the status
-names, both test step answers, the page limit, and the 403 message. Detection is tested with all ten Jira apps
+names, both test step answers, the page limit, the cycles with the ad hoc cycle and without the record count, the
+folders, the coverage, and the 403 message. Detection is tested with all ten Jira apps
 installed, with only some of them, and with `JIRA_APPS`.
 
-**Not covered yet:** cycles and folders, test coverage of requirements, executing tests and recording results, and
-creating cycles.
+**Not covered yet:** executing tests and recording results, and creating cycles.
 
 ## Timesheet Tracking
 
@@ -984,4 +996,4 @@ Apps are added in this order, each step in its own release-ready change.
      were, and TestRail's app connects to TestRail. Zephyr Essential keeps test cycles, executions and step results in
      Jira, which agents are asked about at every release, and SmartBear documents its ZAPI.
      - [x] Read: test executions found with ZQL, a test's steps, and an execution's step results
-     - [ ] Read: cycles and folders, and test coverage of requirements
+     - [x] Read: cycles and folders, and test coverage of requirements

@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## Unreleased
+
+### Features
+
+* **jira:** Zephyr Essential cycles, folders and coverage. Three more read tools:
+  * `zephyressential_getCycles` lists a version's test cycles, with their build, environment and dates, and how many executions each has, how many ran and how they ended;
+  * `zephyressential_getCycleFolders` lists a cycle's folders, with their executions by status;
+  * `zephyressential_getRequirementCoverage` checks which tests cover a story or other requirement, with their executions by status and their defects.
+
+  See [Supported apps](docs/supported-apps.md#zephyr-essential).
+
 ## [0.48.0](https://github.com/tekthar/atlassian-data-center-mcp/releases/tag/v0.48.0) (2026-11-24)
 
 **Your agent now works with the Marketplace apps your teams run on Data Center.** The Jira and Confluence servers find

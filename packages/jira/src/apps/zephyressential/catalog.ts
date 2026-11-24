@@ -6,11 +6,14 @@ import type { ToolCatalog } from '@atlassian-dc-mcp/common';
  */
 export const ZEPHYR_ESSENTIAL_CATALOG: ToolCatalog = {
   toolsets: {
-    zephyressential_tests: { description: 'Zephyr Essential (formerly Zephyr Squad): test executions found with ZQL, test steps, and step results', default: false },
+    zephyressential_tests: { description: 'Zephyr Essential (formerly Zephyr Squad): test executions found with ZQL, test steps and step results, cycles and folders, and the tests covering a requirement', default: false },
   },
   tools: {
     zephyressential_searchExecutions: { toolset: 'zephyressential_tests', access: 'read' },
     zephyressential_getTestSteps: { toolset: 'zephyressential_tests', access: 'read' },
     zephyressential_getStepResults: { toolset: 'zephyressential_tests', access: 'read' },
+    zephyressential_getCycles: { toolset: 'zephyressential_tests', access: 'read' },
+    zephyressential_getCycleFolders: { toolset: 'zephyressential_tests', access: 'read' },
+    zephyressential_getRequirementCoverage: { toolset: 'zephyressential_tests', access: 'read' },
   },
 };
