@@ -18,6 +18,11 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
   * `zephyressential_recordStepResult` does the same for one step of an execution.
 
   Statuses are taken by name, including ones an administrator added. `zephyressential_getStepResults` now gives each step result's id. See [Supported apps](docs/supported-apps.md#zephyr-essential).
+* **jira:** Zephyr Essential cycles you can build. Two more write tools:
+  * `zephyressential_createCycle` creates a test cycle in a version, with its build, environment and dates;
+  * `zephyressential_addTestsToCycle` adds tests to a cycle or one of its folders, and says which were added and why any were not.
+
+  See [Supported apps](docs/supported-apps.md#zephyr-essential).
 
 ## [0.48.0](https://github.com/tekthar/atlassian-data-center-mcp/releases/tag/v0.48.0) (2026-11-24)
 

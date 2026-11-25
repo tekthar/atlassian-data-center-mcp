@@ -712,12 +712,12 @@ sixth app chosen from the Marketplace's most popular Data Center apps; see the [
 | Built from | Zephyr Essential **11.1.0** for Data Center (Marketplace build 111010383, released 2026-11-05) |
 | Jira | 11.0 to 11.3, as this build's Marketplace listing gives |
 | REST API used | `/rest/zapi/latest` (ZAPI), which SmartBear documents. Its pages render in the browser, so the app's own response beans were the source |
-| Tools | 8 in the toolset `zephyressential_tests`: 6 that read, and 2 that record execution and step results |
+| Tools | 10 in the toolset `zephyressential_tests`: 6 that read, and 4 that record execution and step results, create cycles and add tests to them |
 | Detection | `GET /rest/zapi/latest/util/testExecutionStatus` at startup, the execution statuses any signed-in user reads, unless `JIRA_APPS` names the apps to offer |
 | Status | Beta: not yet run against a live Zephyr Essential instance |
 
 **How the tools were built.** The plugin declares two REST modules, `zephyr` and `zapi`, both version 1.0 and both
-serving every resource it annotates. `javap` on its Jakarta resources gave 257 routes. These tools use eight:
+serving every resource it annotates. `javap` on its Jakarta resources gave 257 routes. These tools use ten:
 
 | Tool | Request |
 |---|---|
@@ -729,6 +729,8 @@ serving every resource it annotates. `javap` on its Jakarta resources gave 257 r
 | `zephyressential_getRequirementCoverage` | `GET /traceability/testsByRequirement?requirementIdOrKeyList&versionId` |
 | `zephyressential_recordResult` | `GET /util/testExecutionStatus` for the status's id, then `PUT /execution/{id}/execute` |
 | `zephyressential_recordStepResult` | `GET /util/teststepExecutionStatus` for the status's id, then `PUT /stepResult/{id}` |
+| `zephyressential_createCycle` | `GET /rest/api/2/project/{key}` for the project's id, then `POST /cycle` |
+| `zephyressential_addTestsToCycle` | The project's id as above, then `POST /execution/addTestsToCycle`, then `GET /execution/jobProgress/{token}?type=add_tests_to_cycle_job_progress` until the job is done |
 
 The answers are the app's JAXB beans, whose JSON names are their field names:
 - `ZQLSearchResultBean` holds `executions` (`ZQLScheduleBean`: the test, cycle, version, folder, `status` with its
@@ -756,11 +758,24 @@ by naming the ones it does, and give the saved status by name. `zephyressential_
 result's `id` for `zephyressential_recordStepResult`. Both routes refuse an execution whose workflow is complete, with
 a 400 and Zephyr's message.
 
+**Creating and filling cycles.** `CycleResource.createCycle` checks the request with `inputCycleDataValidation`
+(a name of up to 255 characters, a version of the project) and `CycleResourceDelegateImpl.createCycle` saves it,
+answering `{ id, responseMessage }`. It answers 200 without an `id` when saving fails, which the tool reports as an
+error. Dates are parsed with the signed-in user's Jira date picker format (`DateTimeStyle.DATE_PICKER`), the same
+format `GET /cycle` shows them in, so the tool passes them through as given, such as `25/Nov/26`.
+`ScheduleResourceDelegateImpl.addTestsToCycle` takes `issues` as keys or ids with `method` `"1"` (`"2"` adds a
+saved filter's tests and `"3"` copies another cycle's) and runs the work as a job, answering a `jobProgressToken`.
+The tool waits up to about 10 seconds on `GET /execution/jobProgress/{token}`, whose `progress` reaches 1 when the
+job is done. The job's `message` is Zephyr's localized `cycle.operation.add.tests.warn` text, with six `<strong>`
+slots in a fixed order: tests added, invalid, in another project, already in the cycle, not a test, and without
+permission. The tool reads the slots by position, so it works in any language, and gives the keys in each.
+
 **Who may record results.** Both routes check the project permissions Zephyr Essential adds to Jira,
 `ZEPHYR_BROWSE_CYCLE` and `ZEPHYR_EDIT_EXECUTION`, through `ZephyrPermissionManagerImpl`. It checks them only when
 Zephyr's own permissions are turned on (`JiraUtil.getPermissionSchemeFlag`); otherwise browsing the project is enough.
 Jira's permission list would report `ZEPHYR_EDIT_EXECUTION` as missing for anyone not granted it, even with Zephyr's
-permissions off, so the two tools aren't hidden by it. A refusal says what Zephyr needs.
+permissions off, so the two tools aren't hidden by it. Creating a cycle checks `ZEPHYR_CREATE_CYCLE`, and adding
+tests `ZEPHYR_CREATE_EXECUTION`, in the same way, so those tools aren't hidden either. A refusal says what Zephyr needs.
 
 **Reading only reads.** `javap -c` on the read handlers found only reads from Zephyr's managers, and on
 `StepResultManagerImpl`, which earlier Zephyr versions used to fill in missing step results on reading, only queries
@@ -770,11 +785,12 @@ permissions off, so the two tools aren't hidden by it. A refusal says what Zephy
 names, both test step answers, the page limit, the cycles with the ad hoc cycle and without the record count, the
 folders, the coverage, and the 403 message. For results they check the body sent to each route, a status by name in
 any case or by id, replacing, keeping and unlinking defects, a status Zephyr doesn't have, the comment limit, and the
-403 message. Detection is tested with all ten Jira apps
+403 message. For cycles they check the body of a new cycle, an answer without an id, the tests added and not added as
+read from the job's message, a job that outlasts the wait, and a job's error. Detection is tested with all ten Jira apps
 installed, with only some of them, and with `JIRA_APPS`.
 
-**Not covered yet:** adding tests to cycles, creating cycles and folders, attachments, and the execution workflow
-(starting, completing and reopening an execution).
+**Not covered yet:** creating folders, adding the tests a filter finds or copying another cycle's, cloning cycles,
+attachments, and the execution workflow (starting, completing and reopening an execution).
 
 ## Timesheet Tracking
 
@@ -1018,4 +1034,4 @@ Apps are added in this order, each step in its own release-ready change.
      - [x] Read: test executions found with ZQL, a test's steps, and an execution's step results
      - [x] Read: cycles and folders, and test coverage of requirements
      - [x] Write: record execution and step results, with comments and defects
-     - [ ] Write: create cycles and add tests to them
+     - [x] Write: create cycles and add tests to them

@@ -8,6 +8,7 @@ const versionId = z.number().int().min(-1)
 const issueKey = z.string().regex(/^[A-Za-z][A-Za-z0-9_]*-\d+$/, 'Expected a Jira issue key such as PROJ-12');
 const status = z.string().min(1)
   .describe('The status by name, such as PASS, FAIL, WIP or BLOCKED, or by id. Statuses this instance added work too');
+const date = z.string().min(1).describe('A date as zephyressential_getCycles shows dates, in this Jira\'s date picker format, e.g. 25/Nov/26');
 const defects = z.array(issueKey).max(100).optional()
   .describe('The defects to link, e.g. ["PROJ-40"]. They replace the ones linked now; [] unlinks them all. Leave out to keep them');
 
@@ -32,6 +33,23 @@ export const zephyrEssentialToolSchemas = {
   },
   getStepResults: {
     executionId: z.number().int().positive().describe('The execution id, from zephyressential_searchExecutions'),
+  },
+  createCycle: {
+    projectKey,
+    versionId,
+    name: z.string().min(1).max(255).describe('The cycle\'s name, e.g. Sprint 6 regression'),
+    description: z.string().optional(),
+    build: z.string().optional().describe('The build under test'),
+    environment: z.string().optional().describe('Where the tests run, e.g. Staging'),
+    startDate: date.optional(),
+    endDate: date.optional(),
+  },
+  addTestsToCycle: {
+    cycleId: z.number().int().min(-1).describe('The cycle id, from zephyressential_getCycles or zephyressential_createCycle; -1 for the ad hoc cycle'),
+    projectKey,
+    versionId,
+    issueKeys: z.array(issueKey).min(1).max(100).describe('The tests to add, e.g. ["PROJ-12", "PROJ-13"]'),
+    folderId: z.number().int().positive().optional().describe('A folder of the cycle to add them to, from zephyressential_getCycleFolders'),
   },
   recordResult: {
     executionId: z.number().int().positive().describe('The execution id, from zephyressential_searchExecutions'),

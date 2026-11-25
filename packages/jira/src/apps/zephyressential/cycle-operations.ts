@@ -11,7 +11,7 @@ import { defined } from './operations.js';
  * and defectStat, and totalDefects.
  */
 
-const projectIdOf = async (projectKey: string) => asRecord(await ProjectService.getProject(projectKey)).id;
+export const projectIdOf = async (projectKey: string) => asRecord(await ProjectService.getProject(projectKey)).id;
 
 /** Execution counts by status name, from executionSummaries.executionSummary. */
 const countsByStatus = (summaries: unknown) => Object.fromEntries(asArray(asRecord(summaries).executionSummary)

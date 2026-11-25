@@ -1,6 +1,7 @@
 import { createRecordingRegistrar } from '@atlassian-dc-mcp/common';
 import { request } from '../../jira-client/core/request.js';
 import { ZEPHYR_ESSENTIAL_CATALOG } from '../../apps/zephyressential/catalog.js';
+import { ADD_TESTS_WAIT } from '../../apps/zephyressential/cycle-write-operations.js';
 import { registerZephyrEssentialReadTools } from '../../apps/zephyressential/read-tools.js';
 import { registerZephyrEssentialWriteTools } from '../../apps/zephyressential/write-tools.js';
 
@@ -46,10 +47,13 @@ describe('Zephyr Essential tools', () => {
   beforeEach(() => jest.resetAllMocks());
 
   it('registers every catalogued tool, reading apart from recording results, in a toolset that is off by default', () => {
-    expect(Object.keys(ZEPHYR_ESSENTIAL_CATALOG.tools)).toHaveLength(8);
+    expect(Object.keys(ZEPHYR_ESSENTIAL_CATALOG.tools)).toHaveLength(10);
     expect(setup().registrar.registeredTools().sort()).toEqual(Object.keys(ZEPHYR_ESSENTIAL_CATALOG.tools).sort());
     expect(Object.entries(ZEPHYR_ESSENTIAL_CATALOG.tools).filter(([, entry]) => entry.access !== 'read').map(([name, entry]) => [name, entry.access]))
-      .toEqual([['zephyressential_recordResult', 'write'], ['zephyressential_recordStepResult', 'write']]);
+      .toEqual([
+        ['zephyressential_recordResult', 'write'], ['zephyressential_recordStepResult', 'write'],
+        ['zephyressential_createCycle', 'write'], ['zephyressential_addTestsToCycle', 'write'],
+      ]);
     expect(Object.values(ZEPHYR_ESSENTIAL_CATALOG.toolsets).every((toolset) => !toolset.default)).toBe(true);
   });
 
@@ -265,5 +269,84 @@ describe('Zephyr Essential tools', () => {
     const result = await setup().callJson('zephyressential_recordResult', { executionId: 501, status: 'PASS' });
 
     expect(result.error).toContain('Zephyr Essential refused this (403). It needs you to browse the test\'s project and, when Zephyr\'s own permissions are turned on, to edit executions there.');
+  });
+
+  it('creates a cycle in the project\'s version, sending ids as Zephyr reads them', async () => {
+    routeRequests({
+      '/api/2/project/{projectIdOrKey}': { id: '10000', key: 'PROJ' },
+      [`${BASE}/cycle`]: { id: '12', responseMessage: 'Cycle Sprint 6 created successfully.' },
+    });
+
+    const result = await setup().callJson('zephyressential_createCycle', {
+      projectKey: 'PROJ', versionId: 10100, name: 'Sprint 6', environment: 'Staging', startDate: '1/Dec/26', endDate: '12/Dec/26',
+    });
+
+    const [sent] = sentTo(`${BASE}/cycle`);
+    expect(sent.method).toBe('POST');
+    expect(sent.body).toEqual({ name: 'Sprint 6', environment: 'Staging', startDate: '1/Dec/26', endDate: '12/Dec/26', projectId: '10000', versionId: '10100' });
+    expect(result.data).toEqual({ id: 12, name: 'Sprint 6', projectKey: 'PROJ', versionId: 10100, message: 'Cycle Sprint 6 created successfully.' });
+  });
+
+  it('reports a cycle Zephyr answered without creating', async () => {
+    routeRequests({
+      '/api/2/project/{projectIdOrKey}': { id: '10000', key: 'PROJ' },
+      [`${BASE}/cycle`]: { responseMessage: 'Error occurred while creating new cycle.' },
+    });
+
+    const result = await setup().callJson('zephyressential_createCycle', { projectKey: 'PROJ', versionId: -1, name: 'Sprint 6' });
+
+    expect(result.error).toContain('Zephyr Essential did not create the cycle: Error occurred while creating new cycle.');
+  });
+
+  it('adds tests to a cycle and reads which were added and which were not from the job\'s message', async () => {
+    routeRequests({
+      '/api/2/project/{projectIdOrKey}': { id: '10000', key: 'PROJ' },
+      [`${BASE}/execution/addTestsToCycle`]: { jobProgressToken: 'job-1' },
+      [`${BASE}/execution/jobProgress/{token}`]: {
+        progress: 1.0, errorMessage: '', summaryMessage: '', timeTaken: '0 min, 1 sec',
+        message: 'The following happened: <br/> Tests added: <strong><a href="/browse/PROJ-12">PROJ-12</a>,PROJ-13</strong> <br/> <p>These tests could not be added <br/> Invalid: <strong>-</strong> <br/> Belongs to another project: <strong>-</strong> <br/> Already in this test cycle: <strong>PROJ-14</strong><br/> Not a test: <strong>PROJ-7</strong><br/>',
+      },
+    });
+
+    const result = await setup().callJson('zephyressential_addTestsToCycle', {
+      cycleId: 12, projectKey: 'PROJ', versionId: 10100, issueKeys: ['PROJ-12', 'PROJ-13', 'PROJ-14', 'PROJ-7'], folderId: 3,
+    });
+
+    expect(sentTo(`${BASE}/execution/addTestsToCycle`)[0]).toMatchObject({
+      method: 'POST', body: { issues: ['PROJ-12', 'PROJ-13', 'PROJ-14', 'PROJ-7'], cycleId: 12, projectId: 10000, versionId: 10100, folderId: 3, method: '1' },
+    });
+    expect(sentTo(`${BASE}/execution/jobProgress/{token}`)[0]).toMatchObject({ path: { token: 'job-1' }, query: { type: 'add_tests_to_cycle_job_progress' } });
+    expect(result.data).toEqual({ cycleId: 12, folderId: 3, done: true, added: ['PROJ-12', 'PROJ-13'], alreadyThere: ['PROJ-14'], notATest: ['PROJ-7'] });
+  });
+
+  it('says the tests are still being added when the job outlasts the wait', async () => {
+    const wait = { ...ADD_TESTS_WAIT };
+    Object.assign(ADD_TESTS_WAIT, { attempts: 2, intervalMs: 0 });
+    routeRequests({
+      '/api/2/project/{projectIdOrKey}': { id: '10000', key: 'PROJ' },
+      [`${BASE}/execution/addTestsToCycle`]: { jobProgressToken: 'job-2' },
+      [`${BASE}/execution/jobProgress/{token}`]: { progress: 0.4, message: '', errorMessage: '' },
+    });
+
+    try {
+      const result = await setup().callJson('zephyressential_addTestsToCycle', { cycleId: -1, projectKey: 'PROJ', versionId: -1, issueKeys: ['PROJ-12'] });
+
+      expect(sentTo(`${BASE}/execution/jobProgress/{token}`)).toHaveLength(2);
+      expect(result.data).toEqual({ cycleId: -1, done: false, progress: 0.4 });
+    } finally {
+      Object.assign(ADD_TESTS_WAIT, wait);
+    }
+  });
+
+  it('passes on the job\'s error', async () => {
+    routeRequests({
+      '/api/2/project/{projectIdOrKey}': { id: '10000', key: 'PROJ' },
+      [`${BASE}/execution/addTestsToCycle`]: { jobProgressToken: 'job-3' },
+      [`${BASE}/execution/jobProgress/{token}`]: { progress: 0, errorMessage: 'Cycle 12 is being deleted.' },
+    });
+
+    const result = await setup().callJson('zephyressential_addTestsToCycle', { cycleId: 12, projectKey: 'PROJ', versionId: 10100, issueKeys: ['PROJ-12'] });
+
+    expect(result.error).toContain('Zephyr Essential could not add the tests: Cycle 12 is being deleted.');
   });
 });
