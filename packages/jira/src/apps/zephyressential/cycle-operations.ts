@@ -1,6 +1,7 @@
 import { ProjectService } from '../../jira-client/index.js';
 import { asArray, asRecord } from '../../tools/context.js';
 import { callZephyrEssential } from './client.js';
+import { defined } from './operations.js';
 
 /*
  * Cycles, folders and coverage, as ZAPI's CycleResourceDelegateImpl and TraceabilityResource build them:
@@ -9,9 +10,6 @@ import { callZephyrEssential } from './client.js';
  * same summaries; GET /traceability/testsByRequirement answers each requirement with its tests, their executionStat
  * and defectStat, and totalDefects.
  */
-
-const defined = (entries: Record<string, unknown>) =>
-  Object.fromEntries(Object.entries(entries).filter(([, value]) => value !== undefined && value !== null && value !== ''));
 
 const projectIdOf = async (projectKey: string) => asRecord(await ProjectService.getProject(projectKey)).id;
 

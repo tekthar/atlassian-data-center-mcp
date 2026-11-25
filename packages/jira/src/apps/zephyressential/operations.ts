@@ -7,10 +7,15 @@ import { callZephyrEssential } from './client.js';
  * TeststepBean steps, and StepResultBean results, whose status is an id that their executionStatus lists name.
  */
 
-const defined = (entries: Record<string, unknown>) =>
+export const defined = (entries: Record<string, unknown>) =>
   Object.fromEntries(Object.entries(entries).filter(([, value]) => value !== undefined && value !== null && value !== ''));
 
-const defectKeys = (value: unknown) => asArray(value).map((defect) => asRecord(defect).key).filter(Boolean);
+/** Defect keys from a list of defect beans or of bare keys. */
+export const defectKeys = (value: unknown) =>
+  asArray(value).map((defect) => (typeof defect === 'string' ? defect : asRecord(defect).key)).filter(Boolean);
+
+/** The defect keys, or nothing when there are none, so the answer leaves them out. */
+export const defectsIfAny = (value: unknown) => (defectKeys(value).length ? defectKeys(value) : undefined);
 
 function describeExecution(value: unknown) {
   const execution = asRecord(value);
@@ -27,7 +32,7 @@ function describeExecution(value: unknown) {
     executedBy: execution.executedByDisplay ?? execution.executedBy,
     assignee: execution.assigneeDisplay,
     comment: execution.comment,
-    defects: defectKeys(execution.defects).length ? defectKeys(execution.defects) : undefined,
+    defects: defectsIfAny(execution.defects),
   });
 }
 
@@ -65,12 +70,13 @@ export async function getStepResults(executionId: number) {
   return {
     executionId,
     stepResults: found.map((result) => defined({
+      id: result.id,
       stepId: result.stepId,
       orderId: result.orderId,
       step: result.step,
       status: statuses.get(String(result.status)) ?? result.status,
       comment: result.comment,
-      defects: defectKeys(result.defects).length ? defectKeys(result.defects) : undefined,
+      defects: defectsIfAny(result.defects),
     })),
   };
 }

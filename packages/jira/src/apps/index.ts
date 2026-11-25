@@ -46,6 +46,7 @@ import { registerZephyrWriteTools } from './zephyr/write-tools.js';
 import { ZEPHYR_ESSENTIAL_CATALOG } from './zephyressential/catalog.js';
 import { startZephyrEssentialRequest } from './zephyressential/client.js';
 import { registerZephyrEssentialReadTools } from './zephyressential/read-tools.js';
+import { registerZephyrEssentialWriteTools } from './zephyressential/write-tools.js';
 
 /** Jira apps (Marketplace plugins) whose REST APIs this server can use; see detectApps in common. */
 
@@ -148,7 +149,10 @@ export const JIRA_APPS: JiraApp[] = [
     catalog: ZEPHYR_ESSENTIAL_CATALOG,
     // The execution statuses, for any signed-in user.
     probe: (timeoutMs) => withTimeout(startZephyrEssentialRequest({ method: 'GET', url: '/util/testExecutionStatus' }), timeoutMs),
-    register: registerZephyrEssentialReadTools,
+    register: (tools, context) => {
+      registerZephyrEssentialReadTools(tools, context);
+      registerZephyrEssentialWriteTools(tools, context);
+    },
   },
 ];
 

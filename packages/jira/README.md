@@ -7,7 +7,7 @@ your personal access token, lists the everyday issue tools, and keeps 43 more on
 supported Jira apps such as Xray, Zephyr, ScriptRunner, BigPicture, Tempo, JMWE, Structure, Timesheet Tracking, Zephyr Essential and draw.io when they're installed. Jira's own
 permissions decide what you can do: the server can hide tools, never unlock them.
 
-**Works with your Marketplace apps:** 122 more tools for test management (Xray, Zephyr, Zephyr Essential), automation
+**Works with your Marketplace apps:** 124 more tools for test management (Xray, Zephyr, Zephyr Essential), automation
 (ScriptRunner, JMWE), time tracking (Tempo Timesheets, Timesheet Tracking), planning (Structure, BigPicture) and
 diagrams (draw.io), found on your instance at startup. See [Jira apps](#jira-apps).
 
@@ -151,7 +151,7 @@ Service Management's tools are the `jira_service_desk` toolset in [Toolsets](#to
 | JMWE, workflow extensions | 10 | Beta |
 | Structure, hierarchies and portfolio planning | 9 | Beta |
 | Timesheet Tracking, planned work and timers | 9 | Beta, read-only |
-| Zephyr Essential, test management (formerly Zephyr Squad) | 11 | Beta, read-only |
+| Zephyr Essential, test management (formerly Zephyr Squad) | 11 | Beta |
 | Jira Service Management | not recorded | Beta |
 
 Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists the
@@ -269,14 +269,16 @@ Structure did.
 Work plans are the time people plan on issues; the tools give hours and totals. The app shows each user the plans on
 issues they may manage, and Jira administrators every running timer.
 
-**Zephyr Essential** (formerly Zephyr Squad) tools, all read-only for now:
+**Zephyr Essential** (formerly Zephyr Squad) tools:
 
 | Toolset | Tools |
 |---|---|
-| `zephyressential_tests`: executions, test steps and step results, cycles and folders, and coverage | `zephyressential_searchExecutions`, `zephyressential_getTestSteps`, `zephyressential_getStepResults`, `zephyressential_getCycles`, `zephyressential_getCycleFolders`, `zephyressential_getRequirementCoverage` |
+| `zephyressential_tests`: executions, test steps and step results, cycles and folders, coverage, and recording results | `zephyressential_searchExecutions`, `zephyressential_getTestSteps`, `zephyressential_getStepResults`, `zephyressential_getCycles`, `zephyressential_getCycleFolders`, `zephyressential_getRequirementCoverage`, `zephyressential_recordResult`, `zephyressential_recordStepResult` |
 
 `zephyressential_searchExecutions` takes ZQL, Zephyr's query language, such as
-`project = "PROJ" AND fixVersion = "1.0" AND executionStatus = FAIL`.
+`project = "PROJ" AND fixVersion = "1.0" AND executionStatus = FAIL`. `zephyressential_recordResult` and
+`zephyressential_recordStepResult` take a status by name, such as PASS or FAIL, including ones an administrator added.
+Zephyr lets anyone who browses the project record results unless its own permissions are turned on.
 
 ## Settings
 

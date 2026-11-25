@@ -19,8 +19,9 @@ import { ZEPHYR_ESSENTIAL_CATALOG } from '../apps/zephyressential/catalog.js';
  * Xray test runs, whose executors Xray's own settings decide; Zephyr's writes, which Zephyr's own
  * project permissions decide and Jira's permission list doesn't report; and BigPicture's box and team
  * writes, which BigPicture's own box and team permissions decide; Tempo's timesheet submissions and
- * reviews, which Tempo's own permissions decide; and Structure's changes, which Structure's own
- * settings and edit access to each structure decide.
+ * reviews, which Tempo's own permissions decide; Structure's changes, which Structure's own
+ * settings and edit access to each structure decide; and Zephyr Essential's results, which need only
+ * browsing the project unless Zephyr's own permissions are turned on.
  */
 const UNGATED_WRITE_TOOLS = [
   'jira_watchIssue', 'jira_unwatchIssue', 'jira_createCustomerRequest', 'xray_updateTestRun',
@@ -28,6 +29,7 @@ const UNGATED_WRITE_TOOLS = [
   'bigpicture_addBox', 'bigpicture_addTeamMember', 'bigpicture_updateTeamMember', 'bigpicture_removeTeamMember',
   'tempo_submitTimesheet', 'tempo_reviewTimesheet',
   'structure_addIssues', 'structure_moveRows', 'structure_removeRows', 'structure_createStructure', 'structure_addFolder',
+  'zephyressential_recordResult', 'zephyressential_recordStepResult',
 ];
 
 const SOURCE_DIR = path.join(__dirname, '..');

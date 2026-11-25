@@ -13,6 +13,11 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
   * `zephyressential_getRequirementCoverage` checks which tests cover a story or other requirement, with their executions by status and their defects.
 
   See [Supported apps](docs/supported-apps.md#zephyr-essential).
+* **jira:** Zephyr Essential test results. Two write tools:
+  * `zephyressential_recordResult` sets an execution's status, such as PASS or FAIL, with a comment and the defects to link;
+  * `zephyressential_recordStepResult` does the same for one step of an execution.
+
+  Statuses are taken by name, including ones an administrator added. `zephyressential_getStepResults` now gives each step result's id. See [Supported apps](docs/supported-apps.md#zephyr-essential).
 
 ## [0.48.0](https://github.com/tekthar/atlassian-data-center-mcp/releases/tag/v0.48.0) (2026-11-24)
 

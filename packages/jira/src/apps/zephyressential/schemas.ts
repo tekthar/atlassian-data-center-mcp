@@ -6,6 +6,10 @@ const projectKey = z.string().regex(/^[A-Z][A-Z0-9_]*$/, 'Expected a Jira projec
 const versionId = z.number().int().min(-1)
   .describe('The fix version\'s id, from jira_getProjectVersions; -1 for Unscheduled');
 const issueKey = z.string().regex(/^[A-Za-z][A-Za-z0-9_]*-\d+$/, 'Expected a Jira issue key such as PROJ-12');
+const status = z.string().min(1)
+  .describe('The status by name, such as PASS, FAIL, WIP or BLOCKED, or by id. Statuses this instance added work too');
+const defects = z.array(issueKey).max(100).optional()
+  .describe('The defects to link, e.g. ["PROJ-40"]. They replace the ones linked now; [] unlinks them all. Leave out to keep them');
 
 export const zephyrEssentialToolSchemas = {
   getCycles: { projectKey, versionId },
@@ -28,5 +32,17 @@ export const zephyrEssentialToolSchemas = {
   },
   getStepResults: {
     executionId: z.number().int().positive().describe('The execution id, from zephyressential_searchExecutions'),
+  },
+  recordResult: {
+    executionId: z.number().int().positive().describe('The execution id, from zephyressential_searchExecutions'),
+    status,
+    comment: z.string().max(750).optional().describe('What happened, up to 750 characters, as Zephyr allows'),
+    defects,
+  },
+  recordStepResult: {
+    stepResultId: z.number().int().positive().describe('The step result\'s id, from zephyressential_getStepResults'),
+    status,
+    comment: z.string().optional().describe('What happened at this step'),
+    defects,
   },
 };

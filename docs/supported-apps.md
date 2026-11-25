@@ -17,7 +17,7 @@ Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and th
 | [JMWE](#jmwe), workflow extensions | Jira | 10 | Beta |
 | [Structure](#structure), hierarchies and portfolio planning | Jira | 9 | Beta |
 | [Timesheet Tracking](#timesheet-tracking), planned work and timers | Jira | 9 | Beta, read-only |
-| [Zephyr Essential](#zephyr-essential), test management (formerly Zephyr Squad) | Jira | 11 | Beta, read-only |
+| [Zephyr Essential](#zephyr-essential), test management (formerly Zephyr Squad) | Jira | 11 | Beta |
 
 - **Tested** means the tools were run against a live instance of that app version.
 - **Beta** means the tools were built and checked as described below, but not yet run against a live instance. Please
@@ -712,12 +712,12 @@ sixth app chosen from the Marketplace's most popular Data Center apps; see the [
 | Built from | Zephyr Essential **11.1.0** for Data Center (Marketplace build 111010383, released 2026-11-05) |
 | Jira | 11.0 to 11.3, as this build's Marketplace listing gives |
 | REST API used | `/rest/zapi/latest` (ZAPI), which SmartBear documents. Its pages render in the browser, so the app's own response beans were the source |
-| Tools | 6, all read-only, in the toolset `zephyressential_tests` |
+| Tools | 8 in the toolset `zephyressential_tests`: 6 that read, and 2 that record execution and step results |
 | Detection | `GET /rest/zapi/latest/util/testExecutionStatus` at startup, the execution statuses any signed-in user reads, unless `JIRA_APPS` names the apps to offer |
 | Status | Beta: not yet run against a live Zephyr Essential instance |
 
 **How the tools were built.** The plugin declares two REST modules, `zephyr` and `zapi`, both version 1.0 and both
-serving every resource it annotates. `javap` on its Jakarta resources gave 257 routes. These tools use six:
+serving every resource it annotates. `javap` on its Jakarta resources gave 257 routes. These tools use eight:
 
 | Tool | Request |
 |---|---|
@@ -727,6 +727,8 @@ serving every resource it annotates. `javap` on its Jakarta resources gave 257 r
 | `zephyressential_getCycles` | `GET /rest/api/2/project/{key}` for the project's id, then `GET /cycle?projectId&versionId` |
 | `zephyressential_getCycleFolders` | The project's id as above, then `GET /cycle/{cycleId}/folders?projectId&versionId` |
 | `zephyressential_getRequirementCoverage` | `GET /traceability/testsByRequirement?requirementIdOrKeyList&versionId` |
+| `zephyressential_recordResult` | `GET /util/testExecutionStatus` for the status's id, then `PUT /execution/{id}/execute` |
+| `zephyressential_recordStepResult` | `GET /util/teststepExecutionStatus` for the status's id, then `PUT /stepResult/{id}` |
 
 The answers are the app's JAXB beans, whose JSON names are their field names:
 - `ZQLSearchResultBean` holds `executions` (`ZQLScheduleBean`: the test, cycle, version, folder, `status` with its
@@ -745,16 +747,34 @@ for Unscheduled, or an id from `jira_getProjectVersions`. `GET /cycle/{cycleId}/
 requirement with its `tests`, each with `test`, `executionStat` and `defectStat` (a `total` and `statuses` with a
 `count` each), and `totalDefects`. The tools give the counts by status name.
 
-**Reading only reads.** `javap -c` on the handlers found only reads from Zephyr's managers, and on
+**Recording results.** `ScheduleResource.executeExecution` hands the body to `ScheduleResourceDelegateImpl.editExecution`,
+which reads `status` (a status id as a string), `comment` (up to 750 characters), and `defectList`, which replaces the
+linked defects when `updateDefectList` is `"true"`. `StepResultResource.updateStepResult` reads the same fields from a
+`StepResultBean`. Both answer the saved bean with the status as an id. The tools take a status by name or id, look it
+up in the execution or step status list (so statuses an administrator added work too), refuse one Zephyr doesn't have
+by naming the ones it does, and give the saved status by name. `zephyressential_getStepResults` now gives each step
+result's `id` for `zephyressential_recordStepResult`. Both routes refuse an execution whose workflow is complete, with
+a 400 and Zephyr's message.
+
+**Who may record results.** Both routes check the project permissions Zephyr Essential adds to Jira,
+`ZEPHYR_BROWSE_CYCLE` and `ZEPHYR_EDIT_EXECUTION`, through `ZephyrPermissionManagerImpl`. It checks them only when
+Zephyr's own permissions are turned on (`JiraUtil.getPermissionSchemeFlag`); otherwise browsing the project is enough.
+Jira's permission list would report `ZEPHYR_EDIT_EXECUTION` as missing for anyone not granted it, even with Zephyr's
+permissions off, so the two tools aren't hidden by it. A refusal says what Zephyr needs.
+
+**Reading only reads.** `javap -c` on the read handlers found only reads from Zephyr's managers, and on
 `StepResultManagerImpl`, which earlier Zephyr versions used to fill in missing step results on reading, only queries
 (`ActiveObjects.find` and `count`).
 
 **How they were checked.** Unit tests check each tool's request, the shape of what it returns, paging, the status
 names, both test step answers, the page limit, the cycles with the ad hoc cycle and without the record count, the
-folders, the coverage, and the 403 message. Detection is tested with all ten Jira apps
+folders, the coverage, and the 403 message. For results they check the body sent to each route, a status by name in
+any case or by id, replacing, keeping and unlinking defects, a status Zephyr doesn't have, the comment limit, and the
+403 message. Detection is tested with all ten Jira apps
 installed, with only some of them, and with `JIRA_APPS`.
 
-**Not covered yet:** executing tests and recording results, and creating cycles.
+**Not covered yet:** adding tests to cycles, creating cycles and folders, attachments, and the execution workflow
+(starting, completing and reopening an execution).
 
 ## Timesheet Tracking
 
@@ -997,3 +1017,5 @@ Apps are added in this order, each step in its own release-ready change.
      Jira, which agents are asked about at every release, and SmartBear documents its ZAPI.
      - [x] Read: test executions found with ZQL, a test's steps, and an execution's step results
      - [x] Read: cycles and folders, and test coverage of requirements
+     - [x] Write: record execution and step results, with comments and defects
+     - [ ] Write: create cycles and add tests to them
