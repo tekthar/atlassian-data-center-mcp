@@ -2,6 +2,7 @@ import { createRecordingRegistrar } from '@atlassian-dc-mcp/common';
 import { request } from '../../jira-client/core/request.js';
 import { ZEPHYR_ESSENTIAL_CATALOG } from '../../apps/zephyressential/catalog.js';
 import { registerZephyrEssentialReadTools } from '../../apps/zephyressential/read-tools.js';
+import { registerZephyrEssentialWriteTools } from '../../apps/zephyressential/write-tools.js';
 
 jest.mock('../../jira-client/core/request.js', () => ({
   request: jest.fn(),
@@ -14,6 +15,7 @@ interface RequestOptions {
   url: string;
   path?: Record<string, unknown>;
   query?: Record<string, unknown>;
+  body?: unknown;
 }
 
 const BASE = '/zapi/latest';
@@ -31,7 +33,9 @@ const sentTo = (url: string) => mockedRequest.mock.calls.map((call) => call[1] a
 
 function setup() {
   const recorder = createRecordingRegistrar();
-  registerZephyrEssentialReadTools(recorder.registrar, { instanceType: 'JIRA Data Center edition instance', getPageSize: () => 25 });
+  const context = { instanceType: 'JIRA Data Center edition instance', getPageSize: () => 25 };
+  registerZephyrEssentialReadTools(recorder.registrar, context);
+  registerZephyrEssentialWriteTools(recorder.registrar, context);
   return recorder;
 }
 
@@ -41,10 +45,11 @@ const PASS = { id: 1, name: 'PASS', description: 'Test was executed and passed s
 describe('Zephyr Essential tools', () => {
   beforeEach(() => jest.resetAllMocks());
 
-  it('registers every catalogued tool, all reading, in a toolset that is off by default', () => {
-    expect(Object.keys(ZEPHYR_ESSENTIAL_CATALOG.tools)).toHaveLength(6);
+  it('registers every catalogued tool, reading apart from recording results, in a toolset that is off by default', () => {
+    expect(Object.keys(ZEPHYR_ESSENTIAL_CATALOG.tools)).toHaveLength(8);
     expect(setup().registrar.registeredTools().sort()).toEqual(Object.keys(ZEPHYR_ESSENTIAL_CATALOG.tools).sort());
-    expect(Object.values(ZEPHYR_ESSENTIAL_CATALOG.tools).every((entry) => entry.access === 'read')).toBe(true);
+    expect(Object.entries(ZEPHYR_ESSENTIAL_CATALOG.tools).filter(([, entry]) => entry.access !== 'read').map(([name, entry]) => [name, entry.access]))
+      .toEqual([['zephyressential_recordResult', 'write'], ['zephyressential_recordStepResult', 'write']]);
     expect(Object.values(ZEPHYR_ESSENTIAL_CATALOG.toolsets).every((toolset) => !toolset.default)).toBe(true);
   });
 
@@ -109,8 +114,8 @@ describe('Zephyr Essential tools', () => {
     expect(result.data).toEqual({
       executionId: 501,
       stepResults: [
-        { stepId: 1, orderId: 1, step: 'Open the login page', status: 'PASS' },
-        { stepId: 2, orderId: 2, step: 'Sign in', status: 'FAIL', comment: 'Loops back', defects: ['PROJ-40'] },
+        { id: 9, stepId: 1, orderId: 1, step: 'Open the login page', status: 'PASS' },
+        { id: 10, stepId: 2, orderId: 2, step: 'Sign in', status: 'FAIL', comment: 'Loops back', defects: ['PROJ-40'] },
       ],
     });
   });
@@ -184,5 +189,81 @@ describe('Zephyr Essential tools', () => {
     const result = await setup().callJson('zephyressential_getStepResults', { executionId: 501 });
 
     expect(result.error).toContain('Zephyr Essential refused this (403)');
+  });
+
+  it('records an execution\'s result by status name, linking defects, and names the saved status', async () => {
+    routeRequests({
+      [`${BASE}/util/testExecutionStatus`]: [PASS, FAIL],
+      [`${BASE}/execution/{id}/execute`]: {
+        id: 501, issueKey: 'PROJ-12', cycleId: 7, cycleName: 'Sprint 5', folderName: null, executionStatus: '2', executedBy: 'anna',
+        executedByDisplay: 'Anna Berg', executedOn: '25/Nov/26 2:30 AM', comment: 'Redirect loops', htmlComment: '<p>Redirect loops</p>',
+        defects: [{ key: 'PROJ-40', summary: 'SSO loop', status: 'Open' }], executionSummaries: '{}', totalExecutions: 3, totalExecuted: 2,
+      },
+    });
+
+    const result = await setup().callJson('zephyressential_recordResult', { executionId: 501, status: 'fail', comment: 'Redirect loops', defects: ['PROJ-40'] });
+
+    const [sent] = sentTo(`${BASE}/execution/{id}/execute`);
+    expect(sent).toMatchObject({ method: 'PUT', path: { id: 501 } });
+    expect(sent.body).toEqual({ status: '2', comment: 'Redirect loops', defectList: ['PROJ-40'], updateDefectList: 'true' });
+    expect(result.data).toEqual({
+      id: 501, issueKey: 'PROJ-12', cycle: 'Sprint 5', status: 'FAIL', executedBy: 'Anna Berg', executedOn: '25/Nov/26 2:30 AM',
+      comment: 'Redirect loops', defects: ['PROJ-40'],
+    });
+  });
+
+  it('keeps the linked defects when none are given, and takes a status by id', async () => {
+    routeRequests({
+      [`${BASE}/util/testExecutionStatus`]: [PASS, FAIL],
+      [`${BASE}/execution/{id}/execute`]: { id: 501, executionStatus: '1' },
+    });
+
+    const result = await setup().callJson('zephyressential_recordResult', { executionId: 501, status: '1' });
+
+    expect(sentTo(`${BASE}/execution/{id}/execute`)[0].body).toEqual({ status: '1' });
+    expect(result.data).toEqual({ id: 501, status: 'PASS' });
+  });
+
+  it('refuses a status Zephyr does not have, naming the ones it does, before saving anything', async () => {
+    routeRequests({ [`${BASE}/util/testExecutionStatus`]: [PASS, FAIL] });
+
+    const result = await setup().callJson('zephyressential_recordResult', { executionId: 501, status: 'Passed' });
+
+    expect(result.error).toContain('Zephyr Essential has no status "Passed" here. Use one of: PASS, FAIL.');
+    expect(sentTo(`${BASE}/execution/{id}/execute`)).toHaveLength(0);
+  });
+
+  it('refuses a comment longer than Zephyr allows before calling ZAPI', async () => {
+    await expect(setup().call('zephyressential_recordResult', { executionId: 501, status: 'PASS', comment: 'x'.repeat(751) })).rejects.toThrow();
+    expect(mockedRequest).not.toHaveBeenCalled();
+  });
+
+  it('records a step\'s result with the step statuses, unlinking its defects with an empty list', async () => {
+    const STEP_FAIL = { id: 2, name: 'FAIL', description: 'Test step failed', color: '#CC3300', type: 1 };
+    routeRequests({
+      [`${BASE}/util/teststepExecutionStatus`]: [{ ...PASS, type: 1 }, STEP_FAIL],
+      [`${BASE}/stepResult/{id}`]: {
+        id: 10, executionId: 501, stepId: 2, status: '2', comment: 'Loops back', htmlComment: '<p>Loops back</p>', executedBy: 'anna',
+        defectList: [], totalStepResultsCount: 2,
+      },
+    });
+
+    const result = await setup().callJson('zephyressential_recordStepResult', { stepResultId: 10, status: 'FAIL', comment: 'Loops back', defects: [] });
+
+    const [sent] = sentTo(`${BASE}/stepResult/{id}`);
+    expect(sent).toMatchObject({ method: 'PUT', path: { id: 10 } });
+    expect(sent.body).toEqual({ status: '2', comment: 'Loops back', defectList: [], updateDefectList: 'true' });
+    expect(result.data).toEqual({ id: 10, executionId: 501, stepId: 2, status: 'FAIL', executedBy: 'anna', comment: 'Loops back' });
+  });
+
+  it('explains a refused result in terms of Zephyr\'s own permissions', async () => {
+    routeRequests({
+      [`${BASE}/util/testExecutionStatus`]: [PASS, FAIL],
+      [`${BASE}/execution/{id}/execute`]: Object.assign(new Error('Forbidden'), { status: 403 }),
+    });
+
+    const result = await setup().callJson('zephyressential_recordResult', { executionId: 501, status: 'PASS' });
+
+    expect(result.error).toContain('Zephyr Essential refused this (403). It needs you to browse the test\'s project and, when Zephyr\'s own permissions are turned on, to edit executions there.');
   });
 });

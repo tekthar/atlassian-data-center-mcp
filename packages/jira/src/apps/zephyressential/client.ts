@@ -12,10 +12,12 @@ export function startZephyrEssentialRequest<T>(options: AppRequest): CancelableP
   return startAppRequest<T>(BASE_PATH, options);
 }
 
-/** Calls ZAPI, explaining a 404 and a refusal in terms of the subject and Zephyr Essential itself. */
-export function callZephyrEssential<T = unknown>(options: AppRequest, subject: string): Promise<T> {
+const BROWSE = 'It needs you to browse the test\'s project.';
+
+/** Calls ZAPI, explaining a 404 and a refusal in terms of the subject and what Zephyr Essential needs. */
+export function callZephyrEssential<T = unknown>(options: AppRequest, subject: string, needs = BROWSE): Promise<T> {
   return callApp<T>(BASE_PATH, options, {
     notFound: `${subject} was not found (404). Check the key or id, and that Zephyr Essential is installed on this instance.`,
-    forbidden: (status) => `Zephyr Essential refused this (${status}). It needs you to browse the test's project.`,
+    forbidden: (status) => `Zephyr Essential refused this (${status}). ${needs}`,
   });
 }
