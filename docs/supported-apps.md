@@ -768,7 +768,9 @@ saved filter's tests and `"3"` copies another cycle's) and runs the work as a jo
 The tool waits up to about 10 seconds on `GET /execution/jobProgress/{token}`, whose `progress` reaches 1 when the
 job is done. The job's `message` is Zephyr's localized `cycle.operation.add.tests.warn` text, with six `<strong>`
 slots in a fixed order: tests added, invalid, in another project, already in the cycle, not a test, and without
-permission. The tool reads the slots by position, so it works in any language, and gives the keys in each.
+permission. The tool reads the slots by position, so it works in any language, and gives which of the tests it sent
+each slot names. Slots hold issue keys, some inside links, so the tool looks only for the keys it sent rather than
+stripping the markup. A message without slots is passed on as Zephyr wrote it.
 
 **Who may record results.** Both routes check the project permissions Zephyr Essential adds to Jira,
 `ZEPHYR_BROWSE_CYCLE` and `ZEPHYR_EDIT_EXECUTION`, through `ZephyrPermissionManagerImpl`. It checks them only when
@@ -786,7 +788,8 @@ names, both test step answers, the page limit, the cycles with the ad hoc cycle 
 folders, the coverage, and the 403 message. For results they check the body sent to each route, a status by name in
 any case or by id, replacing, keeping and unlinking defects, a status Zephyr doesn't have, the comment limit, and the
 403 message. For cycles they check the body of a new cycle, an answer without an id, the tests added and not added as
-read from the job's message, a job that outlasts the wait, and a job's error. Detection is tested with all ten Jira apps
+read from the job's message (including a link to a host whose name looks like a key, and a key that only starts
+like one sent), a message without slots, a job that outlasts the wait, and a job's error. Detection is tested with all ten Jira apps
 installed, with only some of them, and with `JIRA_APPS`.
 
 **Not covered yet:** creating folders, adding the tests a filter finds or copying another cycle's, cloning cycles,

@@ -304,7 +304,7 @@ describe('Zephyr Essential tools', () => {
       [`${BASE}/execution/addTestsToCycle`]: { jobProgressToken: 'job-1' },
       [`${BASE}/execution/jobProgress/{token}`]: {
         progress: 1.0, errorMessage: '', summaryMessage: '', timeTaken: '0 min, 1 sec',
-        message: 'The following happened: <br/> Tests added: <strong><a href="/browse/PROJ-12">PROJ-12</a>,PROJ-13</strong> <br/> <p>These tests could not be added <br/> Invalid: <strong>-</strong> <br/> Belongs to another project: <strong>-</strong> <br/> Already in this test cycle: <strong>PROJ-14</strong><br/> Not a test: <strong>PROJ-7</strong><br/>',
+        message: 'The following happened: <br/> Tests added: <strong><a href="https://jira-1.example.com/browse/PROJ-12">PROJ-12</a>,PROJ-13,PROJ-140</strong> <br/> <p>These tests could not be added <br/> Invalid: <strong>-</strong> <br/> Belongs to another project: <strong>-</strong> <br/> Already in this test cycle: <strong>PROJ-14</strong><br/> Not a test: <strong>PROJ-7</strong><br/>',
       },
     });
 
@@ -317,6 +317,18 @@ describe('Zephyr Essential tools', () => {
     });
     expect(sentTo(`${BASE}/execution/jobProgress/{token}`)[0]).toMatchObject({ path: { token: 'job-1' }, query: { type: 'add_tests_to_cycle_job_progress' } });
     expect(result.data).toEqual({ cycleId: 12, folderId: 3, done: true, added: ['PROJ-12', 'PROJ-13'], alreadyThere: ['PROJ-14'], notATest: ['PROJ-7'] });
+  });
+
+  it('passes on a job message without slots as Zephyr wrote it', async () => {
+    routeRequests({
+      '/api/2/project/{projectIdOrKey}': { id: '10000', key: 'PROJ' },
+      [`${BASE}/execution/addTestsToCycle`]: { jobProgressToken: 'job-4' },
+      [`${BASE}/execution/jobProgress/{token}`]: { progress: 1.0, errorMessage: '', message: 'Tests added to the cycle.' },
+    });
+
+    const result = await setup().callJson('zephyressential_addTestsToCycle', { cycleId: 12, projectKey: 'PROJ', versionId: 10100, issueKeys: ['PROJ-12'] });
+
+    expect(result.data).toEqual({ cycleId: 12, done: true, message: 'Tests added to the cycle.' });
   });
 
   it('says the tests are still being added when the job outlasts the wait', async () => {

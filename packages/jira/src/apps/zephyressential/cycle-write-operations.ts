@@ -47,12 +47,18 @@ export async function createCycle({ projectKey, versionId, ...cycle }: NewCycle)
   return defined({ id: Number(created.id), name: cycle.name, projectKey, versionId, message: created.responseMessage });
 }
 
-/** The issue keys in each slot of the job's message, leaving out empty slots. */
-export function readAddTestsMessage(message: string) {
-  const slots = [...message.matchAll(/<strong>(.*?)<\/strong>/gs)].map((match) =>
-    match[1].replace(/<[^>]*>/g, '').split(',').map((key) => key.trim()).filter((key) => key && key !== '-'));
-  if (!slots.length) return { message: message.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() };
-  return Object.fromEntries(OUTCOMES.map((outcome, index) => [outcome, slots[index] ?? []]).filter(([, keys]) => keys.length));
+const issueKeysIn = (text: string) => new Set((text.match(/[A-Za-z][A-Za-z0-9_]*-\d+/g) ?? []).map((key) => key.toUpperCase()));
+
+/**
+ * Which of the tests sent each slot of the job's message names, leaving out empty slots. Slots hold issue keys, some
+ * in links, so only the keys that were sent are looked for; a message without slots is passed on as Zephyr wrote it.
+ */
+export function readAddTestsMessage(message: string, issueKeys: string[]) {
+  const slots = [...message.matchAll(/<strong>(.*?)<\/strong>/gs)].map((match) => issueKeysIn(match[1]));
+  if (!slots.length) return { message };
+  return Object.fromEntries(OUTCOMES
+    .map((outcome, index) => [outcome, issueKeys.filter((key) => slots[index]?.has(key.toUpperCase()))] as const)
+    .filter(([, keys]) => keys.length));
 }
 
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -80,5 +86,5 @@ export async function addTestsToCycle({ cycleId, projectKey, versionId, issueKey
   if (!token) throw new Error('Zephyr Essential did not start adding the tests.');
   const job = await waitForJob(token);
   if (!job.done) return defined({ cycleId, folderId, done: false, progress: job.progress });
-  return defined({ cycleId, folderId, done: true, ...readAddTestsMessage(job.message) });
+  return defined({ cycleId, folderId, done: true, ...readAddTestsMessage(job.message, issueKeys) });
 }
