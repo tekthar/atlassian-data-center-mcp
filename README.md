@@ -31,7 +31,7 @@ more when it needs them, and a sandbox where it can combine many reads into one 
 ## Why you'll like it
 
 - **Your Marketplace apps too**: at startup the servers find the apps installed on your instance and add their tools,
-  131 of them for 11 apps: test management, automation, time tracking, planning and diagrams. See
+  133 of them for 11 apps: test management, automation, time tracking, planning and diagrams. See
   [Works with your Marketplace apps](#works-with-your-marketplace-apps).
 - **One command, nothing to host**: `npx` runs each server on your machine. No Python, no Docker, no server to run.
   Built for Data Center and Server, the editions Atlassian's own MCP server doesn't cover.
@@ -71,7 +71,7 @@ Cloud. These servers are for Data Center and Server.
 
 | Server | npm package | What the agent can do |
 |---|---|---|
-| **Jira** | [`mcp-jira-dc`](https://www.npmjs.com/package/mcp-jira-dc) | Search with JQL, create, update and transition issues, comments, links, versions, sprints, worklogs, service desk queues, fields and users. 63 tools in 18 toolsets, plus 124 tools for 10 Marketplace apps when they're installed. |
+| **Jira** | [`mcp-jira-dc`](https://www.npmjs.com/package/mcp-jira-dc) | Search with JQL, create, update and transition issues, comments, links, versions, sprints, worklogs, service desk queues, fields and users. 63 tools in 18 toolsets, plus 126 tools for 10 Marketplace apps when they're installed. |
 | **Confluence** | [`mcp-confluence-dc`](https://www.npmjs.com/package/mcp-confluence-dc) | Search with CQL, read, create and update pages, page trees, version history and diffs, labels, comments, restrictions and attachments. 26 tools in 11 toolsets, plus draw.io and Gliffy diagrams when they're installed. |
 | **Bitbucket** | [`mcp-bitbucket-dc`](https://www.npmjs.com/package/mcp-bitbucket-dc) | Browse projects, repositories, files, branches and commits, search code, and review and comment on pull requests. Merging and declining are opt-in. 27 tools plus 2 opt-in. |
 

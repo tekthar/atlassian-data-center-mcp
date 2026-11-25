@@ -7,7 +7,7 @@ your personal access token, lists the everyday issue tools, and keeps 43 more on
 supported Jira apps such as Xray, Zephyr, ScriptRunner, BigPicture, Tempo, JMWE, Structure, Timesheet Tracking, Zephyr Essential and draw.io when they're installed. Jira's own
 permissions decide what you can do: the server can hide tools, never unlock them.
 
-**Works with your Marketplace apps:** 124 more tools for test management (Xray, Zephyr, Zephyr Essential), automation
+**Works with your Marketplace apps:** 126 more tools for test management (Xray, Zephyr, Zephyr Essential), automation
 (ScriptRunner, JMWE), time tracking (Tempo Timesheets, Timesheet Tracking), planning (Structure, BigPicture) and
 diagrams (draw.io), found on your instance at startup. See [Jira apps](#jira-apps).
 
@@ -273,12 +273,14 @@ issues they may manage, and Jira administrators every running timer.
 
 | Toolset | Tools |
 |---|---|
-| `zephyressential_tests`: executions, test steps and step results, cycles and folders, coverage, and recording results | `zephyressential_searchExecutions`, `zephyressential_getTestSteps`, `zephyressential_getStepResults`, `zephyressential_getCycles`, `zephyressential_getCycleFolders`, `zephyressential_getRequirementCoverage`, `zephyressential_recordResult`, `zephyressential_recordStepResult` |
+| `zephyressential_tests`: executions, test steps and step results, cycles and folders, coverage, recording results, and creating and filling cycles | `zephyressential_searchExecutions`, `zephyressential_getTestSteps`, `zephyressential_getStepResults`, `zephyressential_getCycles`, `zephyressential_getCycleFolders`, `zephyressential_getRequirementCoverage`, `zephyressential_recordResult`, `zephyressential_recordStepResult`, `zephyressential_createCycle`, `zephyressential_addTestsToCycle` |
 
 `zephyressential_searchExecutions` takes ZQL, Zephyr's query language, such as
 `project = "PROJ" AND fixVersion = "1.0" AND executionStatus = FAIL`. `zephyressential_recordResult` and
 `zephyressential_recordStepResult` take a status by name, such as PASS or FAIL, including ones an administrator added.
-Zephyr lets anyone who browses the project record results unless its own permissions are turned on.
+Zephyr lets anyone who browses the project record results, create cycles and add tests unless its own permissions
+are turned on. `zephyressential_createCycle` takes dates in this Jira's date picker format, as
+`zephyressential_getCycles` shows them, such as `25/Nov/26`.
 
 ## Settings
 
