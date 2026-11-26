@@ -375,6 +375,33 @@ describe('jira service desk tools', () => {
       });
     });
 
+    it('maps priority and component names to ids, as JSM 11 lists them', async () => {
+      routeCreate({
+        ...fieldsResponse,
+        requestTypeFields: [
+          ...fieldsResponse.requestTypeFields,
+          {
+            fieldId: 'priority', name: 'Priority', required: false, jiraSchema: { type: 'priority', system: 'priority' },
+            validValues: [{ value: '2', label: 'High', children: [] }, { value: '4', label: 'Low', children: [] }],
+          },
+          {
+            fieldId: 'components', name: 'Component/s', required: false, jiraSchema: { type: 'array', items: 'component', system: 'components' },
+            validValues: [{ value: '10000', label: 'Active Directory', children: [] }, { value: '10002', label: 'Billing Services', children: [] }],
+          },
+        ],
+      });
+
+      await setup().callJson('jira_createCustomerRequest', {
+        serviceDeskId: '4',
+        requestTypeId: '23',
+        requestFieldValues: { summary: 'Printer jam', priority: 'high', components: 'Active Directory, 10002' },
+      });
+
+      expect(callOptions(1).body).toMatchObject({
+        requestFieldValues: { summary: 'Printer jam', priority: { id: '2' }, components: [{ id: '10000' }, { id: '10002' }] },
+      });
+    });
+
     it('lists missing required fields without creating anything', async () => {
       routeCreate();
 
