@@ -44,14 +44,18 @@ export async function getScriptFile(rootPath: string, filePath: string) {
 
 interface BuiltInScript {
   className?: string;
+  /** ScriptRunner 10.20 sends the class name as `class`. */
+  class?: string;
   name?: string;
   description?: string;
   tags?: string[];
   helpUrl?: string;
 }
 
+const classNameOf = (script: BuiltInScript) => script.className ?? script.class;
+
 const mentions = (script: BuiltInScript, text: string) =>
-  [script.name, script.description, script.className, ...(script.tags ?? [])].some((value) => value?.toLowerCase().includes(text));
+  [script.name, script.description, classNameOf(script), ...(script.tags ?? [])].some((value) => value?.toLowerCase().includes(text));
 
 /** The built-in scripts this ScriptRunner offers, optionally only those whose name, description or tags mention `search`. */
 export async function listBuiltInScripts(search: string | undefined) {
@@ -59,7 +63,7 @@ export async function listBuiltInScripts(search: string | undefined) {
   const text = search?.trim().toLowerCase();
   return (scripts ?? [])
     .filter((script) => !text || mentions(script, text))
-    .map(({ className, name, description, tags, helpUrl }) => ({ className, name, description, tags, helpUrl }));
+    .map((script) => ({ className: classNameOf(script), name: script.name, description: script.description, tags: script.tags, helpUrl: script.helpUrl }));
 }
 
 /** The parameters a built-in script asks for, given the values chosen so far; ScriptRunner computes them and runs nothing. */

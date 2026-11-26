@@ -102,6 +102,21 @@ describe('ScriptRunner tools', () => {
     });
   });
 
+  it('gives the className of built-in scripts that ScriptRunner 10.20 sends as class', async () => {
+    const bulkFix = {
+      name: 'Bulk Fix Resolutions', description: 'Modify resolution field in bulk.', homePlugin: null, source: 'CORE', hideInitially: false,
+      helpUrl: 'https://docs.adaptavist.com/sr4js/10.20.0/?contentKey=bulk-fix-resolutions', tags: ['administer', 'issue'],
+      class: 'com.onresolve.scriptrunner.canned.jira.admin.BulkFixResolutions',
+    };
+    routeRequests({ '/scriptrunner/latest/canned/available': [bulkFix] });
+
+    const result = await setup().callJson('scriptrunner_listBuiltInScripts', { search: 'bulkfix' });
+
+    expect(result.data).toEqual([{
+      className: bulkFix.class, name: bulkFix.name, description: bulkFix.description, tags: bulkFix.tags, helpUrl: bulkFix.helpUrl,
+    }]);
+  });
+
   it('asks for a built-in script\'s parameters with the values chosen so far, by its class name', async () => {
     routeRequests({ '/scriptrunner/latest/canned/{scriptName}/params': [{ name: 'FIELD_SOURCE_PROJECT', type: 'project' }] });
     const className = BUILT_IN_SCRIPTS[0].className;
