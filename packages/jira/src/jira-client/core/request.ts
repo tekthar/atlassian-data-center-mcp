@@ -250,6 +250,30 @@ export const getResponseHeader = (response: Response, responseHeader?: string): 
     return undefined;
 };
 
+/*
+ * Jira 11 answers a REST path that nothing on the instance serves, such as an app that isn't installed, with a 302
+ * to login.jsp?permissionViolation=true instead of a 404, even for a valid token. fetch follows it and gets the
+ * login page with a 200, so landing on login.jsp is read as the 404 it stands for.
+ */
+export const isLoginPageRedirect = (response: Response): boolean => {
+    if (!response.redirected || !response.url) {
+        return false;
+    }
+    try {
+        return new URL(response.url).pathname.endsWith('/login.jsp');
+    } catch {
+        return false;
+    }
+};
+
+const loginRedirectResult = (url: string): ApiResult => ({
+    url,
+    ok: false,
+    status: 404,
+    statusText: 'Not Found',
+    body: 'Jira redirected this REST call to its login page, which it does for a path nothing on the instance serves.',
+});
+
 export const getResponseBody = async (response: Response): Promise<any> => {
     if (response.status !== 204) {
         try {
@@ -325,6 +349,10 @@ export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions): C
 
             if (!onCancel.isCancelled) {
                 const response = await sendRequest(config, options, url, body, formData, headers, onCancel);
+                if (isLoginPageRedirect(response)) {
+                    await response.body?.cancel();
+                    catchErrorCodes(options, loginRedirectResult(url));
+                }
                 const responseBody = await getResponseBody(response);
                 const responseHeader = getResponseHeader(response, options.responseHeader);
 
