@@ -179,6 +179,19 @@ describe('ScriptRunner tools', () => {
     expect(sent(1)).toMatchObject({ method: 'GET', url: `${url}/{${key}}`, path: { [key]: 'a1' } });
   });
 
+  it.each([
+    ['scriptrunner_getScriptedFields', '/scriptrunner-jira/latest/scriptfields', 'Scripted field'],
+    ['scriptrunner_getScheduledJobs', '/scriptrunner/latest/scheduled-jobs', 'Scheduled job'],
+    ['scriptrunner_getRestEndpoints', '/scriptrunner/latest/custom/customadmin', 'REST endpoint'],
+    ['scriptrunner_getFragments', '/scriptrunner/latest/fragments', 'Fragment'],
+  ])('%s says an unknown id was not found, which ScriptRunner 10.20 answers with 200 and null', async (tool, url, item) => {
+    routeRequests({ [`${url}/{id}`]: null });
+
+    const result = await setup().callJson(tool, { id: 'gone' });
+
+    expect(result).toMatchObject({ success: false, error: expect.stringContaining(`${item} gone was not found.`) });
+  });
+
   it('explains a refusal in terms of who ScriptRunner lets in', async () => {
     routeRequests({ '/scriptrunner-jira/latest/listeners': apiError(403, 'Forbidden') });
 

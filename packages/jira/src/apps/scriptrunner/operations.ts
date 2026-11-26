@@ -82,10 +82,14 @@ export const getListeners = () => get('scriptrunner-jira', '/listeners', 'The Sc
 export const getJqlFunctions = () => get('scriptrunner-jira', '/jqlfunctions/docs', 'The ScriptRunner JQL functions');
 
 /** Every configured item of a ScriptRunner feature, or one by id: each route answers `GET <url>` and `GET <url>/{id}`. */
-function getConfigured(api: ScriptRunnerApi, url: string, feature: string, item: string, id: string | undefined) {
-  return id === undefined
-    ? get(api, url, `The ScriptRunner ${feature}`)
-    : get(api, `${url}/{id}`, `${item} ${id}`, undefined, { id });
+async function getConfigured(api: ScriptRunnerApi, url: string, feature: string, item: string, id: string | undefined) {
+  if (id === undefined) return get(api, url, `The ScriptRunner ${feature}`);
+  const found = await get(api, `${url}/{id}`, `${item} ${id}`, undefined, { id });
+  // ScriptRunner 10.20 answers an unknown scripted field, job, REST endpoint or fragment with 200 and null.
+  if (found === null || found === undefined) {
+    throw new Error(`${item} ${id} was not found. List the ${feature} without an id to see their ids.`);
+  }
+  return found;
 }
 
 /*
