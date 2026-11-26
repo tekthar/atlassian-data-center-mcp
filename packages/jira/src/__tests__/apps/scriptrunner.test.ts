@@ -102,6 +102,21 @@ describe('ScriptRunner tools', () => {
     });
   });
 
+  it('gives the className of built-in scripts that ScriptRunner 10.20 sends as class', async () => {
+    const bulkFix = {
+      name: 'Bulk Fix Resolutions', description: 'Modify resolution field in bulk.', homePlugin: null, source: 'CORE', hideInitially: false,
+      helpUrl: 'https://docs.adaptavist.com/sr4js/10.20.0/?contentKey=bulk-fix-resolutions', tags: ['administer', 'issue'],
+      class: 'com.onresolve.scriptrunner.canned.jira.admin.BulkFixResolutions',
+    };
+    routeRequests({ '/scriptrunner/latest/canned/available': [bulkFix] });
+
+    const result = await setup().callJson('scriptrunner_listBuiltInScripts', { search: 'bulkfix' });
+
+    expect(result.data).toEqual([{
+      className: bulkFix.class, name: bulkFix.name, description: bulkFix.description, tags: bulkFix.tags, helpUrl: bulkFix.helpUrl,
+    }]);
+  });
+
   it('asks for a built-in script\'s parameters with the values chosen so far, by its class name', async () => {
     routeRequests({ '/scriptrunner/latest/canned/{scriptName}/params': [{ name: 'FIELD_SOURCE_PROJECT', type: 'project' }] });
     const className = BUILT_IN_SCRIPTS[0].className;
@@ -133,8 +148,19 @@ describe('ScriptRunner tools', () => {
     await tools.callJson('scriptrunner_getBehaviours', {});
     await tools.callJson('scriptrunner_getBehaviours', { id: '3' });
 
-    expect(mockedRequest.mock.calls.map((call) => call[1].method)).toEqual(['GET', 'GET', 'GET', 'GET']);
+    expect(mockedRequest.mock.calls.map((call) => call[1].method)).toEqual(['GET', 'GET', 'GET', 'GET', 'GET']);
     expect(sent(3).path).toEqual({ id: '3' });
+  });
+
+  it('takes one behaviour\'s on/off state from the list, which ScriptRunner 10.20 reports right', async () => {
+    routeRequests({
+      '/scriptrunner/behaviours/latest/admin/behaviour': [{ id: 'b1', name: 'Off', disabled: true }, { id: 'b2', name: 'Other', disabled: false }],
+      '/scriptrunner/behaviours/latest/admin/behaviour/{id}': { id: 'b1', name: 'Off', disabled: false, fields: [] },
+    });
+
+    const result = await setup().callJson('scriptrunner_getBehaviours', { id: 'b1' });
+
+    expect(result.data).toEqual({ id: 'b1', name: 'Off', disabled: true, fields: [] });
   });
 
   it.each([
@@ -151,6 +177,19 @@ describe('ScriptRunner tools', () => {
     expect(await tools.callJson(tool, { [key]: 'a1' })).toEqual({ success: true, data: { id: 'a1' } });
     expect(sent(0)).toMatchObject({ method: 'GET', url });
     expect(sent(1)).toMatchObject({ method: 'GET', url: `${url}/{${key}}`, path: { [key]: 'a1' } });
+  });
+
+  it.each([
+    ['scriptrunner_getScriptedFields', '/scriptrunner-jira/latest/scriptfields', 'Scripted field'],
+    ['scriptrunner_getScheduledJobs', '/scriptrunner/latest/scheduled-jobs', 'Scheduled job'],
+    ['scriptrunner_getRestEndpoints', '/scriptrunner/latest/custom/customadmin', 'REST endpoint'],
+    ['scriptrunner_getFragments', '/scriptrunner/latest/fragments', 'Fragment'],
+  ])('%s says an unknown id was not found, which ScriptRunner 10.20 answers with 200 and null', async (tool, url, item) => {
+    routeRequests({ [`${url}/{id}`]: null });
+
+    const result = await setup().callJson(tool, { id: 'gone' });
+
+    expect(result).toMatchObject({ success: false, error: expect.stringContaining(`${item} gone was not found.`) });
   });
 
   it('explains a refusal in terms of who ScriptRunner lets in', async () => {
@@ -245,8 +284,10 @@ describe('ScriptRunner tools that run or save code', () => {
     const className = 'com.onresolve.scriptrunner.canned.jira.admin.BulkFixResolutions';
     const tools = setupOptIns({ JIRA_SCRIPTRUNNER_BUILTIN_RUN_ENABLED: 'true' });
 
-    await tools.callJson('scriptrunner_validateBuiltInScript', { className, values: { FIELD_FILTER_ID: '10200' } });
+    const validation = await tools.callJson('scriptrunner_validateBuiltInScript', { className, values: { FIELD_FILTER_ID: '10200' } });
     const preview = await tools.callJson('scriptrunner_previewBuiltInScript', { className, values: { FIELD_FILTER_ID: '10200' } });
+
+    expect(validation).toEqual({ success: true, data: { valid: true } });
 
     expect(tools.registrar.registeredTools().sort()).toEqual(['scriptrunner_previewBuiltInScript', 'scriptrunner_runBuiltInScript', 'scriptrunner_validateBuiltInScript']);
     expect(sent(0)).toMatchObject({ method: 'POST', url: '/scriptrunner/latest/canned/{scriptName}/validate', path: { scriptName: className }, body: { FIELD_FILTER_ID: '10200' } });
@@ -254,15 +295,26 @@ describe('ScriptRunner tools that run or save code', () => {
     expect(preview.data).toEqual({ output: '23 issues' });
   });
 
-  it('passes on the errors a failed validation reports', async () => {
-    routeRequests({ '/scriptrunner/latest/canned/{scriptName}/validate': Object.assign(new Error('Bad Request'), {
-      status: 400, statusText: 'Bad Request', body: { errors: { FIELD_FILTER_ID: 'Filter not found' } },
+  it('returns the errors by field when ScriptRunner refuses the values, which 10.20 answers with a 500', async () => {
+    routeRequests({ '/scriptrunner/latest/canned/{scriptName}/validate': Object.assign(new Error('Internal Server Error'), {
+      status: 500,
+      statusText: 'Internal Server Error',
+      body: { targetObjectId: null, errors: { FIELD_FILTER_ID: 'Please enter the filter ID' }, errorMessages: [], scriptRunResult: null },
     }) });
 
     const result = await setupOptIns().callJson('scriptrunner_validateBuiltInScript', { className: 'com.onresolve.scriptrunner.canned.jira.admin.BulkFixResolutions', values: {} });
 
-    expect(result).toMatchObject({ success: false, error: 'Error validating ScriptRunner built-in script: 400 Bad Request' });
-    expect(JSON.stringify(result.details)).toContain('Filter not found');
+    expect(result).toEqual({ success: true, data: { valid: false, errors: { FIELD_FILTER_ID: 'Please enter the filter ID' } } });
+  });
+
+  it('still fails validation on a 500 that lists no errors, such as a script that crashed', async () => {
+    routeRequests({ '/scriptrunner/latest/canned/{scriptName}/validate': Object.assign(new Error('Internal Server Error'), {
+      status: 500, statusText: 'Internal Server Error', body: { message: 'Class could not be found', 'status-code': 500 },
+    }) });
+
+    const result = await setupOptIns().callJson('scriptrunner_validateBuiltInScript', { className: 'com.onresolve.scriptrunner.canned.jira.admin.Missing', values: {} });
+
+    expect(result).toMatchObject({ success: false, error: 'Error validating ScriptRunner built-in script: 500 Internal Server Error' });
   });
 
   it('creates a script file from base64 content, refusing to replace one unless told to overwrite', async () => {
@@ -305,6 +357,19 @@ describe('ScriptRunner tools that change behaviours', () => {
 
     expect(sent()).toMatchObject({ method: 'POST', body: behaviour });
     expect(result).toEqual({ success: true, data: { id: 'b7' } });
+  });
+
+  it('replaces a behaviour sent back as scriptrunner_getBehaviours read it, nulls and mappings included', async () => {
+    routeRequests({ [`${ADMIN}/behaviour`]: '' });
+    const asRead = {
+      id: 'b6cc33a4', guideWorkflow: null, name: 'Renamed', description: null, init: null, fields: [], disabled: false,
+      mappings: [{ type: 'PROJECT', id: 0, fetching: false, project: { id: 10100, key: 'SUP' }, issuetype: { id: 10100, name: 'Incident' } }],
+    };
+
+    const result = await setupOptIns(BEHAVIOURS_ON).callJson('scriptrunner_saveBehaviour', { behaviour: asRead });
+
+    expect(result.success).toBe(true);
+    expect(sent()).toMatchObject({ method: 'POST', body: asRead });
   });
 
   it('refuses to replace a behaviour without its fields, which would drop its field rules', async () => {

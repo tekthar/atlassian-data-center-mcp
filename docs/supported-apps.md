@@ -6,7 +6,7 @@ Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and th
 | App | Server | Versions | Status |
 |---|---|---|---|
 | [Xray](#xray), test management | Jira | 8 | Beta |
-| [ScriptRunner](#scriptrunner), scripting and automation | Jira | 9 and 10 | Beta |
+| [ScriptRunner](#scriptrunner), scripting and automation | Jira | 9 and 10 | Functional on 10, beta on 9 |
 | [Jira Service Management](#jira-service-management) | Jira | 11.3 | Functional |
 | [draw.io](#drawio-for-confluence), diagrams | Confluence | 16 | Beta, read-only |
 | [draw.io](#drawio-for-jira), diagrams | Jira | 11 | Beta, read-only |
@@ -88,8 +88,9 @@ Scripting and automation by Adaptavist, Marketplace key `com.onresolve.jira.groo
 | Jira | 10.0 to 10.7 with ScriptRunner 9.46, whose REST resources use `javax.ws.rs`, and 11.0 to 11.3 with ScriptRunner 10.20, which moved them to `jakarta.ws.rs`; as the two builds' Marketplace listings give |
 | REST APIs used | `/rest/scriptrunner/latest` for the script editor, built-in scripts, the script console, scheduled jobs, REST endpoints and fragments; `/rest/scriptrunner-jira/latest` for listeners, scripted fields, workflow functions and JQL functions; `/rest/scriptrunner/behaviours/latest` for behaviours |
 | Tools | 12 that read, in the toolsets `scriptrunner_script_editor`, `scriptrunner_builtin_scripts`, `scriptrunner_features` and `scriptrunner_behaviours`; 9 opt-in tools that run, validate, preview or save code or change behaviours, in `scriptrunner_console`, `scriptrunner_builtin_scripts`, `scriptrunner_script_editor` and `scriptrunner_behaviours` |
+| Run against | ScriptRunner for Jira **10.20.0** on Jira Software Data Center **11.3.13**, on 2026-11-26, as a Jira administrator and as an ordinary user, each with a personal access token. See [Live run](#scriptrunner-live-run) |
 | Detection | `GET /rest/scriptrunner-jira/latest/jqlfunctions/docs` at startup, which any signed-in user may read, unless `JIRA_APPS` names the apps to offer |
-| Status | Beta: not yet run against a live ScriptRunner instance |
+| Status | Functional on ScriptRunner 10: all 21 tools run against a live instance. Beta on 9, which hasn't been run |
 
 **How the tools were built.** ScriptRunner publishes no OpenAPI description of these routes, so every path, query
 parameter and body comes from the 9.46.0 app itself. Its `atlassian-plugin.xml` gave the REST modules, and `javap` on
@@ -168,7 +169,7 @@ The behaviour tools also refuse three things before calling ScriptRunner:
   ScriptRunner and quietly left out Xray, which answered 404. The tool search found all seven tools, and
   `jira_runReadTool` ran one of them. A `jira_runCode` script listed the script files and read one.
 - Validating and previewing a built-in script are tested on their own routes, registered only with the run setting,
-  and a failed validation's errors come back in the tool's details.
+  and refused values come back as `valid: false` with ScriptRunner's errors by field.
 - With the feature tools added, the tool search ranked the right tool first for "scheduled jobs", "scripted field",
   "rest endpoint", "workflow post function" and "web panel fragment". A `jira_runCode` script read the scheduled jobs.
 
@@ -181,8 +182,43 @@ fix would change first. They run the built-in script's own code, and nothing in 
 changes anything, so they come with running a built-in script: the same setting, destructive, and never offered by the
 tool search or `jira_runCode`.
 
-**Other 9.x and 10.x versions** are expected to work. 9.46.0 and 10.20.0 were read, so an earlier version may lack a
-route.
+<a id="scriptrunner-live-run"></a>**Live run (2026-11-26).** The bundled server was started over stdio against ScriptRunner 10.20.0, and every tool
+was called the way an MCP client calls it. One of each feature was set up first (a listener, a scripted field, a
+scheduled job, a REST endpoint, a web item fragment, a workflow post function and two behaviours), so the read tools
+had real items to read:
+
+- **Script editor.** A file was listed, read, created, refused when it already existed, and replaced with
+  `overwrite: true`, with non-ASCII text intact.
+- **Script console.** Inline Groovy and a script file ran and returned their output and log. A script that threw
+  returned the exception, a short stack trace and the log. Right after a file is replaced, ScriptRunner may run its
+  previous version for a few seconds, until it notices the change; this is ScriptRunner's own compile cache.
+- **Built-in scripts.** They were listed and searched, and their parameters came back, including filters created for
+  the run. Validation answered `valid: true` and `valid: false` with the errors by field. A preview of a bulk fix
+  said which issues it would change, and a run on an empty filter changed none.
+- **Features.** Listeners, scripted fields, scheduled jobs, REST endpoints, fragments and workflow functions were
+  listed with their scripts, and read one at a time by id or workflow name. An unknown id or workflow is reported as
+  not found.
+- **Behaviours.** A behaviour was created, mapped to a project's issue types and to a service desk's request types,
+  switched off and on, read back, changed and saved whole, and unmapped. Its initialiser script, state and mappings
+  survived. A behaviour created with the initialiser shape in the tool's description kept its script.
+- **Guards.** With every opt-in setting on and default `TOOLSETS`, the tool search offered only the read tools,
+  `jira_runReadTool` and `jira_runWriteTool` didn't know the opt-in tools, and `jira_runCode` refused them, while
+  a `jira_runCode` script combined three read tools.
+- **An ordinary user.** Detection found ScriptRunner, the permission filter hid all 9 opt-in tools, the JQL function
+  docs were read, and the admin-only reads gave the 403 message.
+
+The run found these problems, all fixed:
+[#70](https://github.com/tekthar/atlassian-data-center-mcp/issues/70), built-in scripts listed without a class
+name, since 10.20 sends it as `class`;
+[#71](https://github.com/tekthar/atlassian-data-center-mcp/issues/71), refused values reported as a failed call,
+since 10.20 answers them with a 500;
+[#72](https://github.com/tekthar/atlassian-data-center-mcp/issues/72), a behaviour read back couldn't be saved,
+one behaviour's on/off state read wrong, and the initialiser's shape wasn't described;
+[#73](https://github.com/tekthar/atlassian-data-center-mcp/issues/73), an unknown item id returned a success with
+no data.
+
+**Other 9.x and 10.x versions** are expected to work. 9.46.0 and 10.20.0 were read, and 10.20.0 was run, so an
+earlier version may lack a route or answer differently.
 
 **Left out on purpose:**
 

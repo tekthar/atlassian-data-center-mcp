@@ -62,6 +62,22 @@ export async function checkBuiltInScript(className: string, values: Record<strin
 }
 
 /**
+ * Checks parameter values. ScriptRunner 10.20 answers values it refuses with a 500 whose body lists the errors by
+ * field, so that answer is the check's result, not a failure; a 500 without errors is passed on.
+ */
+export async function validateBuiltInScript(className: string, values: Record<string, unknown>) {
+  try {
+    await checkBuiltInScript(className, values, 'validate');
+    return { valid: true };
+  } catch (error) {
+    const { errors, errorMessages } = asRecord(asRecord(error).body);
+    const messages = Array.isArray(errorMessages) && errorMessages.length > 0 ? errorMessages : undefined;
+    if (errors === undefined && messages === undefined) throw error;
+    return { valid: false, errors, errorMessages: messages };
+  }
+}
+
+/**
  * Writes a script editor file. ScriptRunner takes the content base64-encoded; POST refuses to replace an
  * existing file and PUT replaces it.
  */

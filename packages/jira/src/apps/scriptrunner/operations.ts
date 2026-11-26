@@ -1,4 +1,4 @@
-import { stripNoise } from '../../tools/context.js';
+import { asArray, asRecord, stripNoise } from '../../tools/context.js';
 import { callScriptRunner, type ScriptRunnerApi } from './client.js';
 
 type Query = Record<string, string | boolean | undefined>;
@@ -44,14 +44,18 @@ export async function getScriptFile(rootPath: string, filePath: string) {
 
 interface BuiltInScript {
   className?: string;
+  /** ScriptRunner 10.20 sends the class name as `class`. */
+  class?: string;
   name?: string;
   description?: string;
   tags?: string[];
   helpUrl?: string;
 }
 
+const classNameOf = (script: BuiltInScript) => script.className ?? script.class;
+
 const mentions = (script: BuiltInScript, text: string) =>
-  [script.name, script.description, script.className, ...(script.tags ?? [])].some((value) => value?.toLowerCase().includes(text));
+  [script.name, script.description, classNameOf(script), ...(script.tags ?? [])].some((value) => value?.toLowerCase().includes(text));
 
 /** The built-in scripts this ScriptRunner offers, optionally only those whose name, description or tags mention `search`. */
 export async function listBuiltInScripts(search: string | undefined) {
@@ -59,7 +63,7 @@ export async function listBuiltInScripts(search: string | undefined) {
   const text = search?.trim().toLowerCase();
   return (scripts ?? [])
     .filter((script) => !text || mentions(script, text))
-    .map(({ className, name, description, tags, helpUrl }) => ({ className, name, description, tags, helpUrl }));
+    .map((script) => ({ className: classNameOf(script), name: script.name, description: script.description, tags: script.tags, helpUrl: script.helpUrl }));
 }
 
 /** The parameters a built-in script asks for, given the values chosen so far; ScriptRunner computes them and runs nothing. */
@@ -78,13 +82,31 @@ export const getListeners = () => get('scriptrunner-jira', '/listeners', 'The Sc
 export const getJqlFunctions = () => get('scriptrunner-jira', '/jqlfunctions/docs', 'The ScriptRunner JQL functions');
 
 /** Every configured item of a ScriptRunner feature, or one by id: each route answers `GET <url>` and `GET <url>/{id}`. */
-function getConfigured(api: ScriptRunnerApi, url: string, feature: string, item: string, id: string | undefined) {
-  return id === undefined
-    ? get(api, url, `The ScriptRunner ${feature}`)
-    : get(api, `${url}/{id}`, `${item} ${id}`, undefined, { id });
+async function getConfigured(api: ScriptRunnerApi, url: string, feature: string, item: string, id: string | undefined) {
+  if (id === undefined) return get(api, url, `The ScriptRunner ${feature}`);
+  const found = await get(api, `${url}/{id}`, `${item} ${id}`, undefined, { id });
+  // ScriptRunner 10.20 answers an unknown scripted field, job, REST endpoint or fragment with 200 and null.
+  if (found === null || found === undefined) {
+    throw new Error(`${item} ${id} was not found. List the ${feature} without an id to see their ids.`);
+  }
+  return found;
 }
 
-export const getBehaviours = (id?: string) => getConfigured('scriptrunner/behaviours', '/admin/behaviour', 'behaviours', 'Behaviour', id);
+/*
+ * ScriptRunner 10.20 answers disabled: false for one behaviour even when it is switched off. The list has the
+ * state its admin page shows, so one behaviour's state is taken from the list.
+ */
+async function getBehaviour(id: string) {
+  const [behaviour, all] = await Promise.all([
+    getConfigured('scriptrunner/behaviours', '/admin/behaviour', 'behaviours', 'Behaviour', id),
+    callScriptRunner('scriptrunner/behaviours', { method: 'GET', url: '/admin/behaviour' }, 'The ScriptRunner behaviours'),
+  ]);
+  const listed = asArray(all).map(asRecord).find((item) => item.id === id);
+  return typeof listed?.disabled === 'boolean' ? { ...asRecord(behaviour), disabled: listed.disabled } : behaviour;
+}
+
+export const getBehaviours = (id?: string) =>
+  id === undefined ? getConfigured('scriptrunner/behaviours', '/admin/behaviour', 'behaviours', 'Behaviour', id) : getBehaviour(id);
 
 export const getScriptedFields = (id?: string) => getConfigured('scriptrunner-jira', '/scriptfields', 'scripted fields', 'Scripted field', id);
 
