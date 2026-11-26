@@ -4,11 +4,11 @@
 
 The server runs on your machine. Your MCP client starts it and talks to it over stdio; it calls Jira's REST API with
 your personal access token, lists the everyday issue tools, and keeps 43 more one search away, plus the tools of
-supported Jira apps such as Xray, Zephyr, ScriptRunner, BigPicture, Tempo, JMWE, Structure, Timesheet Tracking, Zephyr Essential and draw.io when they're installed. Jira's own
+supported Jira apps such as Xray, Zephyr, ScriptRunner, BigPicture, Tempo, JMWE, Structure, Timesheet Tracking, Zephyr Essential, Tempo Capacity Planner and draw.io when they're installed. Jira's own
 permissions decide what you can do: the server can hide tools, never unlock them.
 
-**Works with your Marketplace apps:** 126 more tools for test management (Xray, Zephyr, Zephyr Essential), automation
-(ScriptRunner, JMWE), time tracking (Tempo Timesheets, Timesheet Tracking), planning (Structure, BigPicture) and
+**Works with your Marketplace apps:** 129 more tools for test management (Xray, Zephyr, Zephyr Essential), automation
+(ScriptRunner, JMWE), time tracking (Tempo Timesheets, Timesheet Tracking), planning (Structure, BigPicture, Tempo Capacity Planner) and
 diagrams (draw.io), found on your instance at startup. See [Jira apps](#jira-apps).
 
 ```bash
@@ -151,6 +151,7 @@ Service Management's tools are the `jira_service_desk` toolset in [Toolsets](#to
 | JMWE, workflow extensions | 10 | Beta |
 | Structure, hierarchies and portfolio planning | 9 | Beta |
 | Timesheet Tracking, planned work and timers | 9 | Beta, read-only |
+| Tempo Capacity Planner, resource planning | 20 | Beta, read-only |
 | Zephyr Essential, test management (formerly Zephyr Squad) | 11 | Beta |
 | Jira Service Management | not recorded | Beta |
 
@@ -282,6 +283,16 @@ Zephyr lets anyone who browses the project record results, create cycles and add
 are turned on. `zephyressential_createCycle` takes dates in this Jira's date picker format, as
 `zephyressential_getCycles` shows them, such as `25/Nov/26`.
 
+**Tempo Capacity Planner** (formerly Tempo Planner) tools, all read-only for now:
+
+| Toolset | Tools |
+|---|---|
+| `tempoplanner_plans`: plans by person, team, issue or project, and plans for review | `tempoplanner_getPlans`, `tempoplanner_getPlan`, `tempoplanner_getPlansForReview` |
+
+Plans are the time Tempo allocates to people and teams on issues and projects; the tools give hours a day and in
+total. Tempo Timesheets serves the same planning API, so these tools are offered with either app. Tempo decides whose
+plans each user sees.
+
 ## Settings
 
 Every setting is an environment variable. Each comes from the first of these that has it: the environment, the dotenv
@@ -311,7 +322,7 @@ keychain.
 | `CODE_EXECUTION` | `off` removes `jira_runCode`. |
 | `PERMISSION_FILTER` | `off` lists tools without asking Jira for your permissions first. |
 | `JIRA_PERMISSION_PROJECTS` | Project keys, e.g. `ACS,BPO`. Without it, a permission you hold in any project counts; with it, only these projects count. |
-| `JIRA_APPS` | Which [Jira apps](#jira-apps) to offer. Unset or `auto` checks which are installed; a list such as `xray,zephyr,scriptrunner,drawio,bigpicture,tempo,jmwe,structure,timesheettracking,zephyressential` offers those without checking; `off` offers none. |
+| `JIRA_APPS` | Which [Jira apps](#jira-apps) to offer. Unset or `auto` checks which are installed; a list such as `xray,zephyr,scriptrunner,drawio,bigpicture,tempo,jmwe,structure,timesheettracking,zephyressential,tempoplanner` offers those without checking; `off` offers none. |
 
 **Turning on risky tools**
 

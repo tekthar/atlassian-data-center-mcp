@@ -7,6 +7,13 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Features
 
+* **jira:** Tempo Capacity Planner (formerly Tempo Planner), the next popular Data Center app, read-only for now:
+  * `tempoplanner_getPlans` gets plans for a period, for people, a Tempo team, an issue or a project, or your own: what each is for, its dates, hours a day and in total, and its approval;
+  * `tempoplanner_getPlan` gets one plan;
+  * `tempoplanner_getPlansForReview` lists the plans awaiting your approval, or the ones you approved or rejected.
+
+  Tempo Timesheets serves the same planning API, so the tools are offered with either app. See [Supported apps](docs/supported-apps.md#tempo-capacity-planner).
+
 * **jira:** Zephyr Essential cycles, folders and coverage. Three more read tools:
   * `zephyressential_getCycles` lists a version's test cycles, with their build, environment and dates, and how many executions each has, how many ran and how they ended;
   * `zephyressential_getCycleFolders` lists a cycle's folders, with their executions by status;
