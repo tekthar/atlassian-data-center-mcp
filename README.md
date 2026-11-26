@@ -97,7 +97,7 @@ Every app's version and status:
 | App | Server | Versions | Status |
 |---|---|---|---|
 | Xray, test management | Jira | 8 | Beta |
-| ScriptRunner, scripting and automation | Jira | 9 and 10 | Beta |
+| ScriptRunner, scripting and automation | Jira | 9 and 10 | Functional on 10, beta on 9 |
 | Jira Service Management | Jira | 11.3 | Functional |
 | draw.io, diagrams | Confluence | 16 | Beta, read-only |
 | draw.io, diagrams | Jira | 11 | Beta, read-only |

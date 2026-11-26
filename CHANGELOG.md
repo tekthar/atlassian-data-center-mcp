@@ -14,12 +14,27 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 * **jira:** `jira_createCustomerRequest` sent priority and component names as plain strings, which Jira Service
   Management refuses. They are now mapped to ids, like select options
   ([#68](https://github.com/tekthar/atlassian-data-center-mcp/issues/68)).
+* **jira:** `scriptrunner_listBuiltInScripts` gave no class names on ScriptRunner 10.20, which sends them as `class`,
+  so the built-in script tools couldn't be called. Both spellings are read now
+  ([#70](https://github.com/tekthar/atlassian-data-center-mcp/issues/70)).
+* **jira:** `scriptrunner_validateBuiltInScript` reported refused values as a failed call with a 500, which is how
+  ScriptRunner 10.20 answers them. It now returns `valid: false` with the errors by field, or `valid: true`
+  ([#71](https://github.com/tekthar/atlassian-data-center-mcp/issues/71)).
+* **jira:** ScriptRunner behaviours can be changed the way the tools describe: a behaviour read with
+  `scriptrunner_getBehaviours` can be sent back to `scriptrunner_saveBehaviour`, which refused its `null` values. One
+  behaviour now reads with its real on/off state, and the initialiser's shape is described, since ScriptRunner keeps
+  no script given any other way ([#72](https://github.com/tekthar/atlassian-data-center-mcp/issues/72)).
+* **jira:** an unknown scripted field, scheduled job, REST endpoint or fragment id is reported as not found, instead
+  of a success with no data ([#73](https://github.com/tekthar/atlassian-data-center-mcp/issues/73)).
 
 ### Documentation
 
 * Jira Service Management is **Functional**: its 6 tools were run against Jira Service Management 11.3.13 on Jira
   11.3.13. Apps whose tools have been run against a live instance are now marked Functional instead of Tested. See
   [Supported apps](docs/supported-apps.md#jira-service-management).
+* ScriptRunner is **Functional** on ScriptRunner 10: its 21 tools were run against ScriptRunner 10.20.0 on Jira
+  11.3.13, as an administrator and as an ordinary user. ScriptRunner 9 stays beta. See
+  [Supported apps](docs/supported-apps.md#scriptrunner).
 
 ### Features
 
