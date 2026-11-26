@@ -260,8 +260,10 @@ describe('ScriptRunner tools that run or save code', () => {
     const className = 'com.onresolve.scriptrunner.canned.jira.admin.BulkFixResolutions';
     const tools = setupOptIns({ JIRA_SCRIPTRUNNER_BUILTIN_RUN_ENABLED: 'true' });
 
-    await tools.callJson('scriptrunner_validateBuiltInScript', { className, values: { FIELD_FILTER_ID: '10200' } });
+    const validation = await tools.callJson('scriptrunner_validateBuiltInScript', { className, values: { FIELD_FILTER_ID: '10200' } });
     const preview = await tools.callJson('scriptrunner_previewBuiltInScript', { className, values: { FIELD_FILTER_ID: '10200' } });
+
+    expect(validation).toEqual({ success: true, data: { valid: true } });
 
     expect(tools.registrar.registeredTools().sort()).toEqual(['scriptrunner_previewBuiltInScript', 'scriptrunner_runBuiltInScript', 'scriptrunner_validateBuiltInScript']);
     expect(sent(0)).toMatchObject({ method: 'POST', url: '/scriptrunner/latest/canned/{scriptName}/validate', path: { scriptName: className }, body: { FIELD_FILTER_ID: '10200' } });
@@ -269,15 +271,26 @@ describe('ScriptRunner tools that run or save code', () => {
     expect(preview.data).toEqual({ output: '23 issues' });
   });
 
-  it('passes on the errors a failed validation reports', async () => {
-    routeRequests({ '/scriptrunner/latest/canned/{scriptName}/validate': Object.assign(new Error('Bad Request'), {
-      status: 400, statusText: 'Bad Request', body: { errors: { FIELD_FILTER_ID: 'Filter not found' } },
+  it('returns the errors by field when ScriptRunner refuses the values, which 10.20 answers with a 500', async () => {
+    routeRequests({ '/scriptrunner/latest/canned/{scriptName}/validate': Object.assign(new Error('Internal Server Error'), {
+      status: 500,
+      statusText: 'Internal Server Error',
+      body: { targetObjectId: null, errors: { FIELD_FILTER_ID: 'Please enter the filter ID' }, errorMessages: [], scriptRunResult: null },
     }) });
 
     const result = await setupOptIns().callJson('scriptrunner_validateBuiltInScript', { className: 'com.onresolve.scriptrunner.canned.jira.admin.BulkFixResolutions', values: {} });
 
-    expect(result).toMatchObject({ success: false, error: 'Error validating ScriptRunner built-in script: 400 Bad Request' });
-    expect(JSON.stringify(result.details)).toContain('Filter not found');
+    expect(result).toEqual({ success: true, data: { valid: false, errors: { FIELD_FILTER_ID: 'Please enter the filter ID' } } });
+  });
+
+  it('still fails validation on a 500 that lists no errors, such as a script that crashed', async () => {
+    routeRequests({ '/scriptrunner/latest/canned/{scriptName}/validate': Object.assign(new Error('Internal Server Error'), {
+      status: 500, statusText: 'Internal Server Error', body: { message: 'Class could not be found', 'status-code': 500 },
+    }) });
+
+    const result = await setupOptIns().callJson('scriptrunner_validateBuiltInScript', { className: 'com.onresolve.scriptrunner.canned.jira.admin.Missing', values: {} });
+
+    expect(result).toMatchObject({ success: false, error: 'Error validating ScriptRunner built-in script: 500 Internal Server Error' });
   });
 
   it('creates a script file from base64 content, refusing to replace one unless told to overwrite', async () => {

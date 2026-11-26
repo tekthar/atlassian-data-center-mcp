@@ -43,10 +43,10 @@ function registerBuiltInRunTool(tools: PolicyRegistrar, context: JiraToolContext
 
 function registerBuiltInCheckTools(tools: PolicyRegistrar, context: JiraToolContext): void {
   tools.registerTool('scriptrunner_validateBuiltInScript', {
-    description: `Ask ScriptRunner on the ${context.instanceType} whether parameter values suit a built-in script, without running it. Returns its errors by field, if any. It runs the script's own checks, which may read Jira data.`,
+    description: `Ask ScriptRunner on the ${context.instanceType} whether parameter values suit a built-in script, without running it. Returns valid: true, or valid: false with its errors by field. It runs the script's own checks, which may read Jira data.`,
     inputSchema: z.object(schemas.runBuiltInScript),
   }, async ({ className, values }) =>
-    respond(() => scriptRunner.checkBuiltInScript(className, values, 'validate'), 'Error validating ScriptRunner built-in script'));
+    respond(() => scriptRunner.validateBuiltInScript(className, values), 'Error validating ScriptRunner built-in script'));
 
   tools.registerTool('scriptrunner_previewBuiltInScript', {
     description: `Preview what a ScriptRunner built-in script would do on the ${context.instanceType} with these values, as its Preview button shows, without making its changes: for a bulk fix, the issues it would change. Not every built-in script offers a preview. Use it before scriptrunner_runBuiltInScript.`,
