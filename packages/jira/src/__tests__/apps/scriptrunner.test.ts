@@ -148,8 +148,19 @@ describe('ScriptRunner tools', () => {
     await tools.callJson('scriptrunner_getBehaviours', {});
     await tools.callJson('scriptrunner_getBehaviours', { id: '3' });
 
-    expect(mockedRequest.mock.calls.map((call) => call[1].method)).toEqual(['GET', 'GET', 'GET', 'GET']);
+    expect(mockedRequest.mock.calls.map((call) => call[1].method)).toEqual(['GET', 'GET', 'GET', 'GET', 'GET']);
     expect(sent(3).path).toEqual({ id: '3' });
+  });
+
+  it('takes one behaviour\'s on/off state from the list, which ScriptRunner 10.20 reports right', async () => {
+    routeRequests({
+      '/scriptrunner/behaviours/latest/admin/behaviour': [{ id: 'b1', name: 'Off', disabled: true }, { id: 'b2', name: 'Other', disabled: false }],
+      '/scriptrunner/behaviours/latest/admin/behaviour/{id}': { id: 'b1', name: 'Off', disabled: false, fields: [] },
+    });
+
+    const result = await setup().callJson('scriptrunner_getBehaviours', { id: 'b1' });
+
+    expect(result.data).toEqual({ id: 'b1', name: 'Off', disabled: true, fields: [] });
   });
 
   it.each([
@@ -333,6 +344,19 @@ describe('ScriptRunner tools that change behaviours', () => {
 
     expect(sent()).toMatchObject({ method: 'POST', body: behaviour });
     expect(result).toEqual({ success: true, data: { id: 'b7' } });
+  });
+
+  it('replaces a behaviour sent back as scriptrunner_getBehaviours read it, nulls and mappings included', async () => {
+    routeRequests({ [`${ADMIN}/behaviour`]: '' });
+    const asRead = {
+      id: 'b6cc33a4', guideWorkflow: null, name: 'Renamed', description: null, init: null, fields: [], disabled: false,
+      mappings: [{ type: 'PROJECT', id: 0, fetching: false, project: { id: 10100, key: 'SUP' }, issuetype: { id: 10100, name: 'Incident' } }],
+    };
+
+    const result = await setupOptIns(BEHAVIOURS_ON).callJson('scriptrunner_saveBehaviour', { behaviour: asRead });
+
+    expect(result.success).toBe(true);
+    expect(sent()).toMatchObject({ method: 'POST', body: asRead });
   });
 
   it('refuses to replace a behaviour without its fields, which would drop its field rules', async () => {

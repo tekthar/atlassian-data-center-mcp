@@ -1,4 +1,4 @@
-import { stripNoise } from '../../tools/context.js';
+import { asArray, asRecord, stripNoise } from '../../tools/context.js';
 import { callScriptRunner, type ScriptRunnerApi } from './client.js';
 
 type Query = Record<string, string | boolean | undefined>;
@@ -88,7 +88,21 @@ function getConfigured(api: ScriptRunnerApi, url: string, feature: string, item:
     : get(api, `${url}/{id}`, `${item} ${id}`, undefined, { id });
 }
 
-export const getBehaviours = (id?: string) => getConfigured('scriptrunner/behaviours', '/admin/behaviour', 'behaviours', 'Behaviour', id);
+/*
+ * ScriptRunner 10.20 answers disabled: false for one behaviour even when it is switched off. The list has the
+ * state its admin page shows, so one behaviour's state is taken from the list.
+ */
+async function getBehaviour(id: string) {
+  const [behaviour, all] = await Promise.all([
+    getConfigured('scriptrunner/behaviours', '/admin/behaviour', 'behaviours', 'Behaviour', id),
+    callScriptRunner('scriptrunner/behaviours', { method: 'GET', url: '/admin/behaviour' }, 'The ScriptRunner behaviours'),
+  ]);
+  const listed = asArray(all).map(asRecord).find((item) => item.id === id);
+  return typeof listed?.disabled === 'boolean' ? { ...asRecord(behaviour), disabled: listed.disabled } : behaviour;
+}
+
+export const getBehaviours = (id?: string) =>
+  id === undefined ? getConfigured('scriptrunner/behaviours', '/admin/behaviour', 'behaviours', 'Behaviour', id) : getBehaviour(id);
 
 export const getScriptedFields = (id?: string) => getConfigured('scriptrunner-jira', '/scriptfields', 'scripted fields', 'Scripted field', id);
 

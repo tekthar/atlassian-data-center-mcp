@@ -12,10 +12,16 @@ export const behaviourToolSchemas = {
     behaviour: z.looseObject({
       id: z.string().min(1).optional().describe('The behaviour to replace; leave out to create one'),
       name: z.string().min(1).describe('The behaviour\'s name'),
-      description: z.string().optional(),
+      // scriptrunner_getBehaviours gives null for an unset description, guide workflow and initialiser, and the
+      // behaviour is sent back as read, so null is accepted wherever ScriptRunner sends it.
+      description: z.string().nullish(),
       disabled: z.boolean().optional().describe('True to save it switched off'),
-      guideWorkflow: z.string().optional().describe('Workflow whose transitions the field rules may name'),
-      init: z.record(z.string(), z.unknown()).optional().describe('The initialiser script, as scriptrunner_getBehaviours returns it'),
+      guideWorkflow: z.string().nullish().describe('Workflow whose transitions the field rules may name'),
+      init: z.record(z.string(), z.unknown()).nullish().describe(
+        'The initialiser, as scriptrunner_getBehaviours returns it. A new one is '
+        + '{"validator": "server", "validatorMethod": "run", "validatorScript": {"script": "<Groovy>"}}, or "scriptPath" in place of '
+        + '"script" for a script file. ScriptRunner keeps no script given any other way, such as {"script": ...}',
+      ),
       fields: z.array(z.record(z.string(), z.unknown())).optional()
         .describe('Every field the behaviour controls, with its rules and scripts, as scriptrunner_getBehaviours returns them'),
     }).describe('The whole behaviour. To change one, get it with scriptrunner_getBehaviours, change it, and send all of it back'),
