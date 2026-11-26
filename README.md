@@ -98,7 +98,7 @@ Every app's version and status:
 |---|---|---|---|
 | Xray, test management | Jira | 8 | Beta |
 | ScriptRunner, scripting and automation | Jira | 9 and 10 | Beta |
-| Jira Service Management | Jira | not recorded | Beta |
+| Jira Service Management | Jira | 11.3 | Functional |
 | draw.io, diagrams | Confluence | 16 | Beta, read-only |
 | draw.io, diagrams | Jira | 11 | Beta, read-only |
 | Gliffy, diagrams | Confluence | 13 | Beta, read-only |
@@ -111,7 +111,8 @@ Every app's version and status:
 | Tempo Capacity Planner, resource planning | Jira | 20 | Beta, read-only |
 | Zephyr Essential, test management (formerly Zephyr Squad) | Jira | 11 | Beta |
 
-Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](docs/supported-apps.md) lists the
+Functional means the tools were run against a live instance of that app version and worked. Beta means built and
+checked, but not yet run against a live instance of the app. [Supported apps](docs/supported-apps.md) lists the
 exact versions each app's tools were built from and how they were checked.
 
 ## Install
@@ -369,7 +370,7 @@ code or docs, read the [contributing guide](CONTRIBUTING.md) first; everyone tak
 [private reporting](SECURITY.md), not in public issues.
 
 Running a supported Jira app's tools against your own instance is one of the most useful contributions: it's what
-moves an app from Beta to Tested. The **Jira app support** issue form asks for what we need.
+moves an app from Beta to Functional. The **Jira app support** issue form asks for what we need.
 
 Thank you to [everyone who has contributed](https://github.com/tekthar/atlassian-data-center-mcp/graphs/contributors),
 and to the open-source projects this one builds on.
