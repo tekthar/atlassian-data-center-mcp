@@ -32,6 +32,9 @@ import { TEMPO_CATALOG } from './tempo/catalog.js';
 import { startTempoRequest } from './tempo/client.js';
 import { registerTempoReadTools } from './tempo/read-tools.js';
 import { registerTempoWriteTools } from './tempo/write-tools.js';
+import { TEMPO_PLANNER_CATALOG } from './tempoplanner/catalog.js';
+import { startTempoPlannerRequest } from './tempoplanner/client.js';
+import { registerTempoPlannerReadTools } from './tempoplanner/read-tools.js';
 import { TIMESHEET_TRACKING_CATALOG } from './timesheettracking/catalog.js';
 import { startTimesheetTrackingRequest } from './timesheettracking/client.js';
 import { registerTimesheetTrackingReadTools } from './timesheettracking/read-tools.js';
@@ -153,6 +156,16 @@ export const JIRA_APPS: JiraApp[] = [
       registerZephyrEssentialReadTools(tools, context);
       registerZephyrEssentialWriteTools(tools, context);
     },
+  },
+  {
+    id: 'tempoplanner',
+    name: 'Tempo Capacity Planner',
+    catalog: TEMPO_PLANNER_CATALOG,
+    // Plans on one day in 1970, which is none: Tempo's planning API answers whenever Capacity Planner or Timesheets serves it.
+    probe: (timeoutMs) => withTimeout(startTempoPlannerRequest({
+      method: 'GET', url: '/allocation', query: { startDate: '1970-01-01', endDate: '1970-01-01' },
+    }), timeoutMs),
+    register: registerTempoPlannerReadTools,
   },
 ];
 

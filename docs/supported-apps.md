@@ -18,6 +18,7 @@ Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and th
 | [Structure](#structure), hierarchies and portfolio planning | Jira | 9 | Beta |
 | [Timesheet Tracking](#timesheet-tracking), planned work and timers | Jira | 9 | Beta, read-only |
 | [Zephyr Essential](#zephyr-essential), test management (formerly Zephyr Squad) | Jira | 11 | Beta |
+| [Tempo Capacity Planner](#tempo-capacity-planner), resource planning | Jira | 20 | Beta, read-only |
 
 - **Tested** means the tools were run against a live instance of that app version.
 - **Beta** means the tools were built and checked as described below, but not yet run against a live instance. Please
@@ -550,8 +551,9 @@ and `links`; a team `id`, `name`, `mission`, `summary`, `lead` and `program`; a 
 lookups: `AccountService.getAccounts`, `getAccountByKey` and `getCurrentAccountForIssue`, and `TeamService.getTeam`,
 `getActiveUsers`, `getAllUsers` and `getMembershipsForUser`. Unit tests check each request's path and query.
 
-**Not covered yet:** work attributes on a worklog; moving a worklog to another issue; changing accounts and teams;
-and Tempo Planner.
+**Not covered yet:** work attributes on a worklog; moving a worklog to another issue; and changing accounts and teams.
+Plans, which Tempo Timesheets and Capacity Planner share, are read by the [Tempo Capacity
+Planner](#tempo-capacity-planner) tools.
 
 ## JMWE
 
@@ -794,6 +796,53 @@ installed, with only some of them, and with `JIRA_APPS`.
 
 **Not covered yet:** creating folders, adding the tests a filter finds or copying another cycle's, cloning cycles,
 attachments, and the execution workflow (starting, completing and reopening an execution).
+
+## Tempo Capacity Planner
+
+Capacity Planner by Tempo Software, formerly Tempo Planner, Marketplace key `com.tempoplugin.tempo-planner`. Added
+after 0.48.0. It was the seventh app chosen from the Marketplace's most popular Data Center apps; see the
+[roadmap](#roadmap) for why.
+
+| | |
+|---|---|
+| Built from | Capacity Planner **20.0.02** for Data Center (Marketplace build 7013312, released 2026-11-19) |
+| Jira | 10.0 to 11.3, as this build's Marketplace listing gives |
+| REST API used | `/rest/tempo-planning/1`, the planning API Tempo documents for Data Center in its published Planner OpenAPI. It comes from the bundled `tempo-plan-core` plugin, which Tempo Timesheets bundles too |
+| Tools | 3, all read-only, in the toolset `tempoplanner_plans` |
+| Detection | `GET /rest/tempo-planning/1/allocation` for one day in 1970 at startup, unless `JIRA_APPS` names the apps to offer. It answers whenever Capacity Planner or Tempo Timesheets is installed, since both serve the planning API; Timesheets uses it to plan time in the calendar |
+| Status | Beta: not yet run against a live Capacity Planner instance |
+
+**How the tools were built.** Capacity Planner is an OBR: the `tempo-planner` plugin with Tempo's core, accounts,
+teams and `tempo-plan-core` plugins. The planning API is `tempo-plan-core`'s `tempo-planning` module, versions 1 and
+2; `javap` on its Jakarta resources gave 48 version 1 routes, the same as in the `tempo-plan-core` that Tempo
+Timesheets 20.0.1 bundles. Tempo's published Planner OpenAPI documents `/allocation`, `/allocation/{allocationId}`,
+`/plan/search` and `/plan` with the same parameters. The tools use three routes:
+
+| Tool | Request |
+|---|---|
+| `tempoplanner_getPlans` | `GET /allocation?assigneeKeys&assigneeType&planItemId&planItemType&startDate&endDate`. A person's plans use `assigneeType=user`, a team's `assigneeType=team` with its id; an issue's or project's id comes from Jira first. With none of these, the tool asks for your own plans, by your user key from `GET /rest/api/2/myself` |
+| `tempoplanner_getPlan` | `GET /allocation/{allocationId}` |
+| `tempoplanner_getPlansForReview` | `POST /plan-approval/plans-for-review` with `{ statusCodes, includePastPlans }`. This route is the one Capacity Planner's approval pages use; Tempo doesn't publish it |
+
+The answers are `AllocationBean`s, serialized from their getters: `id`, `assignee` (`key` and `type`), `planItem`
+(`type`, one of ISSUE, PROJECT, EPIC, VERSION, COMPONENT and SPRINT, with its `key`, `summary` or `name`), `start`
+and `end`, `secondsPerDay`, `totalPlannedSeconds`, `commitment`, `description`, `recurrence` (`rule` and `endDate`)
+and `planApproval`. `AllocationResource.throwIfInvalidParams` refuses `assigneeKeys` without `assigneeType` and
+`planItemId` without `planItemType`, and the handler turns usernames into user keys, so either works. The tools give
+hours rather than seconds. A plan's approval has a `statusCode` that `PlanWorkflowStatus.getCode` gives as 0 no
+change, 1 awaiting review (created or requested), 2 rejected and 3 approved; the tools name it, with the requester,
+the reviewer and the latest message. `getPlansForReview` lists the plans the signed-in user reviews.
+
+**Reading only reads.** `javap -c` on the three handlers found only `AllocationService.getAllocations` and
+`getAllocation`, and `PlanApprovalService.getPlanAllocationsForReview`.
+
+**How they were checked.** Unit tests check your own plans by default, a team's plans with a repeating, awaiting plan,
+an issue's and a project's plans by their ids, refusing a person with a team, an issue with a project and a period
+that ends before it starts, one plan, the review list for each status, and the 403 message. Detection is tested with
+every Jira app installed, with only some of them, and with `JIRA_APPS`.
+
+**Not covered yet:** capacity, and planned against available time by person and team (`/planSchedule`); changing
+plans; approving and rejecting plans; and plan search by account, customer or Jira filter (`POST /plan/search`).
 
 ## Timesheet Tracking
 
@@ -1038,3 +1087,17 @@ Apps are added in this order, each step in its own release-ready change.
      - [x] Read: cycles and folders, and test coverage of requirements
      - [x] Write: record execution and step results, with comments and defects
      - [x] Write: create cycles and add tests to them
+   - **Tempo Capacity Planner** (`com.tempoplugin.tempo-planner`), formerly Tempo Planner, chosen on 2026-11-26. On the
+     Marketplace's popular Data Center apps for Jira, the most installed ones not yet supported were then Microsoft
+     Teams for Jira (26,164), Zendesk Support for Jira (12,772), JSU (11,934), Easy Reports Free (11,600), eazyBI
+     (10,672), Status Time Reports Free (10,485), TestRail's integration (10,223), Rich Filters for Jira Dashboards
+     (9,398), Time Tracker for Jira (9,387) and Capacity Planner (9,165). The first seven were passed over earlier for
+     the reasons given above. Rich Filters builds dashboard gadgets over Jira filters, whose issues the Jira server
+     already reads with JQL, and Time Tracker is Tempo's reporting over worklogs, which the Jira and Tempo Timesheets
+     tools already read. Capacity Planner keeps its own data, the plans that allocate people's and teams' time to
+     issues and projects, which agents are asked about when planning work, and Tempo publishes its API. On Confluence
+     the next were Lucidchart (an external service), Table Filter (page content) and Scroll PDF Exporter (8,605),
+     which exports pages rather than keeping data.
+     - [x] Read: plans by person, team, issue or project, one plan, and plans awaiting your review
+     - [ ] Read: capacity, and planned against available time by person and team
+     - [ ] Write: create, change and delete plans, and approve or reject them

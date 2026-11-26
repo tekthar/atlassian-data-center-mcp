@@ -150,7 +150,7 @@ Creating and editing diagrams isn't offered yet: draw.io saves need a preview im
 | `gliffy_listPageDiagrams` | Lists the diagrams a page shows, including ones from other pages. |
 | `gliffy_getDiagram` | Reads a diagram by its id, or by page and name. By default it returns the shapes it holds and the connections between them, by label; `format: "json"` returns Gliffy's own document instead. |
 | `gliffy_getDiagramHistory` | Lists a diagram's versions, with who saved each and when. |
-The Jira server, `mcp-jira-dc`, has tools for Xray, Zephyr, ScriptRunner, BigPicture, Tempo Timesheets, JMWE, Structure, Timesheet Tracking, Zephyr Essential, Jira Service Management and draw.io.
+The Jira server, `mcp-jira-dc`, has tools for Xray, Zephyr, ScriptRunner, BigPicture, Tempo Timesheets, JMWE, Structure, Timesheet Tracking, Zephyr Essential, Tempo Capacity Planner, Jira Service Management and draw.io.
 [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists every
 app with the versions its tools were built from.
 
