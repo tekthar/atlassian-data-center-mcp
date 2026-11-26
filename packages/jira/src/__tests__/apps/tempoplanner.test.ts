@@ -70,7 +70,7 @@ describe('Tempo Capacity Planner tools', () => {
   beforeEach(() => jest.resetAllMocks());
 
   it('registers every catalogued tool, all reading, in a toolset that is off by default', () => {
-    expect(Object.keys(TEMPO_PLANNER_CATALOG.tools)).toHaveLength(3);
+    expect(Object.keys(TEMPO_PLANNER_CATALOG.tools)).toHaveLength(4);
     expect(setup().registrar.registeredTools().sort()).toEqual(Object.keys(TEMPO_PLANNER_CATALOG.tools).sort());
     expect(Object.values(TEMPO_PLANNER_CATALOG.tools).every((entry) => entry.access === 'read')).toBe(true);
     expect(Object.values(TEMPO_PLANNER_CATALOG.toolsets).every((toolset) => !toolset.default)).toBe(true);
@@ -170,5 +170,68 @@ describe('Tempo Capacity Planner tools', () => {
     const result = await setup().callJson('tempoplanner_getPlans', { from: '2026-11-01', to: '2026-11-30', teamId: 7 });
 
     expect(result.error).toContain('Tempo refused this (403). Seeing other people\'s plans needs Tempo\'s permission to view their plans');
+  });
+
+  const schedule = (assigneeKey: string) => ({
+    assigneeKey,
+    planLogs: [
+      { allocationId: 41, day: '2026-11-30', timePlannedSeconds: 7200 },
+      { allocationId: 44, day: '2026-11-30', timePlannedSeconds: 3600 },
+      { allocationId: 41, day: '2026-12-01', timePlannedSeconds: 14400 },
+    ],
+    daySchedules: [
+      { date: '2026-11-30', requiredSeconds: 28800, type: 'WORKING_DAY' },
+      { date: '2026-12-01', requiredSeconds: 28800, type: 'WORKING_DAY' },
+      { date: '2026-12-02', requiredSeconds: 0, type: 'HOLIDAY_AND_NON_WORKING_DAY', holiday: { name: 'National day', durationSeconds: 28800 } },
+    ],
+    totalAvailability: 9,
+    plannedPercentage: 43.75,
+    totalCapacity: 16,
+    totalPlannedHours: 7,
+    totalAvailableSeconds: 32400,
+  });
+
+  it('checks your own capacity by default, with each day\'s required and planned hours', async () => {
+    routeRequests({
+      'GET /api/2/myself': { key: 'JIRAUSER10000', name: 'anna' },
+      [`POST ${BASE}/planSchedule/users`]: [schedule('JIRAUSER10000')],
+    });
+
+    const result = await setup().callJson('tempoplanner_getCapacity', { from: '2026-11-30', to: '2026-12-02' });
+
+    expect(sentTo('POST', `${BASE}/planSchedule/users`)[0].body).toEqual({
+      assigneeKeys: ['JIRAUSER10000'], startDate: '2026-11-30', endDate: '2026-12-02', withPlanItemInfo: false,
+    });
+    expect(result.data).toEqual({
+      from: '2026-11-30',
+      to: '2026-12-02',
+      totalsCountFrom: 'today',
+      people: [{
+        assignee: 'JIRAUSER10000', capacityHours: 16, plannedHours: 7, availableHours: 9, plannedPercent: 43.75,
+        days: [
+          { date: '2026-11-30', type: 'working day', requiredHours: 8, plannedHours: 3 },
+          { date: '2026-12-01', type: 'working day', requiredHours: 8, plannedHours: 4 },
+          { date: '2026-12-02', type: 'holiday', holiday: 'National day', requiredHours: 0, plannedHours: 0 },
+        ],
+      }],
+    });
+  });
+
+  it('checks a team\'s capacity as a whole by its id', async () => {
+    routeRequests({ [`GET ${BASE}/planSchedule/forTeam`]: schedule('7') });
+
+    const result = await setup().callJson('tempoplanner_getCapacity', { from: '2026-11-30', to: '2026-12-02', teamId: 7 });
+
+    expect(sentTo('GET', `${BASE}/planSchedule/forTeam`)[0].query).toEqual({ teamId: 7, from: '2026-11-30', to: '2026-12-02' });
+    expect(result.data.team).toMatchObject({ teamId: 7, capacityHours: 16, plannedHours: 7, availableHours: 9 });
+  });
+
+  it('refuses people with a team, and more than 92 days, before calling Tempo', async () => {
+    const tools = setup();
+
+    expect((await tools.callJson('tempoplanner_getCapacity', { from: '2026-11-01', to: '2026-11-30', users: ['JIRAUSER10000'], teamId: 7 })).error)
+      .toBe('Give users or teamId, not both.');
+    expect((await tools.callJson('tempoplanner_getCapacity', { from: '2026-01-01', to: '2026-06-30' })).error).toBe('Ask for up to 92 days at a time.');
+    expect(mockedRequest).not.toHaveBeenCalled();
   });
 });

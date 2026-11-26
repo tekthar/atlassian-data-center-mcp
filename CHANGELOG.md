@@ -13,6 +13,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
   * `tempoplanner_getPlansForReview` lists the plans awaiting your approval, or the ones you approved or rejected.
 
   Tempo Timesheets serves the same planning API, so the tools are offered with either app. See [Supported apps](docs/supported-apps.md#tempo-capacity-planner).
+* **jira:** Tempo Capacity Planner capacity: `tempoplanner_getCapacity` gives the hours people or a Tempo team have, have planned and have free in a period, with each day's required and planned hours and holidays. Like Tempo, the totals count from today on. See [Supported apps](docs/supported-apps.md#tempo-capacity-planner).
 
 * **jira:** Zephyr Essential cycles, folders and coverage. Three more read tools:
   * `zephyressential_getCycles` lists a version's test cycles, with their build, environment and dates, and how many executions each has, how many ran and how they ended;
