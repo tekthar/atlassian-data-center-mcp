@@ -17,6 +17,12 @@ export const tempoPlannerToolSchemas = {
   getPlan: {
     id: z.number().int().positive().describe('The plan\'s id, from tempoplanner_getPlans'),
   },
+  getCapacity: {
+    from: isoDate('First day, YYYY-MM-DD'),
+    to: isoDate('Last day, YYYY-MM-DD, included; up to 92 days after from'),
+    users: z.array(z.string().min(1)).min(1).max(20).optional().describe('People, by Jira user key; leave out, with no team, for yourself'),
+    teamId: z.number().int().positive().optional().describe('A Tempo team as a whole, by id from tempo_getTeams'),
+  },
   getPlansForReview: {
     status: z.enum(['awaiting', 'approved', 'rejected']).optional().describe('Which plans: awaiting your review (default), or ones you approved or rejected'),
     includePast: z.boolean().optional().describe('Also plans that have ended (default false)'),

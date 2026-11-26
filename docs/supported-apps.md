@@ -808,7 +808,7 @@ after 0.48.0. It was the seventh app chosen from the Marketplace's most popular 
 | Built from | Capacity Planner **20.0.02** for Data Center (Marketplace build 7013312, released 2026-11-19) |
 | Jira | 10.0 to 11.3, as this build's Marketplace listing gives |
 | REST API used | `/rest/tempo-planning/1`, the planning API Tempo documents for Data Center in its published Planner OpenAPI. It comes from the bundled `tempo-plan-core` plugin, which Tempo Timesheets bundles too |
-| Tools | 3, all read-only, in the toolset `tempoplanner_plans` |
+| Tools | 4, all read-only, in the toolset `tempoplanner_plans` |
 | Detection | `GET /rest/tempo-planning/1/allocation` for one day in 1970 at startup, unless `JIRA_APPS` names the apps to offer. It answers whenever Capacity Planner or Tempo Timesheets is installed, since both serve the planning API; Timesheets uses it to plan time in the calendar |
 | Status | Beta: not yet run against a live Capacity Planner instance |
 
@@ -816,13 +816,14 @@ after 0.48.0. It was the seventh app chosen from the Marketplace's most popular 
 teams and `tempo-plan-core` plugins. The planning API is `tempo-plan-core`'s `tempo-planning` module, versions 1 and
 2; `javap` on its Jakarta resources gave 48 version 1 routes, the same as in the `tempo-plan-core` that Tempo
 Timesheets 20.0.1 bundles. Tempo's published Planner OpenAPI documents `/allocation`, `/allocation/{allocationId}`,
-`/plan/search` and `/plan` with the same parameters. The tools use three routes:
+`/plan/search` and `/plan` with the same parameters. The tools use these routes:
 
 | Tool | Request |
 |---|---|
 | `tempoplanner_getPlans` | `GET /allocation?assigneeKeys&assigneeType&planItemId&planItemType&startDate&endDate`. A person's plans use `assigneeType=user`, a team's `assigneeType=team` with its id; an issue's or project's id comes from Jira first. With none of these, the tool asks for your own plans, by your user key from `GET /rest/api/2/myself` |
 | `tempoplanner_getPlan` | `GET /allocation/{allocationId}` |
 | `tempoplanner_getPlansForReview` | `POST /plan-approval/plans-for-review` with `{ statusCodes, includePastPlans }`. This route is the one Capacity Planner's approval pages use; Tempo doesn't publish it |
+| `tempoplanner_getCapacity` | `POST /planSchedule/users` with `{ assigneeKeys, startDate, endDate, withPlanItemInfo }` for people, yourself by default; `GET /planSchedule/forTeam?teamId&from&to` for a team as a whole. Capacity Planner's own pages use these; Tempo doesn't publish them |
 
 The answers are `AllocationBean`s, serialized from their getters: `id`, `assignee` (`key` and `type`), `planItem`
 (`type`, one of ISSUE, PROJECT, EPIC, VERSION, COMPONENT and SPRINT, with its `key`, `summary` or `name`), `start`
@@ -833,16 +834,29 @@ hours rather than seconds. A plan's approval has a `statusCode` that `PlanWorkfl
 change, 1 awaiting review (created or requested), 2 rejected and 3 approved; the tools name it, with the requester,
 the reviewer and the latest message. `getPlansForReview` lists the plans the signed-in user reviews.
 
-**Reading only reads.** `javap -c` on the three handlers found only `AllocationService.getAllocations` and
-`getAllocation`, and `PlanApprovalService.getPlanAllocationsForReview`.
+**Capacity.** Both schedule routes answer `PlanDayScheduleBean`s, serialized from their fields: `assigneeKey`,
+`totalCapacity`, `totalPlannedHours`, `totalAvailability`, `plannedPercentage`, `daySchedules` (each day's `date`,
+`requiredSeconds`, `type` and `holiday`) and `planLogs` (each day's `day` and `timePlannedSeconds`). `javap -c` on
+`PlanDaySchedule` shows the totals are kept in seconds and divided by an hour, so they are hours, and the planned share
+is multiplied by 100, so it is a percent. They count only the days from today on: `calculateTotalCapacity`,
+`calculatePlannedTotal` and `calculateAvailability` skip days before today. Availability is each day's required time
+less what is planned that day, never below zero (`Math.max`), summed, so an overbooked day doesn't take from another. The tool says so, gives the totals as they are, and gives each day's required and planned hours, summing the
+day's plan logs; both dates are `yyyy-MM-dd`. The day types are `WORKING_DAY`, `NON_WORKING_DAY`, `HOLIDAY` and
+`HOLIDAY_AND_NON_WORKING_DAY`. The people route takes user keys, not usernames. Both take ISO dates and include the
+last day. The tool asks for up to 92 days at a time, so a long period doesn't return thousands of days.
+
+**Reading only reads.** `javap -c` on the handlers found only `AllocationService.getAllocations` and
+`getAllocation`, `PlanApprovalService.getPlanAllocationsForReview`, and `PlanScheduleService.getPlanDaySchedulesForAssignees`
+and `getPlanDayScheduleForTeam`.
 
 **How they were checked.** Unit tests check your own plans by default, a team's plans with a repeating, awaiting plan,
 an issue's and a project's plans by their ids, refusing a person with a team, an issue with a project and a period
-that ends before it starts, one plan, the review list for each status, and the 403 message. Detection is tested with
+that ends before it starts, one plan, the review list for each status, and the 403 message. For capacity they check
+your own by default with the day's plan logs summed, a holiday, a team as a whole, and refusing people with a team and
+more than 92 days. Detection is tested with
 every Jira app installed, with only some of them, and with `JIRA_APPS`.
 
-**Not covered yet:** capacity, and planned against available time by person and team (`/planSchedule`); changing
-plans; approving and rejecting plans; and plan search by account, customer or Jira filter (`POST /plan/search`).
+**Not covered yet:** changing plans; approving and rejecting plans; and plan search by account, customer or Jira filter (`POST /plan/search`).
 
 ## Timesheet Tracking
 
@@ -1099,5 +1113,5 @@ Apps are added in this order, each step in its own release-ready change.
      the next were Lucidchart (an external service), Table Filter (page content) and Scroll PDF Exporter (8,605),
      which exports pages rather than keeping data.
      - [x] Read: plans by person, team, issue or project, one plan, and plans awaiting your review
-     - [ ] Read: capacity, and planned against available time by person and team
+     - [x] Read: capacity, and planned against available time by person and team
      - [ ] Write: create, change and delete plans, and approve or reject them

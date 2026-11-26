@@ -12,10 +12,10 @@ import { callTempoPlanner } from './client.js';
 const APPROVAL_STATUSES: Record<number, string> = { 0: 'no change', 1: 'awaiting review', 2: 'rejected', 3: 'approved' };
 const REVIEW_CODES = { awaiting: 1, rejected: 2, approved: 3 } as const;
 
-const defined = (entries: Record<string, unknown>) =>
+export const defined = (entries: Record<string, unknown>) =>
   Object.fromEntries(Object.entries(entries).filter(([, value]) => value !== undefined && value !== null && value !== ''));
 
-const hours = (seconds: unknown) => (typeof seconds === 'number' ? Math.round((seconds / 3600) * 100) / 100 : undefined);
+export const hours = (seconds: unknown) => (typeof seconds === 'number' ? Math.round((seconds / 3600) * 100) / 100 : undefined);
 const person = (value: unknown) => asRecord(value).displayName ?? asRecord(value).key;
 
 export interface PlanQuery {

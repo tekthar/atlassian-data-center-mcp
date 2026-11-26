@@ -1,10 +1,27 @@
 import { z } from 'zod';
 import { invalidInput, respond, type PolicyRegistrar } from '@atlassian-dc-mcp/common';
 import type { JiraToolContext } from '../../tools/context.js';
+import * as capacity from './capacity-operations.js';
 import * as planner from './operations.js';
 import { tempoPlannerToolSchemas as schemas } from './schemas.js';
 
+const MAX_CAPACITY_DAYS = 92;
+const daysBetween = (from: string, to: string) => (Date.parse(to) - Date.parse(from)) / 86_400_000;
+
+function registerCapacityTool(tools: PolicyRegistrar, context: JiraToolContext): void {
+  tools.registerTool('tempoplanner_getCapacity', {
+    description: `Check a person's or a Tempo team's capacity and availability in Tempo Capacity Planner in the ${context.instanceType}: for a period, how many hours they have, how many are planned and how many are free, with each day's required and planned hours and holidays. Yours by default. Like Tempo, the totals count from today on.`,
+    inputSchema: z.object(schemas.getCapacity),
+  }, async (query) => {
+    if (query.users?.length && query.teamId !== undefined) return invalidInput('Give users or teamId, not both.');
+    if (query.from > query.to) return invalidInput('from must not be after to.');
+    if (daysBetween(query.from, query.to) > MAX_CAPACITY_DAYS) return invalidInput(`Ask for up to ${MAX_CAPACITY_DAYS} days at a time.`);
+    return respond(() => capacity.getCapacity(query), 'Error fetching Tempo capacity');
+  });
+}
+
 export function registerTempoPlannerReadTools(tools: PolicyRegistrar, context: JiraToolContext): void {
+  registerCapacityTool(tools, context);
   tools.registerTool('tempoplanner_getPlans', {
     description: `Find who is planned to work on what, and when, in Tempo Capacity Planner in the ${context.instanceType}: the plans (allocated time) in a period for people, a Tempo team, an issue or a project, or your own planned work by default. Each with its dates, hours a day and in total, and approval.`,
     inputSchema: z.object(schemas.getPlans),
