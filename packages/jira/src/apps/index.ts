@@ -35,6 +35,7 @@ import { registerTempoWriteTools } from './tempo/write-tools.js';
 import { TEMPO_PLANNER_CATALOG } from './tempoplanner/catalog.js';
 import { startTempoPlannerRequest } from './tempoplanner/client.js';
 import { registerTempoPlannerReadTools } from './tempoplanner/read-tools.js';
+import { registerTempoPlannerWriteTools } from './tempoplanner/write-tools.js';
 import { TIMESHEET_TRACKING_CATALOG } from './timesheettracking/catalog.js';
 import { startTimesheetTrackingRequest } from './timesheettracking/client.js';
 import { registerTimesheetTrackingReadTools } from './timesheettracking/read-tools.js';
@@ -165,7 +166,10 @@ export const JIRA_APPS: JiraApp[] = [
     probe: (timeoutMs) => withTimeout(startTempoPlannerRequest({
       method: 'GET', url: '/allocation', query: { startDate: '1970-01-01', endDate: '1970-01-01' },
     }), timeoutMs),
-    register: registerTempoPlannerReadTools,
+    register: (tools, context) => {
+      registerTempoPlannerReadTools(tools, context);
+      registerTempoPlannerWriteTools(tools, context);
+    },
   },
 ];
 

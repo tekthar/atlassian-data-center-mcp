@@ -7,7 +7,7 @@ your personal access token, lists the everyday issue tools, and keeps 43 more on
 supported Jira apps such as Xray, Zephyr, ScriptRunner, BigPicture, Tempo, JMWE, Structure, Timesheet Tracking, Zephyr Essential, Tempo Capacity Planner and draw.io when they're installed. Jira's own
 permissions decide what you can do: the server can hide tools, never unlock them.
 
-**Works with your Marketplace apps:** 130 more tools for test management (Xray, Zephyr, Zephyr Essential), automation
+**Works with your Marketplace apps:** 132 more tools for test management (Xray, Zephyr, Zephyr Essential), automation
 (ScriptRunner, JMWE), time tracking (Tempo Timesheets, Timesheet Tracking), planning (Structure, BigPicture, Tempo Capacity Planner) and
 diagrams (draw.io), found on your instance at startup. See [Jira apps](#jira-apps).
 
@@ -151,7 +151,7 @@ Service Management's tools are the `jira_service_desk` toolset in [Toolsets](#to
 | JMWE, workflow extensions | 10 | Beta |
 | Structure, hierarchies and portfolio planning | 9 | Beta |
 | Timesheet Tracking, planned work and timers | 9 | Beta, read-only |
-| Tempo Capacity Planner, resource planning | 20 | Beta, read-only |
+| Tempo Capacity Planner, resource planning | 20 | Beta |
 | Zephyr Essential, test management (formerly Zephyr Squad) | 11 | Beta |
 | Jira Service Management | not recorded | Beta |
 
@@ -283,16 +283,17 @@ Zephyr lets anyone who browses the project record results, create cycles and add
 are turned on. `zephyressential_createCycle` takes dates in this Jira's date picker format, as
 `zephyressential_getCycles` shows them, such as `25/Nov/26`.
 
-**Tempo Capacity Planner** (formerly Tempo Planner) tools, all read-only for now:
+**Tempo Capacity Planner** (formerly Tempo Planner) tools:
 
 | Toolset | Tools |
 |---|---|
-| `tempoplanner_plans`: plans by person, team, issue or project, capacity, and plans for review | `tempoplanner_getPlans`, `tempoplanner_getPlan`, `tempoplanner_getPlansForReview`, `tempoplanner_getCapacity` |
+| `tempoplanner_plans`: plans by person, team, issue or project, capacity, plans for review, and changing plans | `tempoplanner_getPlans`, `tempoplanner_getPlan`, `tempoplanner_getPlansForReview`, `tempoplanner_getCapacity`, `tempoplanner_updatePlan`, `tempoplanner_deletePlan` (destructive) |
 
 Plans are the time Tempo allocates to people and teams on issues and projects; the tools give hours a day and in
 total. Tempo Timesheets serves the same planning API, so these tools are offered with either app. Tempo decides whose
 plans each user sees. `tempoplanner_getCapacity` gives the hours people or a team have, have planned and have free,
-with each day; like Tempo, its totals count from today on.
+with each day; like Tempo, its totals count from today on. `tempoplanner_updatePlan` changes a plan's dates, hours a day
+(a person's plan) or percent of the team (a team's plan), keeping the rest.
 
 ## Settings
 
