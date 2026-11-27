@@ -32,6 +32,19 @@ export const tempoPlannerToolSchemas = {
     description: z.string().optional(),
     includeNonWorkingDays: z.boolean().optional().describe('Whether the plan also covers weekends and holidays'),
   },
+  getPlanApprovers: {
+    user: z.string().min(1).optional().describe('Whose plans, by Jira user key; leave out for yours'),
+    from: isoDate('First day the reviewer must cover, YYYY-MM-DD; default today').optional(),
+    to: isoDate('Last day, YYYY-MM-DD, included; default today').optional(),
+  },
+  requestPlanApproval: {
+    id: z.number().int().positive().describe('The plan\'s id, from tempoplanner_getPlans'),
+    reviewer: z.string().min(1).describe('Who should review it, by Jira user key from tempoplanner_getPlanApprovers'),
+  },
+  approveOrRejectPlan: {
+    id: z.number().int().positive().describe('The plan\'s id, from tempoplanner_getPlansForReview'),
+    decision: z.enum(['approve', 'reject']).describe('approve or reject'),
+  },
   deletePlan: {
     id: z.number().int().positive().describe('The plan\'s id, from tempoplanner_getPlans'),
   },

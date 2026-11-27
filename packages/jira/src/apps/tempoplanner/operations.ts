@@ -27,7 +27,7 @@ export interface PlanQuery {
   projectKey?: string;
 }
 
-function describeApproval(value: unknown) {
+export function describeApproval(value: unknown) {
   const approval = asRecord(value);
   if (typeof approval.statusCode !== 'number') return undefined;
   return defined({

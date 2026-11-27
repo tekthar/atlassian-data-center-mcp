@@ -23,7 +23,7 @@ import { ZEPHYR_ESSENTIAL_CATALOG } from '../apps/zephyressential/catalog.js';
  * reviews, which Tempo's own permissions decide; Structure's changes, which Structure's own
  * settings and edit access to each structure decide; Zephyr Essential's results, cycles and added
  * tests, which need only browsing the project unless Zephyr's own permissions are turned on; and Tempo
- * Capacity Planner's plan changes, which Tempo's own planning permissions decide.
+ * Capacity Planner's plan changes and approvals, which Tempo's own planning permissions decide.
  */
 const UNGATED_WRITE_TOOLS = [
   'jira_watchIssue', 'jira_unwatchIssue', 'jira_createCustomerRequest', 'xray_updateTestRun',
@@ -32,7 +32,7 @@ const UNGATED_WRITE_TOOLS = [
   'tempo_submitTimesheet', 'tempo_reviewTimesheet',
   'structure_addIssues', 'structure_moveRows', 'structure_removeRows', 'structure_createStructure', 'structure_addFolder',
   'zephyressential_recordResult', 'zephyressential_recordStepResult', 'zephyressential_createCycle', 'zephyressential_addTestsToCycle',
-  'tempoplanner_updatePlan', 'tempoplanner_deletePlan',
+  'tempoplanner_updatePlan', 'tempoplanner_deletePlan', 'tempoplanner_requestPlanApproval', 'tempoplanner_approveOrRejectPlan',
 ];
 
 const SOURCE_DIR = path.join(__dirname, '..');

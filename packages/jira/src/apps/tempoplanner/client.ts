@@ -13,10 +13,12 @@ export function startTempoPlannerRequest<T>(options: AppRequest): CancelableProm
   return startAppRequest<T>(BASE_PATH, options);
 }
 
-/** Calls Tempo's planning API, explaining a 404 and a refusal in terms of the subject and Tempo's permissions. */
-export function callTempoPlanner<T = unknown>(options: AppRequest, subject: string): Promise<T> {
+const VIEW_PLANS = 'Seeing other people\'s plans needs Tempo\'s permission to view their plans, usually through a Tempo team.';
+
+/** Calls Tempo's planning API, explaining a 404 and a refusal in terms of the subject and the permission it needs. */
+export function callTempoPlanner<T = unknown>(options: AppRequest, subject: string, needs = VIEW_PLANS): Promise<T> {
   return callApp<T>(BASE_PATH, options, {
     notFound: `${subject} was not found (404). Check the id or key, and that Capacity Planner or Tempo Timesheets is installed on this instance.`,
-    forbidden: (status) => `Tempo refused this (${status}). Seeing other people's plans needs Tempo's permission to view their plans, usually through a Tempo team.`,
+    forbidden: (status) => `Tempo refused this (${status}). ${needs}`,
   });
 }
