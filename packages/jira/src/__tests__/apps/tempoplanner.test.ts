@@ -72,11 +72,14 @@ const PLAN_12 = {
 describe('Tempo Capacity Planner tools', () => {
   beforeEach(() => jest.resetAllMocks());
 
-  it('registers every catalogued tool, reading apart from changing and deleting a plan, in a toolset that is off by default', () => {
-    expect(Object.keys(TEMPO_PLANNER_CATALOG.tools)).toHaveLength(6);
+  it('registers every catalogued tool, reading apart from approvals and changing and deleting a plan, in a toolset that is off by default', () => {
+    expect(Object.keys(TEMPO_PLANNER_CATALOG.tools)).toHaveLength(9);
     expect(setup().registrar.registeredTools().sort()).toEqual(Object.keys(TEMPO_PLANNER_CATALOG.tools).sort());
     expect(Object.entries(TEMPO_PLANNER_CATALOG.tools).filter(([, entry]) => entry.access !== 'read').map(([name, entry]) => [name, entry.access]))
-      .toEqual([['tempoplanner_updatePlan', 'write'], ['tempoplanner_deletePlan', 'destructive']]);
+      .toEqual([
+        ['tempoplanner_requestPlanApproval', 'write'], ['tempoplanner_approveOrRejectPlan', 'write'],
+        ['tempoplanner_updatePlan', 'write'], ['tempoplanner_deletePlan', 'destructive'],
+      ]);
     expect(Object.values(TEMPO_PLANNER_CATALOG.toolsets).every((toolset) => !toolset.default)).toBe(true);
   });
 
@@ -301,5 +304,58 @@ describe('Tempo Capacity Planner tools', () => {
 
     expect(sentTo('DELETE', `${BASE}/allocation/{allocationId}`)[0].path).toEqual({ allocationId: 41 });
     expect(result.data).toEqual({ deleted: 41 });
+  });
+
+  it('lists who may review your plans, for today by default or a period', async () => {
+    routeRequests({
+      'GET /api/2/myself': { key: 'JIRAUSER10000', name: 'anna' },
+      [`GET ${BASE}/plan-approval/reviewers/{userKey}`]: [BO],
+    });
+
+    const mine = await setup().callJson('tempoplanner_getPlanApprovers', {});
+    await setup().callJson('tempoplanner_getPlanApprovers', { user: 'JIRAUSER10002', from: '2026-12-01', to: '2026-12-31' });
+
+    const [forMe, forOther] = sentTo('GET', `${BASE}/plan-approval/reviewers/{userKey}`);
+    expect(forMe).toMatchObject({ path: { userKey: 'JIRAUSER10000' }, query: { from: undefined, to: undefined } });
+    expect(forOther).toMatchObject({ path: { userKey: 'JIRAUSER10002' }, query: { from: '2026-12-01', to: '2026-12-31' } });
+    expect(mine.data).toEqual({ user: 'JIRAUSER10000', reviewers: [{ key: 'JIRAUSER10001', name: 'bo', displayName: 'Bo Lin' }] });
+  });
+
+  it('asks a reviewer to approve a plan', async () => {
+    routeRequests({ [`POST ${BASE}/plan-approval/{allocationId}`]: '' });
+
+    const result = await setup().callJson('tempoplanner_requestPlanApproval', { id: 41, reviewer: 'JIRAUSER10001' });
+
+    expect(sentTo('POST', `${BASE}/plan-approval/{allocationId}`)[0]).toMatchObject({
+      path: { allocationId: 41 }, body: { reviewerKey: 'JIRAUSER10001', statusCode: 1 },
+    });
+    expect(result.data).toEqual({ id: 41, status: 'awaiting review', reviewer: 'JIRAUSER10001' });
+  });
+
+  it('approves or rejects a plan as its reviewer, by status code', async () => {
+    routeRequests({
+      'GET /api/2/myself': { key: 'JIRAUSER10001', name: 'bo' },
+      [`PUT ${BASE}/plan-approval/{allocationId}`]: { requester: ANNA, reviewer: BO, actor: BO, statusCode: 3, latestAction: { key: 'approve', message: '' } },
+    });
+
+    const approved = await setup().callJson('tempoplanner_approveOrRejectPlan', { id: 41, decision: 'approve' });
+    await setup().callJson('tempoplanner_approveOrRejectPlan', { id: 42, decision: 'reject' });
+
+    expect(sentTo('PUT', `${BASE}/plan-approval/{allocationId}`).map((options) => [options.path, options.body])).toEqual([
+      [{ allocationId: 41 }, { reviewerKey: 'JIRAUSER10001', statusCode: 3 }],
+      [{ allocationId: 42 }, { reviewerKey: 'JIRAUSER10001', statusCode: 2 }],
+    ]);
+    expect(approved.data).toEqual({ id: 41, approval: { status: 'approved', requester: 'Anna Berg', reviewer: 'Bo Lin' } });
+  });
+
+  it('explains a refused review in terms of Tempo\'s approval permission', async () => {
+    routeRequests({
+      'GET /api/2/myself': { key: 'JIRAUSER10001', name: 'bo' },
+      [`PUT ${BASE}/plan-approval/{allocationId}`]: Object.assign(new Error('Forbidden'), { status: 403 }),
+    });
+
+    const result = await setup().callJson('tempoplanner_approveOrRejectPlan', { id: 41, decision: 'approve' });
+
+    expect(result.error).toContain('Tempo refused this (403). Approving or rejecting a plan needs Tempo\'s permission to approve plans');
   });
 });

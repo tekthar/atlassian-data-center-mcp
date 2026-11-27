@@ -13,6 +13,12 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
   * `tempoplanner_getPlansForReview` lists the plans awaiting your approval, or the ones you approved or rejected.
 
   Tempo Timesheets serves the same planning API, so the tools are offered with either app. See [Supported apps](docs/supported-apps.md#tempo-capacity-planner).
+* **jira:** Tempo Capacity Planner approvals:
+  * `tempoplanner_getPlanApprovers` lists who may review a person's plans;
+  * `tempoplanner_requestPlanApproval` asks one of them to approve a plan;
+  * `tempoplanner_approveOrRejectPlan` approves or rejects a plan, as its reviewer.
+
+  See [Supported apps](docs/supported-apps.md#tempo-capacity-planner).
 * **jira:** Tempo Capacity Planner plan changes:
   * `tempoplanner_updatePlan` changes a plan's dates, hours a day (a person's plan) or percent of the team (a team's plan), description, or whether it covers non-working days, keeping the rest;
   * `tempoplanner_deletePlan` deletes a plan. It is destructive, so it is listed only when `TOOLSETS` names the toolset.

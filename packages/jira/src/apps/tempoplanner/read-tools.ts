@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { invalidInput, respond, type PolicyRegistrar } from '@atlassian-dc-mcp/common';
 import type { JiraToolContext } from '../../tools/context.js';
+import * as approvals from './approval-operations.js';
 import * as capacity from './capacity-operations.js';
 import * as planner from './operations.js';
 import { tempoPlannerToolSchemas as schemas } from './schemas.js';
@@ -36,6 +37,11 @@ export function registerTempoPlannerReadTools(tools: PolicyRegistrar, context: J
     description: `Get one Tempo plan by its id from tempoplanner_getPlans in the ${context.instanceType}: how it repeats, and its approval.`,
     inputSchema: z.object(schemas.getPlan),
   }, async ({ id }) => respond(() => planner.getPlan(id), 'Error fetching Tempo plan'));
+
+  tools.registerTool('tempoplanner_getPlanApprovers', {
+    description: `List who may approve or reject a person's Tempo plans in Capacity Planner in the ${context.instanceType}, as Tempo's approval dialog does: yours by default, for today or a period.`,
+    inputSchema: z.object(schemas.getPlanApprovers),
+  }, async ({ user, from, to }) => respond(() => approvals.getPlanReviewers(user, from, to), 'Error fetching Tempo plan reviewers'));
 
   tools.registerTool('tempoplanner_getPlansForReview', {
     description: `List the Tempo plans you review in the ${context.instanceType}: those awaiting your approval, or ones you approved or rejected, with who asked and their message.`,

@@ -808,7 +808,7 @@ after 0.48.0. It was the seventh app chosen from the Marketplace's most popular 
 | Built from | Capacity Planner **20.0.02** for Data Center (Marketplace build 7013312, released 2026-11-19) |
 | Jira | 10.0 to 11.3, as this build's Marketplace listing gives |
 | REST API used | `/rest/tempo-planning/1`, the planning API Tempo documents for Data Center in its published Planner OpenAPI. It comes from the bundled `tempo-plan-core` plugin, which Tempo Timesheets bundles too |
-| Tools | 6 in the toolset `tempoplanner_plans`: 4 that read, 1 that changes a plan, and 1 destructive one that deletes a plan |
+| Tools | 9 in the toolset `tempoplanner_plans`: 5 that read, 3 that change a plan or ask for or record its approval, and 1 destructive one that deletes a plan |
 | Detection | `GET /rest/tempo-planning/1/allocation` for one day in 1970 at startup, unless `JIRA_APPS` names the apps to offer. It answers whenever Capacity Planner or Tempo Timesheets is installed, since both serve the planning API; Timesheets uses it to plan time in the calendar |
 | Status | Beta: not yet run against a live Capacity Planner instance |
 
@@ -823,6 +823,11 @@ Timesheets 20.0.1 bundles. Tempo's published Planner OpenAPI documents `/allocat
 | `tempoplanner_getPlans` | `GET /allocation?assigneeKeys&assigneeType&planItemId&planItemType&startDate&endDate`. A person's plans use `assigneeType=user`, a team's `assigneeType=team` with its id; an issue's or project's id comes from Jira first. With none of these, the tool asks for your own plans, by your user key from `GET /rest/api/2/myself` |
 | `tempoplanner_getPlan` | `GET /allocation/{allocationId}` |
 | `tempoplanner_getPlansForReview` | `POST /plan-approval/plans-for-review` with `{ statusCodes, includePastPlans }`. This route is the one Capacity Planner's approval pages use; Tempo doesn't publish it |
+| `tempoplanner_getPlanApprovers` | `GET /plan-approval/reviewers/{userKey}?from&to`, the route Tempo's approval dialog uses |
+| `tempoplanner_requestPlanApproval` | `POST /plan-approval/{allocationId}` with `{ reviewerKey, statusCode: 1 }` |
+| `tempoplanner_approveOrRejectPlan` | `GET /rest/api/2/myself` for your user key, then `PUT /plan-approval/{allocationId}` with `{ reviewerKey, statusCode }`, 3 to approve or 2 to reject |
+| `tempoplanner_updatePlan` | `GET /allocation/{allocationId}`, then `PUT /allocation/{allocationId}` with the plan sent back whole |
+| `tempoplanner_deletePlan` | `DELETE /allocation/{allocationId}` |
 | `tempoplanner_getCapacity` | `POST /planSchedule/users` with `{ assigneeKeys, startDate, endDate, withPlanItemInfo }` for people, yourself by default; `GET /planSchedule/forTeam?teamId&from&to` for a team as a whole. Capacity Planner's own pages use these; Tempo doesn't publish them |
 
 The answers are `AllocationBean`s, serialized from their getters: `id`, `assignee` (`key` and `type`), `planItem`
@@ -856,6 +861,15 @@ that kind of plan is best changed in Tempo. The `folioId` query parameter, for T
 Deleting answers 204 and is destructive, so it is listed only when `TOOLSETS` names the toolset. Tempo's own
 planning permissions decide who may change whose plans.
 
+**Approvals.** `PlanApprovalResource` takes a `PlanApprovalInputBean`, `{ reviewerKey, statusCode }`, on
+`POST /plan-approval/{allocationId}` to ask for a review and `PUT` to record a decision; `PlanApprovalMapperImpl.fromBean`
+refuses a blank `reviewerKey`. `PlanWorkflowStatus.fromCode` reads 1 as requested, 2 rejected and 3 approved.
+`PlanApprovalServiceImpl.getStatusForUpdate` checks a decision with `PlannerPermissionService.validateCanApprovePlan`
+for the signed-in user, so `tempoplanner_approveOrRejectPlan` sends your own user key as the reviewer. `POST` answers with no
+body and `PUT` with the `PlanApprovalBean`, which the tool names as for a plan. Both need plan approval turned on in
+Tempo (`checkIfFeatureIsEnabled`). `tempoplanner_getPlanApprovers` lists the people whose team permissions let them
+approve the person's plans in the period, today by default, as `UserBean`s.
+
 **Why creating a plan waits.** Tempo's OpenAPI marks a plan's `scope` optional, but `AllocationBuilder.validate`
 refuses a plan without a scope type, and the scope (`project`, `team`, `account`, `board`, `folio` or `none`) decides
 where the plan is filed and, for a team, whether it is reflected onto the team's members
@@ -872,10 +886,12 @@ that ends before it starts, one plan, the review list for each status, and the 4
 your own by default with the day's plan logs summed, a holiday, a team as a whole, and refusing people with a team and
 more than 92 days. For changes they check a person's plan sent back whole with new hours and dates, a team's plan as a
 percent with its recurrence kept, refusing hours on a team's plan, any change to a total plan, no change and a start
-after the end, and deleting by id. Detection is tested with
+after the end, and deleting by id. For approvals they check the reviewers for you by default and for someone in a
+period, asking for a review, approving and rejecting by status code with your own key, and the 403 message. Detection
+is tested with
 every Jira app installed, with only some of them, and with `JIRA_APPS`.
 
-**Not covered yet:** creating plans (see above); approving and rejecting plans; changing a total plan; and plan search by account,
+**Not covered yet:** creating plans (see above); withdrawing a review request (`DELETE /plan-approval/{allocationId}`); changing a total plan; and plan search by account,
 customer or Jira filter (`POST /plan/search`).
 
 ## Timesheet Tracking
@@ -1136,4 +1152,4 @@ Apps are added in this order, each step in its own release-ready change.
      - [x] Read: capacity, and planned against available time by person and team
      - [x] Write: change and delete plans
      - [ ] Write: create plans, once the scope a new plan needs is confirmed on a live instance
-     - [ ] Write: approve or reject plans
+     - [x] Write: ask for, approve and reject plan approvals
