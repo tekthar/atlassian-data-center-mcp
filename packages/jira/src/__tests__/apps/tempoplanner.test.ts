@@ -2,6 +2,7 @@ import { createRecordingRegistrar } from '@atlassian-dc-mcp/common';
 import { request } from '../../jira-client/core/request.js';
 import { TEMPO_PLANNER_CATALOG } from '../../apps/tempoplanner/catalog.js';
 import { registerTempoPlannerReadTools } from '../../apps/tempoplanner/read-tools.js';
+import { registerTempoPlannerWriteTools } from '../../apps/tempoplanner/write-tools.js';
 
 jest.mock('../../jira-client/core/request.js', () => ({
   request: jest.fn(),
@@ -33,7 +34,9 @@ const sentTo = (method: string, url: string) =>
 
 function setup() {
   const recorder = createRecordingRegistrar();
-  registerTempoPlannerReadTools(recorder.registrar, { instanceType: 'JIRA Data Center edition instance', getPageSize: () => 25 });
+  const context = { instanceType: 'JIRA Data Center edition instance', getPageSize: () => 25 };
+  registerTempoPlannerReadTools(recorder.registrar, context);
+  registerTempoPlannerWriteTools(recorder.registrar, context);
   return recorder;
 }
 
@@ -69,10 +72,11 @@ const PLAN_12 = {
 describe('Tempo Capacity Planner tools', () => {
   beforeEach(() => jest.resetAllMocks());
 
-  it('registers every catalogued tool, all reading, in a toolset that is off by default', () => {
-    expect(Object.keys(TEMPO_PLANNER_CATALOG.tools)).toHaveLength(4);
+  it('registers every catalogued tool, reading apart from changing and deleting a plan, in a toolset that is off by default', () => {
+    expect(Object.keys(TEMPO_PLANNER_CATALOG.tools)).toHaveLength(6);
     expect(setup().registrar.registeredTools().sort()).toEqual(Object.keys(TEMPO_PLANNER_CATALOG.tools).sort());
-    expect(Object.values(TEMPO_PLANNER_CATALOG.tools).every((entry) => entry.access === 'read')).toBe(true);
+    expect(Object.entries(TEMPO_PLANNER_CATALOG.tools).filter(([, entry]) => entry.access !== 'read').map(([name, entry]) => [name, entry.access]))
+      .toEqual([['tempoplanner_updatePlan', 'write'], ['tempoplanner_deletePlan', 'destructive']]);
     expect(Object.values(TEMPO_PLANNER_CATALOG.toolsets).every((toolset) => !toolset.default)).toBe(true);
   });
 
@@ -233,5 +237,69 @@ describe('Tempo Capacity Planner tools', () => {
       .toBe('Give users or teamId, not both.');
     expect((await tools.callJson('tempoplanner_getCapacity', { from: '2026-01-01', to: '2026-06-30' })).error).toBe('Ask for up to 92 days at a time.');
     expect(mockedRequest).not.toHaveBeenCalled();
+  });
+
+  it('changes a person\'s plan, sending it back whole with its own assignee, plan item and scope', async () => {
+    const saved = allocation(41, { end: '2026-12-11', secondsPerDay: 21600, totalPlannedSeconds: 216000 });
+    routeRequests({
+      [`GET ${BASE}/allocation/{allocationId}`]: allocation(41),
+      [`PUT ${BASE}/allocation/{allocationId}`]: saved,
+    });
+
+    const result = await setup().callJson('tempoplanner_updatePlan', { id: 41, end: '2026-12-11', hoursPerDay: 6 });
+
+    const [sent] = sentTo('PUT', `${BASE}/allocation/{allocationId}`);
+    expect(sent.path).toEqual({ allocationId: 41 });
+    expect(sent.body).toEqual({
+      assignee: { key: 'JIRAUSER10000', type: 'user' },
+      planItem: { id: 10010, type: 'ISSUE' },
+      scope: { id: 10000, type: 'project' },
+      start: '2026-11-30', startTime: '09:00', end: '2026-12-11', secondsPerDay: 21600, includeNonWorkingDays: false, description: 'Front end',
+    });
+    expect(result.data).toMatchObject({ id: 41, end: '2026-12-11', hoursPerDay: 6, totalHours: 60 });
+  });
+
+  it('changes a team\'s plan as a percent of the team, keeping how it repeats', async () => {
+    const teamPlan = allocation(42, {
+      assignee: { key: '7', type: 'team' }, scope: { id: 7, type: 'team' }, commitment: 50, recurrence: { rule: 'WEEKLY', endDate: '2026-12-31' },
+    });
+    routeRequests({
+      [`GET ${BASE}/allocation/{allocationId}`]: teamPlan,
+      [`PUT ${BASE}/allocation/{allocationId}`]: { ...teamPlan, commitment: 30 },
+    });
+
+    await setup().callJson('tempoplanner_updatePlan', { id: 42, percentOfTeam: 30 });
+
+    const { body } = sentTo('PUT', `${BASE}/allocation/{allocationId}`)[0];
+    expect(body).toMatchObject({ assignee: { key: '7', type: 'team' }, scope: { id: 7, type: 'team' }, commitment: 30, recurrence: { rule: 'WEEKLY', endDate: '2026-12-31' } });
+    expect(body).not.toHaveProperty('secondsPerDay');
+  });
+
+  it('refuses hours a day on a team\'s plan and any change to a total plan, without saving', async () => {
+    routeRequests({ [`GET ${BASE}/allocation/{allocationId}`]: allocation(42, { assignee: { key: '7', type: 'team' } }) });
+    const forTeam = await setup().callJson('tempoplanner_updatePlan', { id: 42, hoursPerDay: 4 });
+    routeRequests({ [`GET ${BASE}/allocation/{allocationId}`]: allocation(43, { isTotalPlan: true }) });
+    const forTotal = await setup().callJson('tempoplanner_updatePlan', { id: 43, end: '2026-12-11' });
+
+    expect(forTeam.error).toContain('Give percentOfTeam instead of hoursPerDay.');
+    expect(forTotal.error).toContain('This plan spreads a total of hours over its days.');
+    expect(sentTo('PUT', `${BASE}/allocation/{allocationId}`)).toHaveLength(0);
+  });
+
+  it('refuses no change, or a start after the end, before calling Tempo', async () => {
+    const tools = setup();
+
+    expect((await tools.callJson('tempoplanner_updatePlan', { id: 41 })).error).toBe('Give at least one change.');
+    expect((await tools.callJson('tempoplanner_updatePlan', { id: 41, start: '2026-12-12', end: '2026-12-11' })).error).toBe('start must not be after end.');
+    expect(mockedRequest).not.toHaveBeenCalled();
+  });
+
+  it('deletes a plan by id', async () => {
+    routeRequests({ [`DELETE ${BASE}/allocation/{allocationId}`]: '' });
+
+    const result = await setup().callJson('tempoplanner_deletePlan', { id: 41 });
+
+    expect(sentTo('DELETE', `${BASE}/allocation/{allocationId}`)[0].path).toEqual({ allocationId: 41 });
+    expect(result.data).toEqual({ deleted: 41 });
   });
 });

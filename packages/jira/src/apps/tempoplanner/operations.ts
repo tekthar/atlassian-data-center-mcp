@@ -38,7 +38,7 @@ function describeApproval(value: unknown) {
   });
 }
 
-function describePlan(value: unknown) {
+export function describePlan(value: unknown) {
   const plan = asRecord(value);
   const { key, type } = asRecord(plan.assignee);
   const item = asRecord(plan.planItem);

@@ -6,12 +6,14 @@ import type { ToolCatalog } from '@atlassian-dc-mcp/common';
  */
 export const TEMPO_PLANNER_CATALOG: ToolCatalog = {
   toolsets: {
-    tempoplanner_plans: { description: 'Tempo Capacity Planner: plans (allocated time) by person, team, issue or project, capacity and availability, and plans awaiting your approval', default: false },
+    tempoplanner_plans: { description: 'Tempo Capacity Planner: plans (allocated time) by person, team, issue or project, capacity and availability, plans awaiting your approval, and changing and deleting plans', default: false },
   },
   tools: {
     tempoplanner_getPlans: { toolset: 'tempoplanner_plans', access: 'read' },
     tempoplanner_getPlan: { toolset: 'tempoplanner_plans', access: 'read' },
     tempoplanner_getPlansForReview: { toolset: 'tempoplanner_plans', access: 'read' },
     tempoplanner_getCapacity: { toolset: 'tempoplanner_plans', access: 'read' },
+    tempoplanner_updatePlan: { toolset: 'tempoplanner_plans', access: 'write' },
+    tempoplanner_deletePlan: { toolset: 'tempoplanner_plans', access: 'destructive' },
   },
 };

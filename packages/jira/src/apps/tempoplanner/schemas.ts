@@ -23,6 +23,18 @@ export const tempoPlannerToolSchemas = {
     users: z.array(z.string().min(1)).min(1).max(20).optional().describe('People, by Jira user key; leave out, with no team, for yourself'),
     teamId: z.number().int().positive().optional().describe('A Tempo team as a whole, by id from tempo_getTeams'),
   },
+  updatePlan: {
+    id: z.number().int().positive().describe('The plan\'s id, from tempoplanner_getPlans'),
+    start: isoDate('New first day, YYYY-MM-DD').optional(),
+    end: isoDate('New last day, YYYY-MM-DD, included').optional(),
+    hoursPerDay: z.number().positive().max(24).optional().describe('New hours a day, for a person\'s plan'),
+    percentOfTeam: z.number().min(1).max(100).optional().describe('New percent of the team, for a team\'s plan'),
+    description: z.string().optional(),
+    includeNonWorkingDays: z.boolean().optional().describe('Whether the plan also covers weekends and holidays'),
+  },
+  deletePlan: {
+    id: z.number().int().positive().describe('The plan\'s id, from tempoplanner_getPlans'),
+  },
   getPlansForReview: {
     status: z.enum(['awaiting', 'approved', 'rejected']).optional().describe('Which plans: awaiting your review (default), or ones you approved or rejected'),
     includePast: z.boolean().optional().describe('Also plans that have ended (default false)'),

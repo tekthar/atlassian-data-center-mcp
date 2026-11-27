@@ -18,7 +18,7 @@ Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and th
 | [Structure](#structure), hierarchies and portfolio planning | Jira | 9 | Beta |
 | [Timesheet Tracking](#timesheet-tracking), planned work and timers | Jira | 9 | Beta, read-only |
 | [Zephyr Essential](#zephyr-essential), test management (formerly Zephyr Squad) | Jira | 11 | Beta |
-| [Tempo Capacity Planner](#tempo-capacity-planner), resource planning | Jira | 20 | Beta, read-only |
+| [Tempo Capacity Planner](#tempo-capacity-planner), resource planning | Jira | 20 | Beta |
 
 - **Tested** means the tools were run against a live instance of that app version.
 - **Beta** means the tools were built and checked as described below, but not yet run against a live instance. Please
@@ -808,7 +808,7 @@ after 0.48.0. It was the seventh app chosen from the Marketplace's most popular 
 | Built from | Capacity Planner **20.0.02** for Data Center (Marketplace build 7013312, released 2026-11-19) |
 | Jira | 10.0 to 11.3, as this build's Marketplace listing gives |
 | REST API used | `/rest/tempo-planning/1`, the planning API Tempo documents for Data Center in its published Planner OpenAPI. It comes from the bundled `tempo-plan-core` plugin, which Tempo Timesheets bundles too |
-| Tools | 4, all read-only, in the toolset `tempoplanner_plans` |
+| Tools | 6 in the toolset `tempoplanner_plans`: 4 that read, 1 that changes a plan, and 1 destructive one that deletes a plan |
 | Detection | `GET /rest/tempo-planning/1/allocation` for one day in 1970 at startup, unless `JIRA_APPS` names the apps to offer. It answers whenever Capacity Planner or Tempo Timesheets is installed, since both serve the planning API; Timesheets uses it to plan time in the calendar |
 | Status | Beta: not yet run against a live Capacity Planner instance |
 
@@ -845,6 +845,23 @@ day's plan logs; both dates are `yyyy-MM-dd`. The day types are `WORKING_DAY`, `
 `HOLIDAY_AND_NON_WORKING_DAY`. The people route takes user keys, not usernames. Both take ISO dates and include the
 last day. The tool asks for up to 92 days at a time, so a long period doesn't return thousands of days.
 
+**Changing and deleting plans.** `PUT /allocation/{allocationId}` and `DELETE /allocation/{allocationId}`, which
+Tempo's Planner OpenAPI documents, with an `AllocationInputBean` for the change. A change replaces the plan, so
+`tempoplanner_updatePlan` reads it first and sends it back whole, with its own assignee, plan item, scope and
+recurrence, changing only what was asked. `javap -c` on `Allocation.AllocationBuilder` shows a team's plan is kept as
+a `commitment`, a percent of the team, and a person's as `secondsPerDay`, falling back to a commitment; so the tool
+takes `percentOfTeam` for one and `hoursPerDay` for the other, and refuses the wrong one. It refuses to change a plan
+that spreads a total of hours over its days (`isTotalPlan`), since the builder also reads `totalPlannedSeconds` and
+that kind of plan is best changed in Tempo. The `folioId` query parameter, for Tempo's financial plans, isn't sent.
+Deleting answers 204 and is destructive, so it is listed only when `TOOLSETS` names the toolset. Tempo's own
+planning permissions decide who may change whose plans.
+
+**Why creating a plan waits.** Tempo's OpenAPI marks a plan's `scope` optional, but `AllocationBuilder.validate`
+refuses a plan without a scope type, and the scope (`project`, `team`, `account`, `board`, `folio` or `none`) decides
+where the plan is filed and, for a team, whether it is reflected onto the team's members
+(`AllocationServiceImpl.isSettingPlanToNewTeamScope`). Choosing it for a new plan needs a live instance to confirm
+what Tempo's own pages send, so a change keeps each plan's scope as it is.
+
 **Reading only reads.** `javap -c` on the handlers found only `AllocationService.getAllocations` and
 `getAllocation`, `PlanApprovalService.getPlanAllocationsForReview`, and `PlanScheduleService.getPlanDaySchedulesForAssignees`
 and `getPlanDayScheduleForTeam`.
@@ -853,10 +870,13 @@ and `getPlanDayScheduleForTeam`.
 an issue's and a project's plans by their ids, refusing a person with a team, an issue with a project and a period
 that ends before it starts, one plan, the review list for each status, and the 403 message. For capacity they check
 your own by default with the day's plan logs summed, a holiday, a team as a whole, and refusing people with a team and
-more than 92 days. Detection is tested with
+more than 92 days. For changes they check a person's plan sent back whole with new hours and dates, a team's plan as a
+percent with its recurrence kept, refusing hours on a team's plan, any change to a total plan, no change and a start
+after the end, and deleting by id. Detection is tested with
 every Jira app installed, with only some of them, and with `JIRA_APPS`.
 
-**Not covered yet:** changing plans; approving and rejecting plans; and plan search by account, customer or Jira filter (`POST /plan/search`).
+**Not covered yet:** creating plans (see above); approving and rejecting plans; changing a total plan; and plan search by account,
+customer or Jira filter (`POST /plan/search`).
 
 ## Timesheet Tracking
 
@@ -1114,4 +1134,6 @@ Apps are added in this order, each step in its own release-ready change.
      which exports pages rather than keeping data.
      - [x] Read: plans by person, team, issue or project, one plan, and plans awaiting your review
      - [x] Read: capacity, and planned against available time by person and team
-     - [ ] Write: create, change and delete plans, and approve or reject them
+     - [x] Write: change and delete plans
+     - [ ] Write: create plans, once the scope a new plan needs is confirmed on a live instance
+     - [ ] Write: approve or reject plans
