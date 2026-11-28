@@ -154,9 +154,10 @@ Service Management's tools are the `jira_service_desk` toolset in [Toolsets](#to
 | Tempo Capacity Planner, resource planning | 20 | Beta |
 | Git Integration for Jira, commits, branches and pull requests | 6 | Beta, read-only |
 | Zephyr Essential, test management (formerly Zephyr Squad) | 11 | Beta |
-| Jira Service Management | not recorded | Beta |
+| Jira Service Management | 11.3 | Functional |
 
-Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists the
+Functional means the tools were run against a live instance of that app version and worked. Beta means built and
+checked, but not yet run against a live instance of the app. [Supported apps](https://github.com/tekthar/atlassian-data-center-mcp/blob/main/docs/supported-apps.md) lists the
 exact versions each app's tools were built from and how they were checked.
 
 **Xray** tools:

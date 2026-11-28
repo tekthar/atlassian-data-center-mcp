@@ -37,6 +37,8 @@ const MAX_SERVICE_DESK_PAGES = 20;
 /** Customer request creation is an experimental JSM API on Data Center (sooperset sends this too). */
 const EXPERIMENTAL_API_HEADERS = { 'X-ExperimentalApi': 'opt-in' };
 const SELECT_SCHEMA_MARKERS = ['select', 'radiobutton', 'checkbox'];
+/** Jira-schema types whose values JSM lists in validValues and takes only as {id} or {name} objects. */
+const OPTION_SCHEMA_TYPES = ['option', 'priority', 'component', 'version'];
 
 type JsonRecord = Record<string, unknown>;
 type ServiceDeskRequest = Omit<ApiRequestOptions, 'mediaType'>;
@@ -208,7 +210,8 @@ const isScalar = (value: unknown): value is string | number => typeof value === 
 
 function isSelectLike(schema: JsonRecord): boolean {
   const custom = String(schema.custom ?? '').toLowerCase();
-  return schema.type === 'option' || schema.items === 'option' || SELECT_SCHEMA_MARKERS.some((marker) => custom.includes(marker));
+  return [schema.type, schema.items].some((type) => OPTION_SCHEMA_TYPES.includes(String(type)))
+    || SELECT_SCHEMA_MARKERS.some((marker) => custom.includes(marker));
 }
 
 /** Accept an option's label or id, as a person would type it, and send the {id} form Jira expects. */
@@ -311,7 +314,7 @@ export const serviceDeskToolSchemas = {
     requestTypeId: requestTypeIdSchema,
     requestFieldValues: z.record(z.string(), z.unknown()).describe(
       'Field values keyed by field id from jira_getRequestTypeFields, e.g. {"summary": "Cannot log in", "description": "Since 9am", "customfield_10010": "High"}. '
-      + 'Select, radio and checkbox fields take an option label or id; multi-value fields take an array or a comma-separated string. '
+      + 'Select, radio, checkbox, priority, component and version fields take an option label or id; multi-value fields take an array or a comma-separated string. '
       + 'Other values are sent as given, in Jira REST format.',
     ),
     raiseOnBehalfOf: z.string().min(1).optional()

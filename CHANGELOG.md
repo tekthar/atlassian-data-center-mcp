@@ -5,6 +5,22 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ## Unreleased
 
+### Bug fixes
+
+* **jira:** on Jira 11, the server found apps that weren't installed and offered their tools, which then returned
+  Jira's login page. Jira 11 answers a REST path that nothing serves with a redirect to the login page instead of a
+  404, even for a valid token, and the server read the login page as a success. Such a redirect now counts as a 404
+  ([#67](https://github.com/tekthar/atlassian-data-center-mcp/issues/67)).
+* **jira:** `jira_createCustomerRequest` sent priority and component names as plain strings, which Jira Service
+  Management refuses. They are now mapped to ids, like select options
+  ([#68](https://github.com/tekthar/atlassian-data-center-mcp/issues/68)).
+
+### Documentation
+
+* Jira Service Management is **Functional**: its 6 tools were run against Jira Service Management 11.3.13 on Jira
+  11.3.13. Apps whose tools have been run against a live instance are now marked Functional instead of Tested. See
+  [Supported apps](docs/supported-apps.md#jira-service-management).
+
 ### Features
 
 * **jira:** Git Integration for Jira by GitKraken, the next popular Data Center app, read-only for now:

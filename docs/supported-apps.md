@@ -7,7 +7,7 @@ Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and th
 |---|---|---|---|
 | [Xray](#xray), test management | Jira | 8 | Beta |
 | [ScriptRunner](#scriptrunner), scripting and automation | Jira | 9 and 10 | Beta |
-| [Jira Service Management](#jira-service-management) | Jira | not recorded | Beta |
+| [Jira Service Management](#jira-service-management) | Jira | 11.3 | Functional |
 | [draw.io](#drawio-for-confluence), diagrams | Confluence | 16 | Beta, read-only |
 | [draw.io](#drawio-for-jira), diagrams | Jira | 11 | Beta, read-only |
 | [Gliffy](#gliffy), diagrams | Confluence | 13 | Beta, read-only |
@@ -21,7 +21,7 @@ Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and th
 | [Tempo Capacity Planner](#tempo-capacity-planner), resource planning | Jira | 20 | Beta |
 | [Git Integration for Jira](#git-integration-for-jira), commits, branches and pull requests | Jira | 6 | Beta, read-only |
 
-- **Tested** means the tools were run against a live instance of that app version.
+- **Functional** means the tools were run against a live instance of that app version and worked, as the app's section records.
 - **Beta** means the tools were built and checked as described below, but not yet run against a live instance. Please
   [open an issue](https://github.com/tekthar/atlassian-data-center-mcp/issues) if something doesn't work with your
   version, and say which version you have.
@@ -74,7 +74,7 @@ add routes was read with `javap -c`:
 results), test repository folders, preconditions, datasets, and importing automated test results. Two query options
 aren't offered: `testDefinition` on a test set's tests, and `includeTestFields` on the test run search.
 
-**To mark it Tested**, we need the tools run against a live Xray 8 instance, including detection with an ordinary
+**To mark it Functional**, we need the tools run against a live Xray 8 instance, including detection with an ordinary
 user's token, since it hasn't been confirmed that every user can read the test statuses detection asks for.
 
 ## ScriptRunner
@@ -1062,13 +1062,34 @@ Atlassian's service desk app. Its tools are the `jira_service_desk` toolset, whi
 | | |
 |---|---|
 | Built from | Adapted from [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian); the app version wasn't recorded |
+| Run against | Jira Service Management **11.3.13** on Jira Software Data Center **11.3.13**, on 2026-11-26, as a Jira administrator with a personal access token |
 | REST API used | `/rest/servicedeskapi` |
 | Tools | 6 |
 | Detection | None: the toolset is listed when you turn it on, and a call explains a 404 when the app isn't installed |
-| Status | Beta: checked with unit tests against recorded responses |
+| Status | Functional: all 6 tools run against a live instance |
 
 Raising a customer request uses an endpoint Jira Service Management marks experimental, so the tool sends the
 `X-ExperimentalApi: opt-in` header that endpoint requires.
+
+**What was run.** The bundled server was started over stdio against a service desk made from the IT service
+management template, and each tool was called the way an MCP client calls it:
+
+- `jira_getServiceDeskForProject` found the desk by its project key in any case, and answered `serviceDesk: null` for
+  a project that isn't a service desk.
+- `jira_getServiceDeskQueues` listed the template's 15 queues with their JQL, columns and issue counts, and paged
+  with `start` and `limit`.
+- `jira_getQueueIssues` returned a queue's issues with the queue's columns, SLA fields included.
+- `jira_getRequestTypes` and `jira_getRequestTypeFields` listed the request types, and each type's fields with their
+  required flags, schemas and valid values.
+- `jira_createCustomerRequest` raised requests with select, priority and component values given by label, and with
+  request participants; the values were read back from the issues. A missing required field and an unknown option
+  label were refused before anything was created, and an unknown customer in `raiseOnBehalfOf` gave JSM's own error.
+- An unknown service desk, queue or request type gave the tool's 404 message.
+
+**Fixed by the run.** Priority and component names were sent as plain strings, which JSM refuses
+([#68](https://github.com/tekthar/atlassian-data-center-mcp/issues/68)). They are now mapped to ids like select
+options. JSM 11 doesn't return a desk `name`, a request type's `issueTypeId` or a field's `visible` flag, so the
+tools leave those out.
 
 ## Checking newer builds
 

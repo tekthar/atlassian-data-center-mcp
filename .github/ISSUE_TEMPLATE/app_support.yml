@@ -49,7 +49,7 @@ body:
     id: testing
     attributes:
       label: Could you try tools against your instance?
-      description: Running new tools against a live instance is what moves an app from Beta to Tested.
+      description: Running new tools against a live instance is what moves an app from Beta to Functional.
       options:
         - "Yes"
         - "Maybe"
