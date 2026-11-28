@@ -31,7 +31,7 @@ more when it needs them, and a sandbox where it can combine many reads into one 
 ## Why you'll like it
 
 - **Your Marketplace apps too**: at startup the servers find the apps installed on your instance and add their tools,
-  142 of them for 12 apps: test management, automation, time tracking, planning and diagrams. See
+  146 of them for 13 apps: test management, automation, time tracking, planning, code and diagrams. See
   [Works with your Marketplace apps](#works-with-your-marketplace-apps).
 - **One command, nothing to host**: `npx` runs each server on your machine. No Python, no Docker, no server to run.
   Built for Data Center and Server, the editions Atlassian's own MCP server doesn't cover.
@@ -71,7 +71,7 @@ Cloud. These servers are for Data Center and Server.
 
 | Server | npm package | What the agent can do |
 |---|---|---|
-| **Jira** | [`mcp-jira-dc`](https://www.npmjs.com/package/mcp-jira-dc) | Search with JQL, create, update and transition issues, comments, links, versions, sprints, worklogs, service desk queues, fields and users. 63 tools in 18 toolsets, plus 135 tools for 11 Marketplace apps when they're installed. |
+| **Jira** | [`mcp-jira-dc`](https://www.npmjs.com/package/mcp-jira-dc) | Search with JQL, create, update and transition issues, comments, links, versions, sprints, worklogs, service desk queues, fields and users. 63 tools in 18 toolsets, plus 139 tools for 12 Marketplace apps when they're installed. |
 | **Confluence** | [`mcp-confluence-dc`](https://www.npmjs.com/package/mcp-confluence-dc) | Search with CQL, read, create and update pages, page trees, version history and diffs, labels, comments, restrictions and attachments. 26 tools in 11 toolsets, plus draw.io and Gliffy diagrams when they're installed. |
 | **Bitbucket** | [`mcp-bitbucket-dc`](https://www.npmjs.com/package/mcp-bitbucket-dc) | Browse projects, repositories, files, branches and commits, search code, and review and comment on pull requests. Merging and declining are opt-in. 27 tools plus 2 opt-in. |
 
@@ -90,6 +90,7 @@ it, and every write or delete is marked as one.
 | **Automation** | ScriptRunner, JMWE | Read script files, built-in scripts, listeners, jobs, REST endpoints, behaviours and workflow extensions, and why they did or didn't run. Running or saving code is off unless you turn it on |
 | **Time tracking** | Tempo Timesheets, Timesheet Tracking | Search worklogs with totals, log and change time, submit and review timesheets, and read planned work and running timers |
 | **Planning** | Structure, BigPicture, Tempo Capacity Planner | Read structures, their rows and history, and add, move and remove rows; read boxes, teams, capacity and resources, and plan them; read who is planned on what and who has time free, change plans, and ask for, approve and reject plan approvals |
+| **Code** | Git Integration for Jira | Read the commits, branches and pull requests linked to an issue, with changed files, and the connected repositories |
 | **Diagrams** | draw.io (Jira and Confluence), Gliffy | Find diagrams and read them as shapes and connections an agent can explain, with their history |
 
 Every app's version and status:
@@ -109,6 +110,7 @@ Every app's version and status:
 | Structure, hierarchies and portfolio planning | Jira | 9 | Beta |
 | Timesheet Tracking, planned work and timers | Jira | 9 | Beta, read-only |
 | Tempo Capacity Planner, resource planning | Jira | 20 | Beta |
+| Git Integration for Jira, commits, branches and pull requests | Jira | 6 | Beta, read-only |
 | Zephyr Essential, test management (formerly Zephyr Squad) | Jira | 11 | Beta |
 
 Beta means built and checked, but not yet run against a live instance of the app. [Supported apps](docs/supported-apps.md) lists the

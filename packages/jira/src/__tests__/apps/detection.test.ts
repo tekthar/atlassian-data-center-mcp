@@ -32,6 +32,7 @@ const STRUCTURE_PROBE = '/structure/2.0/structure';
 const TIMESHEET_TRACKING_PROBE = '/reportrest/1.0/reportrestglobal/get-jira-settings';
 const ZEPHYR_ESSENTIAL_PROBE = '/zapi/latest/util/testExecutionStatus';
 const TEMPO_PLANNER_PROBE = '/tempo-planning/1/allocation';
+const GIT_INTEGRATION_PROBE = '/gitplugin/1.0/repository';
 const NOT_FOUND = () => { throw apiError(404, 'Not Found'); };
 
 /** Answer each app's check by its URL. */
@@ -53,16 +54,16 @@ describe('detectJiraApps', () => {
   beforeEach(() => jest.resetAllMocks());
 
   it('asks each app for something cheap when JIRA_APPS is unset, and offers the apps that answer', async () => {
-    answerProbes({ [XRAY_PROBE]: () => [{ name: 'PASS' }], [SCRIPTRUNNER_PROBE]: () => ({}), [DRAWIO_PROBE]: () => [], [ZEPHYR_PROBE]: () => undefined, [BIGPICTURE_PROBE]: () => [], [TEMPO_PROBE]: () => ({}), [JMWE_PROBE]: () => [], [STRUCTURE_PROBE]: () => ({ structures: [], haveMore: false }), [TIMESHEET_TRACKING_PROBE]: () => ({ hoursPerDay: '8' }), [ZEPHYR_ESSENTIAL_PROBE]: () => [], [TEMPO_PLANNER_PROBE]: () => [] });
+    answerProbes({ [XRAY_PROBE]: () => [{ name: 'PASS' }], [SCRIPTRUNNER_PROBE]: () => ({}), [DRAWIO_PROBE]: () => [], [ZEPHYR_PROBE]: () => undefined, [BIGPICTURE_PROBE]: () => [], [TEMPO_PROBE]: () => ({}), [JMWE_PROBE]: () => [], [STRUCTURE_PROBE]: () => ({ structures: [], haveMore: false }), [TIMESHEET_TRACKING_PROBE]: () => ({ hoursPerDay: '8' }), [ZEPHYR_ESSENTIAL_PROBE]: () => [], [TEMPO_PLANNER_PROBE]: () => [], [GIT_INTEGRATION_PROBE]: () => ({ items: [], total: 0 }) });
 
-    expect(await detect({})).toEqual({ ids: ['xray', 'scriptrunner', 'drawio', 'zephyr', 'bigpicture', 'tempo', 'jmwe', 'structure', 'timesheettracking', 'zephyressential', 'tempoplanner'], warnings: [] });
-    expect(probedUrls()).toEqual([XRAY_PROBE, SCRIPTRUNNER_PROBE, DRAWIO_PROBE, ZEPHYR_PROBE, BIGPICTURE_PROBE, TEMPO_PROBE, JMWE_PROBE, STRUCTURE_PROBE, TIMESHEET_TRACKING_PROBE, ZEPHYR_ESSENTIAL_PROBE, TEMPO_PLANNER_PROBE].sort());
+    expect(await detect({})).toEqual({ ids: ['xray', 'scriptrunner', 'drawio', 'zephyr', 'bigpicture', 'tempo', 'jmwe', 'structure', 'timesheettracking', 'zephyressential', 'tempoplanner', 'gitintegration'], warnings: [] });
+    expect(probedUrls()).toEqual([XRAY_PROBE, SCRIPTRUNNER_PROBE, DRAWIO_PROBE, ZEPHYR_PROBE, BIGPICTURE_PROBE, TEMPO_PROBE, JMWE_PROBE, STRUCTURE_PROBE, TIMESHEET_TRACKING_PROBE, ZEPHYR_ESSENTIAL_PROBE, TEMPO_PLANNER_PROBE, GIT_INTEGRATION_PROBE].sort());
     expect(mockedRequest.mock.calls.find((call) => call[1].url === TEMPO_PLANNER_PROBE)?.[1].query).toEqual({ startDate: '1970-01-01', endDate: '1970-01-01' });
     expect(mockedRequest.mock.calls.every((call) => call[1].method === 'GET')).toBe(true);
   });
 
   it('offers only the apps that are installed', async () => {
-    answerProbes({ [XRAY_PROBE]: NOT_FOUND, [SCRIPTRUNNER_PROBE]: () => ({}), [DRAWIO_PROBE]: NOT_FOUND, [ZEPHYR_PROBE]: NOT_FOUND, [BIGPICTURE_PROBE]: NOT_FOUND, [TEMPO_PROBE]: NOT_FOUND, [JMWE_PROBE]: NOT_FOUND, [STRUCTURE_PROBE]: NOT_FOUND, [TIMESHEET_TRACKING_PROBE]: NOT_FOUND, [ZEPHYR_ESSENTIAL_PROBE]: NOT_FOUND, [TEMPO_PLANNER_PROBE]: NOT_FOUND });
+    answerProbes({ [XRAY_PROBE]: NOT_FOUND, [SCRIPTRUNNER_PROBE]: () => ({}), [DRAWIO_PROBE]: NOT_FOUND, [ZEPHYR_PROBE]: NOT_FOUND, [BIGPICTURE_PROBE]: NOT_FOUND, [TEMPO_PROBE]: NOT_FOUND, [JMWE_PROBE]: NOT_FOUND, [STRUCTURE_PROBE]: NOT_FOUND, [TIMESHEET_TRACKING_PROBE]: NOT_FOUND, [ZEPHYR_ESSENTIAL_PROBE]: NOT_FOUND, [TEMPO_PLANNER_PROBE]: NOT_FOUND, [GIT_INTEGRATION_PROBE]: NOT_FOUND });
 
     expect(await detect({})).toEqual({ ids: ['scriptrunner'], warnings: [] });
   });
@@ -74,7 +75,7 @@ describe('detectJiraApps', () => {
   });
 
   it('leaves an app out with a warning when its check fails another way', async () => {
-    answerProbes({ [XRAY_PROBE]: () => { throw apiError(500, 'Server Error'); }, [SCRIPTRUNNER_PROBE]: NOT_FOUND, [DRAWIO_PROBE]: NOT_FOUND, [ZEPHYR_PROBE]: NOT_FOUND, [BIGPICTURE_PROBE]: NOT_FOUND, [TEMPO_PROBE]: NOT_FOUND, [JMWE_PROBE]: NOT_FOUND, [STRUCTURE_PROBE]: NOT_FOUND, [TIMESHEET_TRACKING_PROBE]: NOT_FOUND, [ZEPHYR_ESSENTIAL_PROBE]: NOT_FOUND, [TEMPO_PLANNER_PROBE]: NOT_FOUND });
+    answerProbes({ [XRAY_PROBE]: () => { throw apiError(500, 'Server Error'); }, [SCRIPTRUNNER_PROBE]: NOT_FOUND, [DRAWIO_PROBE]: NOT_FOUND, [ZEPHYR_PROBE]: NOT_FOUND, [BIGPICTURE_PROBE]: NOT_FOUND, [TEMPO_PROBE]: NOT_FOUND, [JMWE_PROBE]: NOT_FOUND, [STRUCTURE_PROBE]: NOT_FOUND, [TIMESHEET_TRACKING_PROBE]: NOT_FOUND, [ZEPHYR_ESSENTIAL_PROBE]: NOT_FOUND, [TEMPO_PLANNER_PROBE]: NOT_FOUND, [GIT_INTEGRATION_PROBE]: NOT_FOUND });
 
     const { ids, warnings } = await detect({});
 

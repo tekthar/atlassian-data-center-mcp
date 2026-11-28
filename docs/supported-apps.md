@@ -19,6 +19,7 @@ Marketplace apps add their own REST APIs. The Jira server, `mcp-jira-dc`, and th
 | [Timesheet Tracking](#timesheet-tracking), planned work and timers | Jira | 9 | Beta, read-only |
 | [Zephyr Essential](#zephyr-essential), test management (formerly Zephyr Squad) | Jira | 11 | Beta |
 | [Tempo Capacity Planner](#tempo-capacity-planner), resource planning | Jira | 20 | Beta |
+| [Git Integration for Jira](#git-integration-for-jira), commits, branches and pull requests | Jira | 6 | Beta, read-only |
 
 - **Tested** means the tools were run against a live instance of that app version.
 - **Beta** means the tools were built and checked as described below, but not yet run against a live instance. Please
@@ -894,6 +895,66 @@ every Jira app installed, with only some of them, and with `JIRA_APPS`.
 **Not covered yet:** creating plans (see above); withdrawing a review request (`DELETE /plan-approval/{allocationId}`); changing a total plan; and plan search by account,
 customer or Jira filter (`POST /plan/search`).
 
+## Git Integration for Jira
+
+Git Integration for Jira by GitKraken, formerly by BigBrassBand, Marketplace key `com.xiplink.jira.git.jira_git_plugin`.
+Added after 0.48.0. It was the eighth app chosen from the Marketplace's most popular Data Center apps; see the
+[roadmap](#roadmap) for why.
+
+| | |
+|---|---|
+| Built from | Git Integration for Jira **6.1.9** for Data Center (Marketplace build 1009621, released 2026-10-14) |
+| Jira | 11.0 to 11.3, as this build's Marketplace listing gives |
+| REST API used | `/rest/gitplugin/1.0`, which GitKraken documents for Data Center |
+| Tools | 4, all read-only, in the toolset `gitintegration_code` |
+| Detection | `GET /rest/gitplugin/1.0/repository?short=true&limit=1` at startup, which lists the repositories the user may see; only a 404 means the app isn't there. `JIRA_APPS` can name the apps to offer instead |
+| Status | Beta, read-only: not yet run against a live Git Integration instance |
+
+**How the tools were built.** The plugin declares three REST modules, `/rest/gitplugin` versions 1.0 and 2.0 and a
+webhook module. `javap` on their Jakarta resources, subpackages included, gave 112 version 1.0 routes and 24 version
+2.0 routes. GitKraken's REST API pages for Data Center document the issue routes the same way, with the same answer for
+an issue's branches. The tools use four:
+
+| Tool | Request |
+|---|---|
+| `gitintegration_getIssueCommits` | `GET /issues/{issueKey}/commits?showFiles&offset&limit` |
+| `gitintegration_getIssueBranches` | `GET /issuegitdetails/issue/{issueKey}` |
+| `gitintegration_getIssuePullRequests` | `GET /issuegitdetails/issue/{issueKey}/pullRequest` |
+| `gitintegration_getRepositories` | `GET /repository?projectKey&short=true&offset&limit` |
+
+The answers:
+- An issue's commits are the app's public `api.thirdparty.model.Commit`s, from `CommitService.getCommitsForUser`, in a
+  `PaginatedResponse` with `items`, `total`, `offset`, `limit` and `hasMore`. Each has a `revision`, `message`,
+  `createdAt` (`DefaultCommitService` multiplies JGit's commit time in seconds by 1000, so it is milliseconds),
+  `author` with `name` and `email`, `repositoryId`, whether it is a merge commit, its `branches`, and with `showFiles`
+  its `files` with `linesAdded` and `linesDeleted` and whether each was added or deleted. The tool reads the boolean
+  fields under either JSON spelling (`isAdded` or `added`).
+- An issue's branches come in an `IssueWebPanelInfo` with the `commitCount` and, by repository (`repoId`,
+  `repoName`), each branch's `name`, how many commits it is `ahead` of and `behind` the main branch, and its
+  `externalUrl`. `notAllPermissions` says some repositories are hidden from the user.
+- An issue's pull requests (GitHub, Bitbucket, Azure DevOps) and merge requests (GitLab) come in a `MergeRequestsInfo`
+  with a `pullRequests` and a `mergeRequests` group, each with `items`: `id`, `state`, `title`, `description`,
+  `baseBranch`, `compareBranch`, `url`, `repository`, `author` and `reviewers`. The tool gives both kinds together and
+  cuts a description at 1,000 characters.
+- Repositories are the app's `publicmodels.Repository`, which also carries credentials: `password`, `pat`, and GitHub
+  App secrets and keys. The tool asks for the short form and keeps only the id, name, group, origin, main branch,
+  hosting service, whether it is disabled, and when it was last indexed, and cuts any user name and password out of
+  the origin URL. `RepositoryResource` lists the repositories the user may see in each project
+  (`GitPluginPermissionManager.getRepositoriesForProject`).
+
+**Reading only reads.** `javap -c` on the four handlers found only reads: `CommitService.getCommitsForUser`,
+`IssueGitDetailsService.getBranches` and `getMergeRequests`, and `getRepositoriesForProject`.
+
+**How they were checked.** Unit tests check each tool's request, a page of commits with dates and changed files, a
+merge commit and a deleted file under the other JSON spelling, the branches answer as GitKraken documents it, pull and
+merge requests together with a long description cut, repositories with no credentials left in them or their origin
+URL, and the 403 message. Detection is tested with every Jira app installed, with only some of them, and with
+`JIRA_APPS`.
+
+**Not covered yet:** one commit's diff and files by revision (`/commit-info`); tags, builds and deployments on an issue;
+a repository's branches; creating branches and pull requests; linking a commit to issues; and the repository and
+integration settings, which are for administrators.
+
 ## Timesheet Tracking
 
 Timesheet Tracking for Jira by TouchDown Apps, Marketplace key `com.tda.timesheet.report`. Added in 0.48.0. It was the fifth app chosen from the Marketplace's most popular Data Center apps; see the
@@ -1153,3 +1214,13 @@ Apps are added in this order, each step in its own release-ready change.
      - [x] Write: change and delete plans
      - [ ] Write: create plans, once the scope a new plan needs is confirmed on a live instance
      - [x] Write: ask for, approve and reject plan approvals
+   - **Git Integration for Jira** (`com.xiplink.jira.git.jira_git_plugin`), by GitKraken, chosen on 2026-11-28. After
+     Capacity Planner (9,123), the most installed Data Center apps for Jira were draw.io for Jira (8,383), supported
+     already, Power BI Connector for Jira (8,338) and Git Integration for Jira (8,130); on Confluence, Scroll PDF
+     Exporter (8,605). Power BI Connector sends Jira data to Power BI and keeps none of its own, and Scroll PDF
+     Exporter turns pages into files rather than keeping data. Git Integration indexes the commits, branches and pull
+     requests that mention each issue, across GitHub, GitLab, Bitbucket, Azure DevOps and other Git servers, which
+     agents are asked about whenever they check what was done for an issue. GitKraken documents its REST API.
+     - [x] Read: an issue's commits, branches and pull requests, and the connected repositories
+     - [ ] Read: one commit's diff and files, a repository's branches, and an issue's tags, builds and deployments
+     - [ ] Write: create a branch or pull request for an issue, and link a commit to issues

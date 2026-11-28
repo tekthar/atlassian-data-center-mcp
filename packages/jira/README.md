@@ -4,12 +4,12 @@
 
 The server runs on your machine. Your MCP client starts it and talks to it over stdio; it calls Jira's REST API with
 your personal access token, lists the everyday issue tools, and keeps 43 more one search away, plus the tools of
-supported Jira apps such as Xray, Zephyr, ScriptRunner, BigPicture, Tempo, JMWE, Structure, Timesheet Tracking, Zephyr Essential, Tempo Capacity Planner and draw.io when they're installed. Jira's own
+supported Jira apps such as Xray, Zephyr, ScriptRunner, BigPicture, Tempo, JMWE, Structure, Timesheet Tracking, Zephyr Essential, Tempo Capacity Planner, Git Integration and draw.io when they're installed. Jira's own
 permissions decide what you can do: the server can hide tools, never unlock them.
 
-**Works with your Marketplace apps:** 135 more tools for test management (Xray, Zephyr, Zephyr Essential), automation
-(ScriptRunner, JMWE), time tracking (Tempo Timesheets, Timesheet Tracking), planning (Structure, BigPicture, Tempo Capacity Planner) and
-diagrams (draw.io), found on your instance at startup. See [Jira apps](#jira-apps).
+**Works with your Marketplace apps:** 139 more tools for test management (Xray, Zephyr, Zephyr Essential), automation
+(ScriptRunner, JMWE), time tracking (Tempo Timesheets, Timesheet Tracking), planning (Structure, BigPicture, Tempo Capacity Planner), code
+(Git Integration) and diagrams (draw.io), found on your instance at startup. See [Jira apps](#jira-apps).
 
 ```bash
 npx -y mcp-jira-dc setup                    # saves your Jira address and token
@@ -152,6 +152,7 @@ Service Management's tools are the `jira_service_desk` toolset in [Toolsets](#to
 | Structure, hierarchies and portfolio planning | 9 | Beta |
 | Timesheet Tracking, planned work and timers | 9 | Beta, read-only |
 | Tempo Capacity Planner, resource planning | 20 | Beta |
+| Git Integration for Jira, commits, branches and pull requests | 6 | Beta, read-only |
 | Zephyr Essential, test management (formerly Zephyr Squad) | 11 | Beta |
 | Jira Service Management | not recorded | Beta |
 
@@ -296,6 +297,15 @@ with each day; like Tempo, its totals count from today on. `tempoplanner_updateP
 (a person's plan) or percent of the team (a team's plan), keeping the rest. `tempoplanner_approveOrRejectPlan` approves or
 rejects a plan as you, its reviewer; approvals need plan approval turned on in Tempo.
 
+**Git Integration for Jira** tools, all read-only for now:
+
+| Toolset | Tools |
+|---|---|
+| `gitintegration_code`: an issue's commits, branches and pull requests, and the connected repositories | `gitintegration_getIssueCommits`, `gitintegration_getIssueBranches`, `gitintegration_getIssuePullRequests`, `gitintegration_getRepositories` |
+
+The app shows each user the repositories and commits of the projects they may view. Repositories are listed without
+their credentials.
+
 ## Settings
 
 Every setting is an environment variable. Each comes from the first of these that has it: the environment, the dotenv
@@ -325,7 +335,7 @@ keychain.
 | `CODE_EXECUTION` | `off` removes `jira_runCode`. |
 | `PERMISSION_FILTER` | `off` lists tools without asking Jira for your permissions first. |
 | `JIRA_PERMISSION_PROJECTS` | Project keys, e.g. `ACS,BPO`. Without it, a permission you hold in any project counts; with it, only these projects count. |
-| `JIRA_APPS` | Which [Jira apps](#jira-apps) to offer. Unset or `auto` checks which are installed; a list such as `xray,zephyr,scriptrunner,drawio,bigpicture,tempo,jmwe,structure,timesheettracking,zephyressential,tempoplanner` offers those without checking; `off` offers none. |
+| `JIRA_APPS` | Which [Jira apps](#jira-apps) to offer. Unset or `auto` checks which are installed; a list such as `xray,zephyr,scriptrunner,drawio,bigpicture,tempo,jmwe,structure,timesheettracking,zephyressential,tempoplanner,gitintegration` offers those without checking; `off` offers none. |
 
 **Turning on risky tools**
 

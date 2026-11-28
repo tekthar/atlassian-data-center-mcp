@@ -16,6 +16,9 @@ import { registerBigPictureWriteTools } from './bigpicture/write-tools.js';
 import { DRAWIO_CATALOG } from './drawio/catalog.js';
 import { startDrawioRequest } from './drawio/client.js';
 import { registerDrawioReadTools } from './drawio/read-tools.js';
+import { GIT_INTEGRATION_CATALOG } from './gitintegration/catalog.js';
+import { startGitIntegrationRequest } from './gitintegration/client.js';
+import { registerGitIntegrationReadTools } from './gitintegration/read-tools.js';
 import { JMWE_CATALOG } from './jmwe/catalog.js';
 import { startJmweRequest } from './jmwe/client.js';
 import { registerJmweOptInTools } from './jmwe/opt-in-tools.js';
@@ -170,6 +173,16 @@ export const JIRA_APPS: JiraApp[] = [
       registerTempoPlannerReadTools(tools, context);
       registerTempoPlannerWriteTools(tools, context);
     },
+  },
+  {
+    id: 'gitintegration',
+    name: 'Git Integration for Jira',
+    catalog: GIT_INTEGRATION_CATALOG,
+    // One repository in short form, of those the user may see.
+    probe: (timeoutMs) => withTimeout(startGitIntegrationRequest({
+      method: 'GET', url: '/repository', query: { short: true, offset: 0, limit: 1 },
+    }), timeoutMs),
+    register: registerGitIntegrationReadTools,
   },
 ];
 
