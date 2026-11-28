@@ -46,7 +46,7 @@
           "name": "JIRA_API_TOKEN"
         },
         {
-          "description": "Which Jira apps to offer tools for. Unset or \"auto\" checks which of Xray, ScriptRunner, Zephyr, Zephyr Essential, BigPicture, Tempo Timesheets, JMWE, Structure, Timesheet Tracking, Tempo Capacity Planner and draw.io are installed; a list such as \"xray,tempo\" offers those; \"off\" offers none.",
+          "description": "Which Jira apps to offer tools for. Unset or \"auto\" checks which of Xray, ScriptRunner, Zephyr, Zephyr Essential, BigPicture, Tempo Timesheets, JMWE, Structure, Timesheet Tracking, Tempo Capacity Planner, Git Integration and draw.io are installed; a list such as \"xray,tempo\" offers those; \"off\" offers none.",
           "isRequired": false,
           "format": "string",
           "isSecret": false,

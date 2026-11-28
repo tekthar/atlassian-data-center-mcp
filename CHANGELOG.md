@@ -7,6 +7,14 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Features
 
+* **jira:** Git Integration for Jira by GitKraken, the next popular Data Center app, read-only for now:
+  * `gitintegration_getIssueCommits` gets the commits linked to an issue, with author, date, repository and branches, and optionally the changed files;
+  * `gitintegration_getIssueBranches` gets an issue's branches by repository, with how far each is ahead of and behind the main branch;
+  * `gitintegration_getIssuePullRequests` gets an issue's pull and merge requests;
+  * `gitintegration_getRepositories` lists the connected repositories, without their credentials.
+
+  See [Supported apps](docs/supported-apps.md#git-integration-for-jira).
+
 * **jira:** Tempo Capacity Planner (formerly Tempo Planner), the next popular Data Center app, read-only for now:
   * `tempoplanner_getPlans` gets plans for a period, for people, a Tempo team, an issue or a project, or your own: what each is for, its dates, hours a day and in total, and its approval;
   * `tempoplanner_getPlan` gets one plan;
